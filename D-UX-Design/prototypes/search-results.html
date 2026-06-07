@@ -77,7 +77,58 @@
       flex-direction: column;
       overflow: hidden;
     }
-    .global-nav, .search-header { flex-shrink: 0; }
+    .global-nav, .search-header, .breadcrumb-bar { flex-shrink: 0; }
+
+    /* ─── BREADCRUMB BAR ─────────────────────────────────────
+       Shown only when arriving from the browse flow (?from=browse).
+       Sits between the global nav and the search header — a thin strip
+       that tells the user "here's where you came from, click to go back".
+       Hidden on every other path (fresh search, map round-trip) — those
+       have no hierarchical parent to climb. */
+    .breadcrumb-bar {
+      background: var(--bg-card);
+      border-block-end: 1px solid var(--border);
+      padding-block: 8px;
+      padding-inline: 32px;
+    }
+    .breadcrumb-list {
+      max-width: 1280px;
+      margin-inline: auto;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .breadcrumb-list li {
+      display: flex;
+      align-items: center;
+      color: var(--text-secondary);
+    }
+    .breadcrumb-list a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 3px 8px;
+      border-radius: var(--radius-md);
+      transition: color .15s, background .15s;
+    }
+    .breadcrumb-list a:hover {
+      color: var(--primary);
+      background: var(--bg-page);
+    }
+    .breadcrumb-list .crumb-sep {
+      color: var(--text-muted);
+      font-size: 12px;
+      padding-inline: 2px;
+      user-select: none;
+    }
+    .breadcrumb-list [aria-current="page"] {
+      color: var(--text-primary);
+      font-weight: 600;
+      padding: 3px 8px;
+    }
 
     /* ─── ICON HELPER ─── */
     .icon { width: 16px; height: 16px; flex-shrink: 0; }
@@ -942,6 +993,16 @@
 </header>
 
 
+<!-- ══════════════ BREADCRUMB (browse flow only) ══════════════
+     Populated + un-hidden by JS when ?from=browse is in the URL.
+     Stays hidden in every other case (fresh search, direct link, map
+     round-trip) — the bar exists in the DOM only because injecting at
+     load is simpler than mounting later. -->
+<nav class="breadcrumb-bar" id="breadcrumb-bar" hidden aria-label="ניווט היררכי">
+  <ol class="breadcrumb-list" id="breadcrumb-list"></ol>
+</nav>
+
+
 <!-- ══════════════ SEARCH HEADER ══════════════ -->
 <div class="search-header">
   <div class="search-header-inner">
@@ -1513,18 +1574,85 @@
   //
   // The toggle is ALWAYS visible on this page — regardless of how the user
   // arrived (search, browse-tag, or map round-trip). The map is always
-  // available as another view of the same result set. The ?from=browse param
-  // is preserved in the URL for analytics/history but no longer hides the UI.
+  // available as another view of the same result set. We also forward `from`
+  // and `dim` so the map view shows the same breadcrumb (round-trip preserved).
   (function wireViewToggleMapLink() {
     const params = new URLSearchParams(window.location.search);
-    const q = params.get('q');
-    const node = params.get('node');
     const mapLink = document.getElementById('viewToggleMap');
     if (!mapLink) return;
+    /* Pass-through whitelist — every param the map page might care about. */
+    const FORWARDED = ['q', 'node', 'from', 'dim'];
     const out = new URLSearchParams();
-    if (q) out.set('q', q);
-    if (node) out.set('node', node);
+    FORWARDED.forEach(k => { const v = params.get(k); if (v) out.set(k, v); });
     if (out.toString()) mapLink.href = 'node-chart.html?' + out.toString();
+  })();
+
+  /* ─── BREADCRUMB renderer ────────────────────────────────────────────
+     Reads ?from=browse + ?dim=<id> + ?q=<sub-domain-name> from the URL and
+     paints a back-trail crumb: עיון › <dim label> › <sub-domain name>.
+     The dim label is looked up in DIM_LABEL (mirror of browse.html's TREE
+     ids → names — duplicated here, same pattern as TAGS_REGISTRY). */
+  const DIM_LABEL = {
+    'dim-economic':  'ביטחון כלכלי',
+    'dim-education': 'חינוך ופיתוח',
+    'dim-wellbeing': 'רווחה נפשית וחברתית',
+    'dim-health':    'בריאות',
+    'dim-belonging': 'שייכות ומעורבות'
+  };
+
+  (function renderBreadcrumb() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('from') !== 'browse') return;   /* not from browse → no crumb */
+
+    const dim = params.get('dim');
+    const q   = params.get('q');
+    const bar  = document.getElementById('breadcrumb-bar');
+    const list = document.getElementById('breadcrumb-list');
+    if (!bar || !list) return;
+
+    list.textContent = '';
+
+    /* Tiny DOM helpers — keep this IIFE self-contained, don't depend on
+       the file-level `el()` helper that may not exist at this point. */
+    const link = (label, href) => {
+      const li = document.createElement('li');
+      const a  = document.createElement('a');
+      a.href = href;
+      a.textContent = label;
+      li.appendChild(a);
+      return li;
+    };
+    const current = (label) => {
+      const li = document.createElement('li');
+      li.setAttribute('aria-current', 'page');
+      li.textContent = label;
+      return li;
+    };
+    const sep = () => {
+      const li = document.createElement('li');
+      li.className = 'crumb-sep';
+      li.setAttribute('aria-hidden', 'true');
+      li.textContent = '›';
+      return li;
+    };
+
+    /* Crumb 1: עיון → browse.html root (cube grid). Always present. */
+    list.appendChild(link('עיון', 'browse.html'));
+
+    /* Crumb 2: dimension label → also browse.html (no focused-dim URL exists
+       yet; clicking lands at the cube grid where the user can re-hover). */
+    if (dim && DIM_LABEL[dim]) {
+      list.appendChild(sep());
+      list.appendChild(link(DIM_LABEL[dim], 'browse.html'));
+    }
+
+    /* Crumb 3: current sub-domain — non-clickable (you're here). */
+    if (q) {
+      list.appendChild(sep());
+      list.appendChild(current(q));
+    }
+
+    bar.hidden = false;
   })();
 
   // ─── Init ───────────────────────────────────────────────────────────

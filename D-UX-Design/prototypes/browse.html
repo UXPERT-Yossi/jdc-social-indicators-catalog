@@ -1343,9 +1343,16 @@ function buildDimCube(dim) {
   dim.domains.forEach(dom => {
     tagsRow.appendChild(el('a', {
       class: 'cube-domain-tag',
-      /* ?from=browse marker → search-results hides the view-toggle. The browse
-         flow is already "structural navigation"; the map view adds no value. */
-      href: 'search-results.html?q=' + encodeURIComponent(dom.name) + '&from=browse',
+      /* URL carries the FULL hierarchical context:
+         - q   = sub-domain name (the search query)
+         - dim = parent life-dimension id (for the breadcrumb on the next page)
+         - from= origin marker (tells search-results "user came from browse")
+         Together they let search-results.html render a complete back-trail
+         crumb: עיון › <dim name> › <sub-domain name>. */
+      href: 'search-results.html'
+        + '?q=' + encodeURIComponent(dom.name)
+        + '&dim=' + encodeURIComponent(dim.id)
+        + '&from=browse',
       'aria-label': 'הצג מדדים בתחום ' + dom.name,
       text: dom.name
     }));
