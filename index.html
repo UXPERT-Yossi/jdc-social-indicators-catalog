@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>קטלוג מדדים חברתיים — הג'וינט</title>
+  <meta name="description" content="כלי חשיבה לבחירת מדדים חברתיים — פרוטוטיפ אינטראקטיבי">
+
+  <!-- Triple-redundant redirect to the prototype entry point.
+       Three layers, in order of robustness:
+       1. <meta http-equiv="refresh">  → works even without JS
+       2. window.location.replace()    → faster + uses .replace so the
+                                          redirect URL is NOT pushed onto
+                                          history (back button skips it)
+       3. visible <a>                  → fallback if both above fail
+                                          (very old browser, blocked script
+                                          on no-refresh page, etc.) -->
+  <meta http-equiv="refresh" content="0; url=D-UX-Design/prototypes/home.html">
+  <link rel="canonical" href="D-UX-Design/prototypes/home.html">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      font-family: 'Heebo', 'Assistant', system-ui, -apple-system, sans-serif;
+      background: #F8FAFC;
+      color: #0F172A;
+    }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .fallback {
+      text-align: center;
+      max-width: 480px;
+    }
+    .fallback h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #334155;
+      margin-block-end: 8px;
+    }
+    .fallback p {
+      font-size: 15px;
+      color: #475569;
+      line-height: 1.6;
+      margin-block-end: 24px;
+    }
+    .fallback a {
+      display: inline-block;
+      background: #334155;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 15px;
+      padding: 12px 28px;
+      border-radius: 999px;
+      transition: background .15s;
+    }
+    .fallback a:hover { background: #1E293B; }
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid #E2E8F0;
+      border-block-start-color: #334155;
+      border-radius: 50%;
+      margin: 0 auto 16px;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+
+  <script>
+    /* JS redirect — runs faster than <meta refresh>. Use .replace() so the
+       interstitial URL doesn't pollute the user's history stack (back button
+       from home.html should return to wherever they came from, not here). */
+    window.location.replace('D-UX-Design/prototypes/home.html');
+  </script>
+</head>
+<body>
+  <div class="fallback">
+    <div class="spinner" aria-hidden="true"></div>
+    <h1>קטלוג מדדים חברתיים</h1>
+    <p>טוען את הפרוטוטיפ…<br>אם הדף לא נטען אוטומטית:</p>
+    <a href="D-UX-Design/prototypes/home.html">היכנס לקטלוג</a>
+  </div>
+</body>
+</html>

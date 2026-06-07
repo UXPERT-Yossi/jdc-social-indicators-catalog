@@ -24,7 +24,9 @@ build/
 # ─── Local prototype backups (redundant once git tracks history) ─
 # Each meaningful edit was saved as a versioned snapshot in _versions/.
 # Once the project is in git, the commit log replaces these snapshots.
-D-UX-Design/prototypes/_versions/
+# Apply to ALL _versions/ folders at any depth, not just the one we know.
+**/_versions/
+_versions/
 
 # ─── Source materials / heavy assets ─────────────────────────
 # `info /` (note the trailing space — folder is literally named "info ")
