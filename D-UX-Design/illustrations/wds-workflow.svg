@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 1600 720"
+     width="1600" height="720"
+     direction="rtl"
+     role="img"
+     aria-labelledby="title desc">
+
+  <title id="title">WDS Workflow — מסע ההתגבשות</title>
+  <desc id="desc">תרשים זרימה של מתודולוגיית WDS בכיוון RTL: מחומרי גלם, דרך עיבוד של Saga, יצירת קבצי קונטקסט (MD), וויירפריימים של Freya, ועד הפרוטוטיפ הסופי.</desc>
+
+  <defs>
+    <!-- Dot grid pattern (data-viz feel) -->
+    <pattern id="dots" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse">
+      <circle cx="16" cy="16" r="0.8" fill="#CBD5E1" opacity="0.5"/>
+    </pattern>
+
+    <!-- Arrow markers -->
+    <marker id="arrow-slate" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748B"/>
+    </marker>
+    <marker id="arrow-sky" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#0EA5E9"/>
+    </marker>
+
+    <!-- Soft drop shadow for the final prototype -->
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" in="SourceAlpha"/>
+      <feOffset dx="0" dy="2"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.18"/></feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- ============ Canvas ============ -->
+  <rect width="1600" height="720" fill="#F8FAFC"/>
+  <rect width="1600" height="720" fill="url(#dots)"/>
+
+  <!-- Focus halos behind Stage 3 (the crystallization moment) -->
+  <circle cx="800" cy="380" r="210" fill="#0EA5E9" opacity="0.04"/>
+  <circle cx="800" cy="380" r="130" fill="#0EA5E9" opacity="0.04"/>
+
+  <!-- ============ Connections (under nodes) ============ -->
+
+  <!-- Stage 1 → Saga: thin lines (materials being absorbed) -->
+  <g stroke="#94A3B8" stroke-width="1" fill="none" opacity="0.55" stroke-linecap="round">
+    <path d="M 1340 300 Q 1230 330 1126 372"/>
+    <path d="M 1395 350 Q 1265 365 1126 380"/>
+    <path d="M 1340 440 Q 1230 410 1126 388"/>
+    <path d="M 1395 470 Q 1265 425 1126 395"/>
+  </g>
+
+  <!-- Saga → Context: synthesis (sky accent) -->
+  <line x1="1050" y1="380" x2="908" y2="380"
+        stroke="#0EA5E9" stroke-width="1.8" opacity="0.75"
+        marker-end="url(#arrow-sky)"/>
+
+  <!-- Context → Wireframes -->
+  <line x1="692" y1="380" x2="616" y2="380"
+        stroke="#64748B" stroke-width="1.5"
+        marker-end="url(#arrow-slate)"/>
+
+  <!-- Wireframes → Prototype -->
+  <line x1="404" y1="380" x2="328" y2="380"
+        stroke="#64748B" stroke-width="1.5"
+        marker-end="url(#arrow-slate)"/>
+
+  <!-- ============ STAGE 1: חומרי גלם (right) ============ -->
+  <g id="stage-1">
+    <circle cx="1376" cy="180" r="20" fill="white" stroke="#CBD5E1" stroke-width="1.2"/>
+    <text x="1376" y="187" text-anchor="middle"
+          font-family="Heebo, Assistant, system-ui, sans-serif"
+          font-size="15" font-weight="600" fill="#64748B">1</text>
+
+    <!-- Audio waveform -->
+    <g transform="translate(1335, 295)">
+      <rect x="0"  y="-4"  width="3" height="8"  fill="#94A3B8" rx="1.5"/>
+      <rect x="6"  y="-10" width="3" height="20" fill="#94A3B8" rx="1.5"/>
+      <rect x="12" y="-6"  width="3" height="12" fill="#94A3B8" rx="1.5"/>
+      <rect x="18" y="-14" width="3" height="28" fill="#94A3B8" rx="1.5"/>
+      <rect x="24" y="-2"  width="3" height="4"  fill="#94A3B8" rx="1.5"/>
+      <rect x="30" y="-8"  width="3" height="16" fill="#94A3B8" rx="1.5"/>
+    </g>
+
+    <!-- Document 1 -->
+    <g transform="translate(1393, 335) rotate(7)">
+      <rect x="0" y="0" width="38" height="46" rx="3" fill="white" stroke="#94A3B8" stroke-width="1.2"/>
+      <line x1="6" y1="12" x2="32" y2="12" stroke="#CBD5E1" stroke-width="1.2"/>
+      <line x1="6" y1="20" x2="32" y2="20" stroke="#CBD5E1" stroke-width="1.2"/>
+      <line x1="6" y1="28" x2="26" y2="28" stroke="#CBD5E1" stroke-width="1.2"/>
+      <line x1="6" y1="36" x2="30" y2="36" stroke="#CBD5E1" stroke-width="1.2"/>
+    </g>
+
+    <!-- Document 2 -->
+    <g transform="translate(1320, 415) rotate(-6)">
+      <rect x="0" y="0" width="38" height="46" rx="3" fill="white" stroke="#94A3B8" stroke-width="1.2"/>
+      <line x1="6" y1="12" x2="32" y2="12" stroke="#CBD5E1" stroke-width="1.2"/>
+      <line x1="6" y1="20" x2="28" y2="20" stroke="#CBD5E1" stroke-width="1.2"/>
+      <line x1="6" y1="28" x2="32" y2="28" stroke="#CBD5E1" stroke-width="1.2"/>
+    </g>
+
+    <!-- Handwritten note (slate-tinted, in palette) -->
+    <g transform="translate(1397, 448) rotate(10)">
+      <rect x="0" y="0" width="34" height="34" rx="2" fill="#E2E8F0" stroke="#94A3B8" stroke-width="0.8"/>
+      <line x1="5" y1="10" x2="27" y2="10" stroke="#64748B" stroke-width="0.8" opacity="0.5"/>
+      <line x1="5" y1="17" x2="22" y2="17" stroke="#64748B" stroke-width="0.8" opacity="0.5"/>
+      <line x1="5" y1="24" x2="27" y2="24" stroke="#64748B" stroke-width="0.8" opacity="0.5"/>
+    </g>
+  </g>
+
+  <!-- ============ STAGE 2: Saga (agent) ============ -->
+  <g id="stage-2">
+    <circle cx="1088" cy="180" r="20" fill="white" stroke="#CBD5E1" stroke-width="1.2"/>
+    <text x="1088" y="187" text-anchor="middle"
+          font-family="Heebo, Assistant, system-ui, sans-serif"
+          font-size="15" font-weight="600" fill="#64748B">2</text>
+
+    <!-- Spotlight halo -->
+    <circle cx="1088" cy="380" r="62" fill="#0EA5E9" opacity="0.10"/>
+
+    <!-- Agent body -->
+    <circle cx="1088" cy="380" r="38" fill="#0EA5E9"/>
+
+    <!-- Open book icon inside circle -->
+    <g transform="translate(1088, 380)" stroke="white" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Left page -->
+      <path d="M -15 -9 L -2 -5 L -2 13 L -15 9 Z"/>
+      <!-- Right page -->
+      <path d="M 15 -9 L 2 -5 L 2 13 L 15 9 Z"/>
+      <!-- Page lines -->
+      <line x1="-12" y1="-2" x2="-5" y2="-0.5"/>
+      <line x1="-12" y1="3"  x2="-5" y2="4.5"/>
+      <line x1="12"  y1="-2" x2="5"  y2="-0.5"/>
+      <line x1="12"  y1="3"  x2="5"  y2="4.5"/>
+    </g>
+  </g>
+
+  <!-- ============ STAGE 3: Context — MD files (center) ============ -->
+  <g id="stage-3">
+    <circle cx="800" cy="180" r="20" fill="white" stroke="#CBD5E1" stroke-width="1.2"/>
+    <text x="800" y="187" text-anchor="middle"
+          font-family="Heebo, Assistant, system-ui, sans-serif"
+          font-size="15" font-weight="600" fill="#64748B">3</text>
+
+    <!-- Card 1: Product Brief -->
+    <g transform="translate(800, 310)">
+      <rect x="-100" y="0" width="200" height="46" rx="6" fill="white" stroke="#CBD5E1" stroke-width="1.2"/>
+      <rect x="92" y="0" width="4" height="46" rx="2" fill="#94A3B8"/>
+      <text x="-10" y="20" text-anchor="middle"
+            font-family="Heebo, Assistant, sans-serif"
+            font-size="13" font-weight="600" fill="#0F172A">A · Product Brief</text>
+      <text x="-10" y="37" text-anchor="middle"
+            font-family="Heebo, Assistant, sans-serif"
+            font-size="10" font-weight="400" fill="#64748B">חזון · יעדים · קהלים</text>
+    </g>
+
+    <!-- Card 2: Trigger Map (sky accent — the "alive" one) -->
+    <g transform="translate(800, 366)">
+      <rect x="-100" y="0" width="200" height="46" rx="6" fill="white" stroke="#0EA5E9" stroke-width="1.5"/>
+      <rect x="92" y="0" width="4" height="46" rx="2" fill="#0EA5E9"/>
+      <text x="-10" y="20" text-anchor="middle"
+            font-family="Heebo, Assistant, sans-serif"
+            font-size="13" font-weight="600" fill="#0F172A">B · Trigger Map</text>
+      <text x="-10" y="37" text-anchor="middle"
+            font-family="Heebo, Assistant, sans-serif"
+            font-size="10" font-weight="400" fill="#64748B">פרסונות · כוחות מניעים</text>
+    </g>
+
+    <!-- Card 3: design-log -->
+    <g transform="translate(800, 422)">
+      <rect x="-100" y="0" width="200" height="46" rx="6" fill="white" stroke="#CBD5E1" stroke-width="1.2"/>
+      <rect x="92" y="0" width="4" height="46" rx="2" fill="#94A3B8"/>
+      <text x="-10" y="20" text-anchor="middle"
+            font-family="Heebo, Assistant, sans-serif"
+            font-size="13" font-weight="600" fill="#0F172A">design-log.md</text>
+      <text x="-10" y="37" text-anchor="middle"
+            font-family="Heebo, Assistant, sans-serif"
+            font-size="10" font-weight="400" fill="#64748B">זיכרון רציף · המשכיות</text>
+    </g>
+  </g>
+
+  <!-- ============ STAGE 4: Wireframes (Freya) ============ -->
+  <g id="stage-4">
+    <circle cx="512" cy="180" r="20" fill="white" stroke="#CBD5E1" stroke-width="1.2"/>
+    <text x="512" y="187" text-anchor="middle"
+          font-family="Heebo, Assistant, system-ui, sans-serif"
+          font-size="15" font-weight="600" fill="#64748B">4</text>
+
+    <!-- Freya agent badge (smaller, above the wireframe) -->
+    <g transform="translate(512, 252)">
+      <circle cx="0" cy="0" r="22" fill="#0EA5E9" opacity="0.15"/>
+      <circle cx="0" cy="0" r="16" fill="#0EA5E9"/>
+      <text x="0" y="6" text-anchor="middle"
+            font-family="Heebo, Assistant, sans-serif"
+            font-size="14" font-weight="700" fill="white">F</text>
+    </g>
+
+    <!-- Wireframe canvas (dashed = unfinished) -->
+    <g transform="translate(412, 305)">
+      <rect x="0" y="0" width="200" height="150" rx="6" fill="white"
+            stroke="#94A3B8" stroke-width="1.2" stroke-dasharray="4 3"/>
+
+      <!-- Header placeholder bar -->
+      <rect x="12" y="14" width="176" height="18" rx="2" fill="#E2E8F0"/>
+
+      <!-- Title placeholders (right-aligned for RTL) -->
+      <rect x="68"  y="44" width="120" height="10" rx="2" fill="#CBD5E1"/>
+      <rect x="108" y="60" width="80"  height="6"  rx="2" fill="#E2E8F0"/>
+
+      <!-- Content blocks -->
+      <rect x="12"  y="80" width="84" height="40" rx="3" fill="#E2E8F0" stroke="#CBD5E1" stroke-width="0.8"/>
+      <rect x="104" y="80" width="84" height="40" rx="3" fill="#E2E8F0" stroke="#CBD5E1" stroke-width="0.8"/>
+
+      <!-- Button placeholder (left = end of RTL) -->
+      <rect x="12" y="128" width="60" height="14" rx="3" fill="#CBD5E1"/>
+    </g>
+  </g>
+
+  <!-- ============ STAGE 5: Prototype / Figma (left) ============ -->
+  <g id="stage-5">
+    <circle cx="224" cy="180" r="20" fill="white" stroke="#CBD5E1" stroke-width="1.2"/>
+    <text x="224" y="187" text-anchor="middle"
+          font-family="Heebo, Assistant, system-ui, sans-serif"
+          font-size="15" font-weight="600" fill="#64748B">5</text>
+
+    <g transform="translate(124, 305)" filter="url(#soft-shadow)">
+      <!-- Frame -->
+      <rect x="0" y="0" width="200" height="150" rx="8" fill="white" stroke="#E2E8F0" stroke-width="1"/>
+
+      <!-- Header (slate primary) -->
+      <path d="M 8 0 L 192 0 Q 200 0 200 8 L 200 28 L 0 28 L 0 8 Q 0 0 8 0 Z" fill="#334155"/>
+
+      <!-- Brand dot on RIGHT (RTL start) -->
+      <circle cx="184" cy="14" r="4" fill="#0EA5E9"/>
+
+      <!-- Menu items on LEFT (RTL end) -->
+      <g fill="#94A3B8">
+        <rect x="12" y="11" width="14" height="6" rx="1"/>
+        <rect x="30" y="11" width="14" height="6" rx="1"/>
+        <rect x="48" y="11" width="14" height="6" rx="1"/>
+      </g>
+
+      <!-- Title (top-right area) -->
+      <rect x="106" y="42" width="80" height="8" rx="2" fill="#334155"/>
+      <rect x="126" y="56" width="60" height="5" rx="2" fill="#94A3B8"/>
+
+      <!-- Mini bar chart on RIGHT (primary visualization) -->
+      <g transform="translate(96, 75)">
+        <rect x="0"  y="44" width="14" height="22" fill="#CBD5E1" rx="2"/>
+        <rect x="20" y="30" width="14" height="36" fill="#CBD5E1" rx="2"/>
+        <rect x="40" y="18" width="14" height="48" fill="#0EA5E9" rx="2"/>
+        <rect x="60" y="26" width="14" height="40" fill="#CBD5E1" rx="2"/>
+        <rect x="80" y="38" width="14" height="28" fill="#CBD5E1" rx="2"/>
+      </g>
+
+      <!-- Side metric card on LEFT -->
+      <rect x="14" y="75" width="66" height="60" rx="4" fill="#F1F5F9" stroke="#E2E8F0" stroke-width="0.8"/>
+      <rect x="22" y="85"  width="36" height="5" rx="1.5" fill="#94A3B8"/>
+      <rect x="22" y="96"  width="48" height="8" rx="2"   fill="#334155"/>
+      <rect x="22" y="112" width="30" height="4" rx="1"   fill="#CBD5E1"/>
+      <rect x="22" y="120" width="42" height="4" rx="1"   fill="#CBD5E1"/>
+    </g>
+  </g>
+
+  <!-- ============ LABELS (bottom row) ============ -->
+  <g font-family="Heebo, Assistant, system-ui, sans-serif">
+
+    <!-- Stage 1 -->
+    <text x="1376" y="588" text-anchor="middle" font-size="17" font-weight="600" fill="#0F172A">חומרי גלם</text>
+    <text x="1376" y="612" text-anchor="middle" font-size="11" font-weight="400" fill="#64748B">הקלטות · מצגות · הערות</text>
+
+    <!-- Stage 2 -->
+    <text x="1088" y="588" text-anchor="middle" font-size="17" font-weight="600" fill="#0F172A">Saga</text>
+    <text x="1088" y="612" text-anchor="middle" font-size="11" font-weight="400" fill="#64748B">אנליסטית אסטרטגית</text>
+
+    <!-- Stage 3 -->
+    <text x="800" y="588" text-anchor="middle" font-size="17" font-weight="600" fill="#0F172A">קונטקסט</text>
+    <text x="800" y="612" text-anchor="middle" font-size="11" font-weight="400" fill="#64748B">קבצי MD · מקור האמת</text>
+
+    <!-- Stage 4 -->
+    <text x="512" y="588" text-anchor="middle" font-size="17" font-weight="600" fill="#0F172A">Wireframes</text>
+    <text x="512" y="612" text-anchor="middle" font-size="11" font-weight="400" fill="#64748B">Freya · שלד עיצוב</text>
+
+    <!-- Stage 5 -->
+    <text x="224" y="588" text-anchor="middle" font-size="17" font-weight="600" fill="#0F172A">פרוטוטיפ</text>
+    <text x="224" y="612" text-anchor="middle" font-size="11" font-weight="400" fill="#64748B">HTML · Figma</text>
+  </g>
+
+</svg>

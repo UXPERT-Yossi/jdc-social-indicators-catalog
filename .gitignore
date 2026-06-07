@@ -1,0 +1,34 @@
+# ─── macOS / OS noise ────────────────────────────────────────
+.DS_Store
+**/.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# ─── Editor / IDE ────────────────────────────────────────────
+.vscode/
+.idea/
+*.sublime-*
+
+# ─── Node / build artifacts (futureproofing — none today) ────
+node_modules/
+dist/
+build/
+.cache/
+*.log
+
+# ─── Claude / agent local state ──────────────────────────────
+.claude/
+
+# ─── Local prototype backups (redundant once git tracks history) ─
+# Each meaningful edit was saved as a versioned snapshot in _versions/.
+# Once the project is in git, the commit log replaces these snapshots.
+D-UX-Design/prototypes/_versions/
+
+# ─── Source materials / heavy assets ─────────────────────────
+# `info /` (note the trailing space — folder is literally named "info ")
+# holds meeting recordings, methodology decks, source PDFs (~78MB).
+# These are reference material, not deliverable code/design.
+info /
+info/

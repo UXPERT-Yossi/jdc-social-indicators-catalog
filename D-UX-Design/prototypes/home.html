@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>קטלוג המדדים החברתיים</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    ul, ol { list-style: none; }
+    button { cursor: pointer; font-family: inherit; }
+    a { text-decoration: none; }
+
+    :root {
+      --primary:        #334155;
+      --primary-hover:  #1E293B;
+      --primary-light:  #F1F5F9;
+      --primary-mid:    #64748B;
+
+      --bg-page:        #F8FAFC;
+      --bg-card:        #FFFFFF;
+
+      --border:         #E2E8F0;
+      --border-strong:  #CBD5E1;
+
+      --text-primary:   #0F172A;
+      --text-secondary: #475569;
+      --text-muted:     #94A3B8;
+      --text-inverse:   #FFFFFF;
+
+      --success:        #475569;
+      --domain-welfare: #475569;
+      --domain-edu:     #64748B;
+      --domain-health:  #475569;
+      --domain-employ:  #334155;
+      --domain-early:   #64748B;
+
+      --font: 'Heebo', 'Assistant', sans-serif;
+
+      --radius-sm:   4px;
+      --radius-md:   8px;
+      --radius-lg:   12px;
+      --radius-xl:   16px;
+      --radius-full: 9999px;
+
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-md: 0 4px 16px rgba(0,0,0,.08);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,.10);
+    }
+
+    html {
+      font-family: var(--font);
+      font-size: 16px;
+      line-height: 1.65;
+      color: var(--text-primary);
+      background: var(--bg-page);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── NAV ─── */
+    .global-nav {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 100;
+      background: var(--bg-card);
+      border-block-end: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+    .global-nav-inner {
+      max-width: 1280px;
+      margin-inline: auto;
+      padding-inline: 32px;
+      padding-block: 14px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--primary);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .nav-logo-img { height: 18px; width: auto; display: block; }
+    .nav-logo-text { font-weight: 700; color: var(--primary); }
+    .nav-links {
+      display: flex;
+      gap: 4px;
+    }
+    .nav-links a {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      border-radius: var(--radius-md);
+      transition: all .15s;
+    }
+    .nav-links a:hover { background: var(--bg-page); color: var(--text-primary); }
+    .nav-links a[aria-current="page"] {
+      color: var(--primary);
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 6px;
+    }
+    .nav-search {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 320px;
+      max-width: 360px;
+      min-width: 200px;
+      margin-inline-start: auto;
+    }
+    .nav-search-icon {
+      position: absolute;
+      inset-inline-end: 12px;
+      width: 16px;
+      height: 16px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .nav-search-input {
+      width: 100%;
+      font-family: inherit;
+      font-size: 14px;
+      padding: 8px 14px;
+      padding-inline-end: 36px;
+      background: var(--bg-page);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      transition: border-color .15s, background .15s;
+    }
+    .nav-search-input::placeholder { color: var(--text-muted); }
+    .nav-search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: var(--bg-card);
+    }
+
+    /* ─── HERO ─── */
+    .hero {
+      background: linear-gradient(160deg, #EFF6FF 0%, #F0F9FF 40%, var(--bg-page) 100%);
+      border-block-end: 1px solid var(--border);
+      padding-block: 72px 56px;
+      padding-inline: 32px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    /* subtle decorative blobs */
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset-block-start: -80px;
+      inset-inline-end: -80px;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      background: rgba(3,105,161,.06);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      inset-block-end: -60px;
+      inset-inline-start: -60px;
+      width: 240px;
+      height: 240px;
+      border-radius: 50%;
+      background: rgba(124,58,237,.05);
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      max-width: 760px;
+      margin-inline: auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--primary);
+      background: var(--primary-light);
+      border: 1px solid #BAE6FD;
+      padding: 4px 12px;
+      border-radius: var(--radius-full);
+      margin-block-end: 20px;
+    }
+
+    .hero-title {
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 800;
+      line-height: 1.15;
+      color: var(--text-primary);
+      margin-block-end: 16px;
+      letter-spacing: -.01em;
+    }
+    .hero-title span { color: var(--primary); }
+
+    .hero-sub {
+      font-size: 18px;
+      font-weight: 400;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-block-end: 36px;
+      max-width: 580px;
+      margin-inline: auto;
+    }
+
+    /* Search */
+    .hero-search-wrap {
+      position: relative;
+      margin-block-end: 16px;
+    }
+    .hero-search {
+      width: 100%;
+      padding-block: 16px;
+      padding-inline-start: 52px;
+      padding-inline-end: 120px;
+      border: 2px solid var(--border-strong);
+      border-radius: var(--radius-full);
+      font-family: var(--font);
+      font-size: 16px;
+      background: var(--bg-card);
+      outline: none;
+      color: var(--text-primary);
+      box-shadow: var(--shadow-md);
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .hero-search::placeholder { color: var(--text-muted); }
+    .hero-search:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(3,105,161,.12), var(--shadow-md);
+    }
+    .hero-search-icon {
+      position: absolute;
+      inset-block-start: 50%;
+      inset-inline-start: 18px;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+      display: flex;
+    }
+    .hero-search-btn {
+      position: absolute;
+      inset-block-start: 50%;
+      inset-inline-end: 8px;
+      transform: translateY(-50%);
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-full);
+      padding: 10px 22px;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background .15s;
+    }
+    .hero-search-btn:hover { background: var(--primary-hover); }
+
+    /* ─── AI COMPOSER (primary) ─── */
+    .ai-composer {
+      max-width: 680px;
+      margin-inline: auto;
+      margin-block-end: 14px;
+      background: var(--bg-card);
+      border: 2px solid var(--border-strong);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-md);
+      padding: 14px 16px 10px;
+      text-align: start;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .ai-composer:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(51,65,85,.10), var(--shadow-md);
+    }
+    .ai-composer-file-tray {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-block-end: 8px;
+    }
+    .ai-file-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      background: var(--primary-light);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    .ai-file-chip svg { width: 13px; height: 13px; }
+    .ai-composer-input {
+      width: 100%;
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: var(--font);
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--text-primary);
+      background: transparent;
+    }
+    .ai-composer-input::placeholder { color: var(--text-muted); }
+    /* The .ai-composer:focus-within ring already indicates focus — suppress the
+       global :focus-visible outline on the inner textarea to avoid duplication. */
+    .ai-composer-input:focus-visible { outline: none; }
+    .ai-composer-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-block-start: 6px;
+    }
+    .ai-attach-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-strong);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+      transition: all .15s;
+    }
+    .ai-attach-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .ai-attach-btn svg { width: 15px; height: 15px; }
+    .ai-send-btn {
+      margin-inline-start: auto;
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      transition: background .15s;
+    }
+    .ai-send-btn:hover { background: var(--primary-hover); }
+    .ai-send-btn svg { width: 18px; height: 18px; }
+
+    /* Starter & example chips — one unified block */
+    .ai-starters {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      max-width: 680px;
+      margin-inline: auto;
+      margin-block-end: 28px;
+    }
+    .ai-starter {
+      padding: 7px 16px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-strong);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: var(--shadow-sm);
+      transition: all .15s;
+    }
+    .ai-starter:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+
+    /* ─── MOCKED CONVERSATION ─── */
+    .ai-conversation {
+      max-width: 680px;
+      margin-inline: auto;
+      margin-block-end: 28px;
+      text-align: start;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .ai-conversation[hidden] { display: none; }
+    .ai-msg { display: flex; gap: 10px; align-items: flex-start; }
+    .ai-msg-avatar {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      display: grid; place-items: center;
+      font-size: 12px; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .ai-msg.user .ai-msg-avatar { background: var(--border); color: var(--text-secondary); }
+    .ai-msg.bot .ai-msg-avatar { background: var(--primary); color: #fff; }
+    .ai-msg-bubble {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 12px 16px;
+      font-size: 14.5px;
+      line-height: 1.7;
+      color: var(--text-primary);
+      box-shadow: var(--shadow-sm);
+      flex: 1;
+    }
+    .ai-msg.user .ai-msg-bubble { background: var(--primary-light); border-color: var(--border-strong); }
+    .ai-msg-bubble p { margin-block-end: 8px; }
+    .ai-msg-bubble p:last-child { margin-block-end: 0; }
+    .ai-typing { display: inline-flex; gap: 4px; padding-block: 4px; }
+    .ai-typing span {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--text-muted);
+      animation: ai-blink 1.2s infinite both;
+    }
+    .ai-typing span:nth-child(2) { animation-delay: .2s; }
+    .ai-typing span:nth-child(3) { animation-delay: .4s; }
+    @keyframes ai-blink { 0%,80%,100%{opacity:.25} 40%{opacity:1} }
+    .ai-rec {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      margin-block-start: 10px;
+      background: var(--bg-page);
+    }
+    .ai-rec-name { font-weight: 700; font-size: 14px; color: var(--text-primary); margin-block-end: 6px; }
+    .ai-rec-row { font-size: 13px; color: var(--text-secondary); line-height: 1.65; }
+    .ai-rec-row strong { color: var(--text-primary); font-weight: 600; }
+    .ai-rec-cta {
+      display: inline-flex; align-items: center; gap: 5px;
+      margin-block-start: 10px;
+      font-size: 13px; font-weight: 600;
+      color: var(--primary);
+    }
+    .ai-rec-cta:hover { text-decoration: underline; }
+
+    /* Entry modes */
+    .entry-modes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      max-width: 760px;
+      margin-inline: auto;
+    }
+    .entry-card {
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 20px;
+      text-align: start;
+      cursor: pointer;
+      transition: all .2s;
+      box-shadow: var(--shadow-sm);
+    }
+    .entry-card:hover {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    .entry-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      background: var(--primary-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-block-end: 12px;
+    }
+    .entry-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-block-end: 4px;
+    }
+    .entry-desc {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ─── STATS ─── */
+    .stats-section {
+      background: var(--primary);
+      padding-block: 56px;
+      padding-inline: 32px;
+    }
+    .stats-inner {
+      max-width: 1000px;
+      margin-inline: auto;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 32px;
+      text-align: center;
+    }
+    .stat-item {}
+    .stat-number {
+      font-size: 52px;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1;
+      margin-block-end: 8px;
+      letter-spacing: -.02em;
+    }
+    .stat-number sup {
+      font-size: 28px;
+      vertical-align: super;
+    }
+    .stat-label {
+      font-size: 14px;
+      font-weight: 400;
+      color: rgba(255,255,255,.75);
+      line-height: 1.4;
+    }
+    .stat-divider {
+      width: 1px;
+      background: rgba(255,255,255,.2);
+      margin-inline: auto;
+    }
+
+    /* ─── HOW IT WORKS ─── */
+    .how-section {
+      padding-block: 72px;
+      padding-inline: 32px;
+      background: var(--bg-card);
+    }
+    .section-header {
+      text-align: center;
+      margin-block-end: 48px;
+    }
+    .section-eyebrow {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--primary);
+      margin-block-end: 10px;
+    }
+    .section-title {
+      font-size: 30px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-block-end: 10px;
+    }
+    .section-sub {
+      font-size: 16px;
+      color: var(--text-secondary);
+      max-width: 500px;
+      margin-inline: auto;
+      line-height: 1.6;
+    }
+
+    .how-steps {
+      max-width: 900px;
+      margin-inline: auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    .how-step {
+      background: var(--bg-page);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 28px 24px;
+      position: relative;
+    }
+    .step-number {
+      position: absolute;
+      inset-block-start: -14px;
+      inset-inline-start: 24px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .step-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      background: var(--primary-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-block-end: 14px;
+    }
+    .step-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-block-end: 8px;
+    }
+    .step-desc {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* connector line between steps */
+    .how-steps-wrapper {
+      max-width: 900px;
+      margin-inline: auto;
+      position: relative;
+    }
+
+    /* ─── ABOUT ─── */
+    .about-section {
+      padding-block: 72px;
+      padding-inline: 32px;
+      background: var(--bg-page);
+      border-block-start: 1px solid var(--border);
+    }
+    .about-inner {
+      max-width: 1000px;
+      margin-inline: auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 64px;
+      align-items: center;
+    }
+    .about-text .section-eyebrow { text-align: start; }
+    .about-text .section-title { text-align: start; font-size: 26px; margin-block-end: 16px; }
+    .about-body {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      margin-block-end: 24px;
+    }
+    .about-body + .about-body { margin-block-start: -10px; }
+
+    .org-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .org-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .org-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      color: #fff;
+    }
+    .org-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .org-desc { font-size: 12px; color: var(--text-muted); margin-block-start: 2px; }
+
+    /* Methodology highlight box */
+    .methodology-box {
+      background: var(--primary-light);
+      border: 1px solid #BAE6FD;
+      border-inline-start: 4px solid var(--primary);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .methodology-box strong { color: var(--primary); }
+
+    /* ─── FOOTER ─── */
+    .footer {
+      background: var(--text-primary);
+      color: rgba(255,255,255,.6);
+      padding-block: 32px;
+      padding-inline: 32px;
+      text-align: center;
+      font-size: 13px;
+    }
+    .footer a { color: rgba(255,255,255,.6); }
+    .footer a:hover { color: #fff; }
+    .footer-logo {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      margin-block-end: 8px;
+    }
+
+    /* ─── ICON HELPER ─── */
+    .icon { width: 20px; height: 20px; display: inline-flex; flex-shrink: 0; }
+    .icon-sm { width: 16px; height: 16px; }
+
+    /* ─── FOCUS ─── */
+    :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ NAV ══════════════ -->
+<header class="global-nav" role="banner">
+  <nav class="global-nav-inner" aria-label="ניווט ראשי">
+    <a href="home.html" class="nav-logo"><svg class="nav-logo-img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 117 28" fill="none" role="img" aria-label="הג'וינט"><path d="M8.683 27.7342H2.46565L0 3.96457H5.82267L7.71625 22.7453H8.67857C12.7496 22.7453 14.2529 21.0424 14.2529 15.2552V8.95354H9.60984V3.96013H20.0756V15.2507C20.0756 24.7985 15.9691 27.7298 8.67857 27.7298L8.683 27.7342ZM20.5501 27.7342V22.7408H22.7275C24.5856 22.7408 25.0867 21.9071 25.0867 19.6898V8.95354H22.049V3.96013H30.9094V20.4792C30.9094 26.0269 29.5524 27.7298 24.9803 27.7298H20.5501V27.7342ZM33.6987 18.0667V3.96013H39.5569V18.0667H33.6987ZM42.5281 27.7342V3.96013H48.3862V27.7298H42.5281V27.7342ZM56.5681 0V4.11978L54.3198 11.2906H50.5681L51.7832 0H56.5681ZM57.5038 27.7342H56.3242V22.7408H57.5038C62.1114 22.7408 63.362 19.9293 62.7544 15.2507L61.9695 8.9491H57.8985V3.9557H66.7234L70.2977 27.7254H64.7234L63.974 22.457H63.7966C63.0471 25.6677 61.2955 27.7254 57.5083 27.7254L57.5038 27.7342ZM89.584 27.7342H83.7613V8.95354H71.0428V3.96013H89.584V27.7298V27.7342ZM76.9763 14.1421V27.7298H71.1182V14.1421H76.9763Z" fill="#3ABDDC"/><path d="M116.214 4.01074H94.1118V27.7095H116.214V4.01074Z" fill="#00C1DE"/><path d="M106.658 21.2671H103.256V21.9678H106.658V21.2671Z" fill="#fff"/><path d="M107.509 22.519H102.409V23.2197H107.509V22.519Z" fill="#fff"/><path d="M108.777 23.6973H101.127V24.3979H108.777V23.6973Z" fill="#fff"/><mask id="mask0_joint_logo" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="92" y="4" width="25" height="24"><path d="M116.209 4.01318H92.5146V27.7119H116.209V4.01318Z" fill="#fff"/></mask><g mask="url(#mask0_joint_logo)"><path d="M104.952 19.9261C101.945 19.9261 99.4575 17.7398 98.9786 14.8706H98.1626C98.646 18.1833 101.497 20.7288 104.952 20.7288C108.407 20.7288 111.254 18.1833 111.737 14.8706H110.921C110.442 17.7398 107.954 19.9261 104.948 19.9261" fill="#fff"/><path d="M105.504 9.27839C105.504 10.0988 105.264 10.4846 104.967 10.4846C104.67 10.4846 104.431 10.1121 104.431 9.27839C104.431 8.20077 104.967 7.32715 104.967 7.32715C104.967 7.32715 105.504 8.20077 105.504 9.27839Z" fill="#fff"/><path d="M99.1757 12.9356C99.1757 13.756 98.9363 14.1418 98.6391 14.1418C98.342 14.1418 98.1025 13.7649 98.1025 12.9356C98.1025 11.858 98.6391 10.9844 98.6391 10.9844C98.6391 10.9844 99.1757 11.858 99.1757 12.9356Z" fill="#fff"/><path d="M111.824 12.9185C111.824 13.7389 111.585 14.1247 111.288 14.1247C110.99 14.1247 110.751 13.7478 110.751 12.9185C110.751 11.8409 111.288 10.9673 111.288 10.9673C111.288 10.9673 111.824 11.8409 111.824 12.9185Z" fill="#fff"/><path d="M104.461 16.6443H104.847C105.441 16.6443 105.552 16.3339 105.552 15.3405V13.3538C105.552 12.4979 105.464 12.2097 104.781 12.2097H104.461V16.6443ZM103.663 11.54H104.954C106.248 11.54 106.355 11.9702 106.355 13.6554V15.376C106.355 16.8572 106.093 17.3228 104.825 17.3228H103.663V11.5445V11.54Z" fill="#fff"/><path d="M106.99 13.0099C106.99 12.2027 107.252 11.4888 108.343 11.4888C109.137 11.4888 109.505 11.8879 109.505 12.5398V13.1163H108.751V12.7172C108.751 12.3491 108.622 12.1185 108.285 12.1185C107.868 12.1185 107.788 12.4156 107.788 13.1118V15.9456C107.788 16.6241 108.006 16.7483 108.259 16.7483C108.556 16.7483 108.746 16.5398 108.746 16.0609V15.6618H109.5V16.3004C109.5 16.9079 109.252 17.3735 108.325 17.3735C107.318 17.3735 106.99 16.8369 106.99 15.9411V13.0187V13.0099Z" fill="#fff"/><path d="M102.891 11.54H102.089V15.9436C102.089 16.6221 101.871 16.7463 101.614 16.7463C101.317 16.7463 101.126 16.5379 101.126 16.0589V15.6598H100.373V16.2984C100.373 16.906 100.621 17.3716 101.548 17.3716C102.554 17.3716 102.887 16.835 102.887 15.9392V11.5445L102.891 11.54Z" fill="#fff"/><path d="M94.1125 23.7603H92.5205V27.7115H94.1125V23.7603Z" fill="#F8AE51"/><path d="M94.1125 19.814H92.5205V23.7652H94.1125V19.814Z" fill="#BD6095"/><path d="M94.1125 15.8613H92.5205V19.8126H94.1125V15.8613Z" fill="#E9485E"/><path d="M94.1125 7.96436H92.5205V11.9156H94.1125V7.96436Z" fill="#C5D984"/><path d="M94.1125 4.01074H92.5205V7.96201H94.1125V4.01074Z" fill="#00ABA3"/><path d="M94.1125 11.9106H92.5205V15.8619H94.1125V11.9106Z" fill="#0091CE"/></g></svg><span class="nav-logo-text">קטלוג מדדים חברתיים</span></a>
+    <ul class="nav-links" role="list">
+      <li><a href="home.html" aria-current="page">בית</a></li>
+      <li><a href="browse.html">עיון</a></li>
+      <li><a href="#">אודות</a></li>
+    </ul>
+    <form class="nav-search" role="search" action="search-results.html" method="get">
+      <svg class="nav-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="nav-search-input" type="search" name="q" placeholder="חיפוש מדד, תחום או מילת מפתח..." aria-label="חיפוש מדד">
+    </form>
+
+  </nav>
+</header>
+
+
+<!-- ══════════════ HERO ══════════════ -->
+<section class="hero" id="hero" aria-labelledby="hero-title">
+  <div class="hero-inner">
+
+    <h1 class="hero-title" id="hero-title">
+      הכלי לבחירת<br><span>מדדים חברתיים</span>
+    </h1>
+
+    <p class="hero-sub">
+      תארו, העלו או נווטו — שלוש דרכים למצוא את המדדים הנכונים לתוכנית שלכם
+    </p>
+
+    <!-- AI composer (primary) -->
+    <div class="ai-composer" id="ai-composer">
+      <div class="ai-composer-file-tray" id="ai-file-tray" hidden></div>
+      <textarea class="ai-composer-input" id="ai-input" rows="2"
+        placeholder="תארו את התוכנית שלכם, או שאלו שאלת מדידה..."
+        aria-label="שיחה עם העוזר החכם"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();aiSubmit();}"></textarea>
+      <div class="ai-composer-bar">
+        <button class="ai-attach-btn" onclick="mockAttach()" aria-label="צרף מסמכי תוכנית">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+          </svg>
+          צרף מסמכי תוכנית
+        </button>
+        <button class="ai-send-btn" onclick="aiSubmit()" aria-label="שלח">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 5 5 12 12 19"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Starter chips + example prompts — unified block -->
+    <div class="ai-starters" role="list" aria-label="דוגמאות לשאלות">
+      <button class="ai-starter" role="listitem" onclick="fillPrompt('אילו מדדים מתאימים לתוכנית קידום בריאות לנוער בסיכון?')">🩺 מדדים לקידום בריאות נוער</button>
+      <button class="ai-starter" role="listitem" onclick="fillPrompt('איך מודדים אי-שוויון חברתי?')">⚖️ איך מודדים אי-שוויון</button>
+      <button class="ai-starter" role="listitem" onclick="fillPrompt('מדדי רווחה נפשית בקהילה')">🧠 רווחה נפשית בקהילה</button>
+      <button class="ai-starter" role="listitem" onclick="fillPrompt('מה ההבדל בין מדד תוצאה למדד תפוקה? איך בוחרים?')">📊 תוצאה או תפוקה — איך בוחרים?</button>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════ STATS ══════════════ -->
+<section class="stats-section" id="stats-section" aria-label="נתוני הקטלוג">
+  <dl class="stats-inner">
+    <div class="stat-item">
+      <dt class="stat-label">מדדים חברתיים</dt>
+      <dd class="stat-number">250<sup>+</sup></dd>
+    </div>
+    <div class="stat-item">
+      <dt class="stat-label">תחומי חיים</dt>
+      <dd class="stat-number">14</dd>
+    </div>
+    <div class="stat-item">
+      <dt class="stat-label">ממדי תוצאה</dt>
+      <dd class="stat-number">4</dd>
+    </div>
+    <div class="stat-item">
+      <dt class="stat-label">תכניות שמשתמשות במדדים</dt>
+      <dd class="stat-number">40<sup>+</sup></dd>
+    </div>
+  </dl>
+</section>
+
+
+<!-- ══════════════ HOW IT WORKS ══════════════ -->
+<section class="how-section" id="how-section" aria-labelledby="how-title">
+  <div class="section-header">
+    <p class="section-eyebrow">איך זה עובד</p>
+    <h2 class="section-title" id="how-title">שלושה מסלולים — תוצאה אחת</h2>
+    <p class="section-sub">בין אם אתם משוחחים, עוברים על שטח, או גולשים בין קשרים — הכלי מוביל לאותו כרטיס מדד מפורט</p>
+  </div>
+
+  <div class="how-steps-wrapper">
+    <div class="how-steps" role="list">
+
+      <article class="how-step" role="listitem" aria-labelledby="step1-title">
+        <span class="step-number" aria-label="שלב 1">1</span>
+        <div class="step-icon" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            <line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="13" y2="13"/>
+          </svg>
+        </div>
+        <h3 class="step-title" id="step1-title">שיחת AI</h3>
+        <p class="step-desc">תארו תוכנית או שאלו שאלת מדידה. ה-AI מציע מדדים מותאמים, ומסביר את ההיגיון שמאחורי כל המלצה.</p>
+      </article>
+
+      <article class="how-step" role="listitem" aria-labelledby="step2-title">
+        <span class="step-number" aria-label="שלב 2">2</span>
+        <div class="step-icon" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6"/>
+            <line x1="8" y1="12" x2="21" y2="12"/>
+            <line x1="8" y1="18" x2="21" y2="18"/>
+            <line x1="3" y1="6" x2="3.01" y2="6"/>
+            <line x1="3" y1="12" x2="3.01" y2="12"/>
+            <line x1="3" y1="18" x2="3.01" y2="18"/>
+          </svg>
+        </div>
+        <h3 class="step-title" id="step2-title">עיון לפי תחום</h3>
+        <p class="step-desc">נווטו בעץ ממדים ← תחומי חיים ← מדדים. מתאים למי שרוצה לראות מה קיים בשטח.</p>
+      </article>
+
+      <article class="how-step" role="listitem" aria-labelledby="step3-title">
+        <span class="step-number" aria-label="שלב 3">3</span>
+        <div class="step-icon" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="5" r="3"/>
+            <circle cx="19" cy="19" r="3"/>
+            <circle cx="5" cy="19" r="3"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="12" x2="19" y2="17"/>
+            <line x1="12" y1="12" x2="5" y2="17"/>
+          </svg>
+        </div>
+        <h3 class="step-title" id="step3-title">גילוי ויזואלי</h3>
+        <p class="step-desc">בחרו תחום ועיינו במפה הסמנטית. מדדים קשורים מוצגים כרשת — לחצו להרחבה.</p>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════ ABOUT ══════════════ -->
+<section class="about-section" id="about-section" aria-labelledby="about-title">
+  <div class="about-inner">
+
+    <!-- Text -->
+    <div class="about-text">
+      <p class="section-eyebrow">על הקטלוג</p>
+      <h2 class="section-title" id="about-title">מאחורי הקטלוג</h2>
+      <p class="about-body">
+        בעולם החברתי קיים מגוון עצום של מדדים — אך הידע לגביהם מפוזר, לא נגיש, ותלוי באנשי מקצוע בודדים. הקטלוג נבנה כדי לשנות זאת: להפוך את בחירת המדדים מ"אמנות שמבוססת על ניסיון" לתהליך נגיש, מדויק ושקוף לכולם.
+      </p>
+      <p class="about-body">
+        הקטלוג מארגן מדדים לפי ממדי תוצאה (תשומות / תפוקות / תוצאות / אימפקט) ותחומי חיים — ומוסיף לכל מדד הקשר מלא: מתי לבחור, כיצד למדוד, ואיזו החלטה הוא עוזר לקבל.
+      </p>
+      <div class="methodology-box">
+        <strong>מתודולוגיה:</strong> פותחה בשיתוף מכון מאיירס-ג'וינט-ברוקדייל ומבוססת על ניסיון של עשרות שנות הערכת תכניות חברתיות בישראל.
+      </div>
+    </div>
+
+    <!-- Orgs -->
+    <div>
+      <div class="org-cards" role="list">
+        <article class="org-card" role="listitem">
+          <div class="org-logo" style="background: var(--primary);" aria-hidden="true">ג'וינט</div>
+          <div>
+            <div class="org-name">הג'וינט — יחידת הדאטה</div>
+            <div class="org-desc">אגף הדאטה, אינסייטס ודיגיטל של הג'וינט ישראל — בעל ומפתח הקטלוג</div>
+          </div>
+        </article>
+        <article class="org-card" role="listitem">
+          <div class="org-logo" style="background: #1E3A5F;" aria-hidden="true">MJB</div>
+          <div>
+            <div class="org-name">מכון מאיירס-ג'וינט-ברוקדייל</div>
+            <div class="org-desc">שותף מתודולוגי — מחקר הערכה ומדידה חברתית בישראל</div>
+          </div>
+        </article>
+        <article class="org-card" role="listitem">
+          <div class="org-logo" style="background: var(--success);" aria-hidden="true">
+            <svg style="width:20px;height:20px;" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <div>
+            <div class="org-name">40+ ארגונים שותפים</div>
+            <div class="org-desc">עמותות ומשרדי ממשלה שתכניותיהם משתמשות בקטלוג</div>
+          </div>
+        </article>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════ FOOTER ══════════════ -->
+<footer class="footer" role="contentinfo">
+  <p class="footer-logo">קטלוג המדדים החברתיים</p>
+  <p>© 2026 הג'וינט · <a href="#">תנאי שימוש</a> · <a href="#">צרו קשר</a></p>
+</footer>
+
+
+<script>
+  function goTo(mode) {
+    if (mode === 'browse') {
+      window.location.href = 'browse.html';
+    } else if (mode === 'discover') {
+      window.location.href = 'node-chart.html';
+    }
+  }
+
+  /* Example chips: fill the composer input with the prompt text.
+     Users can edit before sending; submit still triggers navigation to ai-chat.html. */
+  function fillPrompt(text) {
+    const input = document.getElementById('ai-input');
+    input.value = text;
+    /* Put caret at end and bring composer into view so user sees what got filled */
+    input.focus();
+    input.setSelectionRange(text.length, text.length);
+    document.getElementById('ai-composer').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  /* Paperclip in composer: shows a mocked attached file chip (DOM API, no innerHTML). */
+  function mockAttach() {
+    const tray = document.getElementById('ai-file-tray');
+    tray.hidden = false;
+    tray.textContent = '';
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    const p1 = document.createElementNS(SVG_NS, 'path');
+    p1.setAttribute('d', 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z');
+    const p2 = document.createElementNS(SVG_NS, 'polyline');
+    p2.setAttribute('points', '14 2 14 8 20 8');
+    svg.appendChild(p1);
+    svg.appendChild(p2);
+    const chip = document.createElement('span');
+    chip.className = 'ai-file-chip';
+    chip.appendChild(svg);
+    chip.appendChild(document.createTextNode(' תוכנית_אשלים_קידום_בריאות.docx'));
+    tray.appendChild(chip);
+  }
+
+  /* Composer submit: navigate to the chat with the user's message. */
+  function aiSubmit() {
+    const input = document.getElementById('ai-input');
+    const tray = document.getElementById('ai-file-tray');
+    let msg = input.value.trim();
+    if (!msg && !tray.hidden) {
+      msg = 'צירפתי את מסמכי התוכנית — תוכנית_אשלים_קידום_בריאות.docx';
+    }
+    if (!msg) { input.focus(); return; }
+    window.location.href = 'ai-chat.html?q=' + encodeURIComponent(msg);
+  }
+</script>
+
+<script src="assets/search-sync.js?v=1"></script>
+<script src="assets/ai-fab.js?v=1"></script>
+</body>
+</html>

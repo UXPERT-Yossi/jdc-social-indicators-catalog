@@ -1,0 +1,1659 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>עיון לפי תחום — קטלוג מדדים חברתיים</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* ─── RESET ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    ul, ol { list-style: none; }
+    button { cursor: pointer; font-family: inherit; border: none; background: none; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ─── DESIGN TOKENS ─── */
+    :root {
+      --primary:        #334155;
+      --primary-hover:  #1E293B;
+      --primary-light:  #F1F5F9;
+      --primary-border: #CBD5E1;
+
+      --surface:    #FFFFFF;
+      --surface-2:  #F8FAFC;
+      --surface-3:  #F1F5F9;
+      --border:     #E2E8F0;
+      --border-strong: #CBD5E1;
+
+      --text-primary:   #0F172A;
+      --text-secondary: #475569;
+      --text-tertiary:  #94A3B8;
+      --text-muted:     #64748B;
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 18px;
+      --radius-full: 999px;
+
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,.10), 0 2px 4px rgba(0,0,0,.06);
+      --shadow-lg: 0 10px 32px rgba(15,23,42,.10);
+    }
+
+    /* ─── BASE ─── */
+    body {
+      font-family: 'Heebo', sans-serif;
+      background: var(--surface-2);
+      color: var(--text-primary);
+      font-size: 16px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ─── GLOBAL NAV ─── */
+    .global-nav {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 100;
+      background: var(--surface);
+      border-block-end: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+    .global-nav-inner {
+      max-width: 1280px;
+      margin-inline: auto;
+      padding-inline: 32px;
+      padding-block: 14px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--primary);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .nav-logo-img { height: 18px; width: auto; display: block; }
+    .nav-logo-text { font-weight: 700; color: var(--primary); }
+    .nav-links { display: flex; gap: 4px; }
+    .nav-links a {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      border-radius: 8px;
+      transition: all .15s;
+    }
+    .nav-links a:hover { background: var(--surface-2); color: var(--text-primary); }
+    .nav-links a[aria-current="page"] {
+      color: var(--primary);
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 6px;
+    }
+    .nav-search {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 320px;
+      max-width: 360px;
+      min-width: 200px;
+      margin-inline-start: auto;
+    }
+    .nav-search-icon {
+      position: absolute;
+      inset-inline-end: 12px;
+      width: 16px;
+      height: 16px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .nav-search-input {
+      width: 100%;
+      font-family: inherit;
+      font-size: 14px;
+      padding: 8px 14px;
+      padding-inline-end: 36px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      transition: border-color .15s, background .15s;
+    }
+    .nav-search-input::placeholder { color: var(--text-muted); }
+    .nav-search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: var(--surface);
+    }
+
+    /* ─── PAGE HEADER ─── */
+    .page-header {
+      background: var(--surface);
+      border-block-end: 1px solid var(--border);
+      padding-block: 28px 22px;
+    }
+    .page-header-inner {
+      max-width: 1280px;
+      margin-inline: auto;
+      padding-inline: 32px;
+    }
+    .page-header h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -.02em;
+      margin-block-end: 4px;
+    }
+    .page-header-sub {
+      font-size: 14.5px;
+      color: var(--text-secondary);
+    }
+
+    /* ─── BROWSE SHELL ─── */
+    .browse-shell {
+      max-width: 1280px;
+      margin-inline: auto;
+      padding-inline: 32px;
+      padding-block: 22px 60px;
+    }
+
+    /* ─── DRILL NAV (Back + Breadcrumbs) ─── */
+    .drill-nav {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-block-end: 20px;
+      min-height: 36px;  /* reserve height even when back is hidden, prevents shift */
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      transition: all .15s;
+    }
+    .back-btn[hidden] { display: none; }
+    .back-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--surface); }
+    .back-btn svg { width: 15px; height: 15px; }
+    /* SVG draws arrow pointing inline-end; in RTL that's "back to where you came" — natural. */
+
+    .crumbs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-tertiary);
+      flex-wrap: wrap;
+    }
+    .crumb {
+      background: none;
+      border: none;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: color .12s, background .12s;
+    }
+    .crumb:hover { color: var(--primary); background: var(--surface-3); }
+    .crumb.current { color: var(--text-tertiary); cursor: default; font-weight: 500; }
+    .crumb.current:hover { background: transparent; color: var(--text-tertiary); }
+    .crumb-sep {
+      color: var(--text-tertiary);
+      font-size: 11px;
+      user-select: none;
+    }
+
+    /* ─── STAGE (animated container) ─── */
+    .stage {
+      transition: opacity .22s ease, transform .22s cubic-bezier(.4,0,.2,1);
+      will-change: opacity, transform;
+    }
+    .stage.is-leaving {
+      opacity: 0;
+      transform: translateY(-6px);
+      pointer-events: none;
+    }
+    .stage.is-entering {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    /* ─── CUBE GRID (Levels 1+2) ─── */
+    /* Fixed 3 columns → with 5 life-dimensions: 3 on top, 2 on bottom (balanced).
+       For narrower viewports, drops to 2 cols then 1 col via media queries. */
+    .cube-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+    @media (max-width: 900px) {
+      .cube-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 560px) {
+      .cube-grid { grid-template-columns: 1fr; }
+    }
+    /* Cube is now a hover-reveal container: shows summary by default, shows
+       clickable sub-domain tags on hover. NOT a button — the children (.cube-
+       domain-tag <a>) are the interactive elements. */
+    .cube {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 24px 22px;
+      min-height: 200px;
+      position: relative;
+      overflow: hidden;
+      cursor: default;
+      transition: border-color .18s, box-shadow .18s;
+    }
+    .cube::before {
+      /* color accent bar at the top (inline-start) */
+      content: '';
+      position: absolute;
+      inset-block-start: 0;
+      inset-inline-start: 0;
+      width: 4px;
+      block-size: 100%;
+      background: var(--cube-color, var(--border-strong));
+      opacity: .9;
+    }
+    .cube:hover,
+    .cube:focus-within {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Default + hover layers occupy the same area; cross-fade between them. */
+    .cube-default,
+    .cube-hover {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      height: 100%;
+    }
+    .cube-default { transition: opacity .22s ease; }
+    .cube-hover {
+      position: absolute;
+      inset: 24px 22px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s ease;
+    }
+    .cube:hover .cube-default,
+    .cube:focus-within .cube-default { opacity: 0; pointer-events: none; }
+    .cube:hover .cube-hover,
+    .cube:focus-within .cube-hover { opacity: 1; pointer-events: auto; }
+
+    /* Hover header — icon + title side-by-side at top of cube. */
+    .cube-hover-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    /* Override the default .cube-icon margin (used for spacing below icon in
+       the column layout) when icon sits in the horizontal hover header. */
+    .cube-hover-header .cube-icon { margin-block-end: 0; }
+    /* Title in hover state keeps the SAME size as the default .cube-name —
+       just moves up next to the icon. */
+    .cube-hover-title {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.25;
+      letter-spacing: -.01em;
+    }
+
+    /* Tag row inside the hover state — directly below the icon/title header. */
+    .cube-hover-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-block-start: 16px;
+    }
+
+    /* Sub-domain tag — clickable pill that navigates to that domain's
+       indicators (search-results filtered by domain label). */
+    .cube-domain-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 9px 16px;
+      background: var(--surface-2);
+      border: 1px solid var(--border-strong);
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-decoration: none;
+      cursor: pointer;
+      transition: background .12s, color .12s, border-color .12s;
+    }
+    .cube-domain-tag:hover {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .cube-domain-tag:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+    .cube:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+    .cube-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--surface-3);
+      color: var(--primary);
+      display: grid;
+      place-items: center;
+      margin-block-end: 6px;
+      transition: background .15s, color .15s;
+    }
+    .cube-icon svg { width: 24px; height: 24px; }
+    .cube:hover .cube-icon { background: var(--primary-light); color: var(--primary); }
+    .cube-name {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.25;
+      letter-spacing: -.01em;
+    }
+    .cube-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      flex: 1;
+    }
+    .cube-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-block-start: 8px;
+      padding-block-start: 12px;
+      border-block-start: 1px solid var(--border);
+    }
+    .cube-meta-text {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      letter-spacing: .01em;
+    }
+    .cube-meta-chevron {
+      font-size: 16px;
+      color: var(--text-tertiary);
+      transition: color .15s, transform .15s;
+    }
+    .cube:hover .cube-meta-chevron {
+      color: var(--primary);
+      transform: translateX(2px); /* in RTL, +X moves inline-end (right). We want it to "go" inline-start. */
+    }
+    /* Override: in RTL, hover chevron should slide inline-start (toward the drill direction) */
+    [dir="rtl"] .cube:hover .cube-meta-chevron {
+      transform: translateX(-2px);
+    }
+
+    /* Cube "leading" indicator chip for Level 2 (so user knows next click → results) */
+    .cube-hint {
+      position: absolute;
+      inset-block-start: 14px;
+      inset-inline-end: 14px;
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+    }
+
+    /* ─── LEAF VIEW (search-results-like) ─── */
+    .leaf-view { display: none; }
+    .leaf-view.active { display: block; }
+    .cube-wrap.active { display: block; }
+    .cube-wrap { display: none; }
+
+    .leaf-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      /* margin-block-end: 0 is set in .leaf-layout area rule (row-gap handles spacing) */
+    }
+    .leaf-count {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    .leaf-count strong { color: var(--text-primary); font-weight: 700; }
+
+    .sort-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-inline-start: auto;
+    }
+    .sort-select {
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 5px 10px;
+      background: var(--surface);
+      outline: none;
+      cursor: pointer;
+    }
+    .sort-select:focus { border-color: var(--primary); }
+
+    /* Filter sidebar lives on inline-start (RIGHT in RTL) so the inline-end side
+       (LEFT in RTL) remains clear for the global AI panel (assets/ai-fab.js).
+       Filter spans all 3 rows so its top aligns with the tag-bar top. row-gap
+       halved (was 14 + inline margins, now consolidated to 16). */
+    .leaf-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      grid-template-areas:
+        "filter  tagbar"
+        "filter  toolbar"
+        "filter  cards";
+      column-gap: 28px;
+      row-gap: 16px;
+      align-items: start;
+    }
+    #tag-bar-host    { grid-area: tagbar; }
+    .leaf-toolbar    { grid-area: toolbar; margin-block-end: 0; }
+    .leaf-cards-col  { grid-area: cards; min-width: 0; }
+    .filter-col      { grid-area: filter; }
+
+    /* .leaf-cards-col base styles defined in the grid-template-areas block above */
+    .leaf-empty {
+      text-align: center;
+      padding-block: 60px;
+      color: var(--text-tertiary);
+      background: var(--surface);
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius-xl);
+      font-size: 14px;
+    }
+
+    /* ─── FILTER PANEL ─── */
+    .filter-col {
+      position: sticky;
+      inset-block-start: 84px;
+      max-height: calc(100vh - 110px);
+      overflow-y: auto;
+    }
+    .filter-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    .filter-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-block-end: 1px solid var(--border);
+      background: var(--surface-2);
+    }
+    .filter-panel-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .filter-reset-btn {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .filter-reset-btn:hover { color: var(--primary); }
+
+    .filter-group {
+      padding: 12px 16px;
+      border-block-end: 1px solid var(--border);
+    }
+    .filter-group:last-child { border-block-end: none; }
+    .filter-group-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text-muted);
+      margin-block-end: 8px;
+    }
+    .filter-items { display: flex; flex-direction: column; gap: 6px; }
+    .filter-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 2px 0;
+    }
+    .filter-item input[type="checkbox"] {
+      appearance: none;
+      width: 15px;
+      height: 15px;
+      border: 1.5px solid var(--border-strong);
+      border-radius: 4px;
+      flex-shrink: 0;
+      cursor: pointer;
+      position: relative;
+      transition: all .15s;
+    }
+    .filter-item input[type="checkbox"]:checked {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+    .filter-item input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      inset-block-start: 1px;
+      inset-inline-start: 4px;
+      width: 4px;
+      height: 8px;
+      border: 2px solid #fff;
+      border-block-start: none;
+      border-inline-start: none;
+      transform: rotate(45deg);
+    }
+    .filter-item-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      flex: 1;
+    }
+    .filter-item-count {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    /* Tag groups inside the filter panel — collapsible accordion */
+    .tag-group {
+      margin-block-end: 8px;
+    }
+    .tag-group:last-child { margin-block-end: 0; }
+    .tag-group-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 6px 0;
+      background: none;
+      border: none;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      text-align: start;
+    }
+    .tag-group-toggle:hover { color: var(--text-primary); }
+    .tag-group-toggle-icon {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      transition: transform .18s;
+    }
+    .tag-group[data-open="true"] .tag-group-toggle-icon {
+      transform: rotate(90deg);
+    }
+    [dir="rtl"] .tag-group[data-open="true"] .tag-group-toggle-icon {
+      transform: rotate(-90deg);
+    }
+    .tag-group-items {
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      padding-block-start: 4px;
+      padding-inline-start: 4px;
+    }
+    .tag-group[data-open="true"] .tag-group-items {
+      display: flex;
+    }
+
+    /* Active filter pills bar (above cards) */
+    .active-filters {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-block-end: 14px;
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+    }
+    .active-filters.visible { display: flex; }
+    .active-filters-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+    }
+    .filter-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+      background: var(--primary-light);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-full);
+      padding: 3px 4px 3px 10px;
+    }
+    .filter-pill-remove {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      padding: 0 4px;
+      border-radius: 50%;
+    }
+    .filter-pill-remove:hover { color: var(--text-primary); }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 900px) {
+      .leaf-layout { grid-template-columns: 1fr; }
+      .filter-col { position: static; max-height: none; }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .stage, .cube, .cube-meta-chevron { transition: none !important; }
+      .stage.is-leaving, .stage.is-entering { transform: none; }
+    }
+
+    /* A11y focus rings */
+    .crumb:focus-visible,
+    .back-btn:focus-visible,
+    .filter-item input[type="checkbox"]:focus-visible,
+    .filter-reset-btn:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ GLOBAL NAV ═══ -->
+<header class="global-nav" role="banner">
+  <nav class="global-nav-inner" aria-label="ניווט ראשי">
+    <a href="home.html" class="nav-logo"><svg class="nav-logo-img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 117 28" fill="none" role="img" aria-label="הג'וינט"><path d="M8.683 27.7342H2.46565L0 3.96457H5.82267L7.71625 22.7453H8.67857C12.7496 22.7453 14.2529 21.0424 14.2529 15.2552V8.95354H9.60984V3.96013H20.0756V15.2507C20.0756 24.7985 15.9691 27.7298 8.67857 27.7298L8.683 27.7342ZM20.5501 27.7342V22.7408H22.7275C24.5856 22.7408 25.0867 21.9071 25.0867 19.6898V8.95354H22.049V3.96013H30.9094V20.4792C30.9094 26.0269 29.5524 27.7298 24.9803 27.7298H20.5501V27.7342ZM33.6987 18.0667V3.96013H39.5569V18.0667H33.6987ZM42.5281 27.7342V3.96013H48.3862V27.7298H42.5281V27.7342ZM56.5681 0V4.11978L54.3198 11.2906H50.5681L51.7832 0H56.5681ZM57.5038 27.7342H56.3242V22.7408H57.5038C62.1114 22.7408 63.362 19.9293 62.7544 15.2507L61.9695 8.9491H57.8985V3.9557H66.7234L70.2977 27.7254H64.7234L63.974 22.457H63.7966C63.0471 25.6677 61.2955 27.7254 57.5083 27.7254L57.5038 27.7342ZM89.584 27.7342H83.7613V8.95354H71.0428V3.96013H89.584V27.7298V27.7342ZM76.9763 14.1421V27.7298H71.1182V14.1421H76.9763Z" fill="#3ABDDC"/><path d="M116.214 4.01074H94.1118V27.7095H116.214V4.01074Z" fill="#00C1DE"/><path d="M106.658 21.2671H103.256V21.9678H106.658V21.2671Z" fill="#fff"/><path d="M107.509 22.519H102.409V23.2197H107.509V22.519Z" fill="#fff"/><path d="M108.777 23.6973H101.127V24.3979H108.777V23.6973Z" fill="#fff"/><mask id="mask0_joint_logo" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="92" y="4" width="25" height="24"><path d="M116.209 4.01318H92.5146V27.7119H116.209V4.01318Z" fill="#fff"/></mask><g mask="url(#mask0_joint_logo)"><path d="M104.952 19.9261C101.945 19.9261 99.4575 17.7398 98.9786 14.8706H98.1626C98.646 18.1833 101.497 20.7288 104.952 20.7288C108.407 20.7288 111.254 18.1833 111.737 14.8706H110.921C110.442 17.7398 107.954 19.9261 104.948 19.9261" fill="#fff"/><path d="M105.504 9.27839C105.504 10.0988 105.264 10.4846 104.967 10.4846C104.67 10.4846 104.431 10.1121 104.431 9.27839C104.431 8.20077 104.967 7.32715 104.967 7.32715C104.967 7.32715 105.504 8.20077 105.504 9.27839Z" fill="#fff"/><path d="M99.1757 12.9356C99.1757 13.756 98.9363 14.1418 98.6391 14.1418C98.342 14.1418 98.1025 13.7649 98.1025 12.9356C98.1025 11.858 98.6391 10.9844 98.6391 10.9844C98.6391 10.9844 99.1757 11.858 99.1757 12.9356Z" fill="#fff"/><path d="M111.824 12.9185C111.824 13.7389 111.585 14.1247 111.288 14.1247C110.99 14.1247 110.751 13.7478 110.751 12.9185C110.751 11.8409 111.288 10.9673 111.288 10.9673C111.288 10.9673 111.824 11.8409 111.824 12.9185Z" fill="#fff"/><path d="M104.461 16.6443H104.847C105.441 16.6443 105.552 16.3339 105.552 15.3405V13.3538C105.552 12.4979 105.464 12.2097 104.781 12.2097H104.461V16.6443ZM103.663 11.54H104.954C106.248 11.54 106.355 11.9702 106.355 13.6554V15.376C106.355 16.8572 106.093 17.3228 104.825 17.3228H103.663V11.5445V11.54Z" fill="#fff"/><path d="M106.99 13.0099C106.99 12.2027 107.252 11.4888 108.343 11.4888C109.137 11.4888 109.505 11.8879 109.505 12.5398V13.1163H108.751V12.7172C108.751 12.3491 108.622 12.1185 108.285 12.1185C107.868 12.1185 107.788 12.4156 107.788 13.1118V15.9456C107.788 16.6241 108.006 16.7483 108.259 16.7483C108.556 16.7483 108.746 16.5398 108.746 16.0609V15.6618H109.5V16.3004C109.5 16.9079 109.252 17.3735 108.325 17.3735C107.318 17.3735 106.99 16.8369 106.99 15.9411V13.0187V13.0099Z" fill="#fff"/><path d="M102.891 11.54H102.089V15.9436C102.089 16.6221 101.871 16.7463 101.614 16.7463C101.317 16.7463 101.126 16.5379 101.126 16.0589V15.6598H100.373V16.2984C100.373 16.906 100.621 17.3716 101.548 17.3716C102.554 17.3716 102.887 16.835 102.887 15.9392V11.5445L102.891 11.54Z" fill="#fff"/><path d="M94.1125 23.7603H92.5205V27.7115H94.1125V23.7603Z" fill="#F8AE51"/><path d="M94.1125 19.814H92.5205V23.7652H94.1125V19.814Z" fill="#BD6095"/><path d="M94.1125 15.8613H92.5205V19.8126H94.1125V15.8613Z" fill="#E9485E"/><path d="M94.1125 7.96436H92.5205V11.9156H94.1125V7.96436Z" fill="#C5D984"/><path d="M94.1125 4.01074H92.5205V7.96201H94.1125V4.01074Z" fill="#00ABA3"/><path d="M94.1125 11.9106H92.5205V15.8619H94.1125V11.9106Z" fill="#0091CE"/></g></svg><span class="nav-logo-text">קטלוג מדדים חברתיים</span></a>
+    <ul class="nav-links" role="list">
+      <li><a href="home.html">בית</a></li>
+      <li><a href="browse.html" aria-current="page">עיון</a></li>
+      <li><a href="#">אודות</a></li>
+    </ul>
+    <form class="nav-search" role="search" action="search-results.html" method="get">
+      <svg class="nav-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="nav-search-input" type="search" name="q" placeholder="חיפוש מדד, תחום או מילת מפתח..." aria-label="חיפוש מדד">
+    </form>
+
+  </nav>
+</header>
+
+<!-- ═══ PAGE HEADER ═══ -->
+<section class="page-header">
+  <div class="page-header-inner">
+    <h1>עיון לפי תחום</h1>
+    <p class="page-header-sub">בחרו ממד חיים, ואז התחום הרלוונטי. ניתן גם להתחיל מתגית סמנטית.</p>
+  </div>
+</section>
+
+<!-- ═══ MAIN ═══ -->
+<main class="browse-shell" id="main-content">
+
+  <!-- Drill nav: back button + breadcrumbs. Always visible (min-height reserves space). -->
+  <div class="drill-nav">
+    <button class="back-btn" id="back-btn" hidden onclick="goBack()" aria-label="חזרה לרמה הקודמת">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="5" y1="12" x2="19" y2="12"/>
+        <polyline points="12 5 19 12 12 19"/>
+      </svg>
+      חזרה
+    </button>
+    <ol class="crumbs" id="crumbs" aria-label="נתיב ניווט"></ol>
+  </div>
+
+  <!-- Stage: holds either grid OR leaf view. Transition animates the whole stage. -->
+  <div class="stage" id="stage">
+
+    <!-- Grid mode -->
+    <div class="cube-wrap" id="cube-wrap">
+      <div class="cube-grid" id="cube-grid" role="list"></div>
+    </div>
+
+    <!-- Leaf mode (indicators view, search-results-like).
+         No internal source-breadcrumb: the .drill-nav above the stage IS the
+         single source of truth for "where you are" + "how to go back". Each
+         crumb is clickable and returns to the matching grid level. -->
+    <div class="leaf-view" id="leaf-view">
+
+      <!-- Active filters bar removed: tag counts appear on the category pills
+           and the (open) filter panel shows checked type/frequency directly. -->
+
+      <div class="leaf-layout">
+        <!-- Semantic tag bar — Notion-style category pills + flyout.
+             Inside the grid (grid-area: tagbar) so its right-most pill aligns
+             with the right edge of the cards column below it. -->
+        <div id="tag-bar-host"></div>
+
+        <!-- Toolbar lives INSIDE the grid (grid-area: toolbar) so the sort
+             dropdown aligns with the cards column's inline-end — not stretched
+             across the filter panel. Same pattern as search-results.html. -->
+        <div class="leaf-toolbar">
+          <div class="leaf-count" id="leaf-count"></div>
+          <span class="sort-label">מיון:</span>
+          <select class="sort-select" aria-label="מיון תוצאות" onchange="/* prototype: no-op */">
+            <option>רלוונטיות</option>
+            <option>שם א'-ת'</option>
+            <option>תדירות מדידה</option>
+          </select>
+        </div>
+
+        <section class="leaf-cards-col" aria-label="רשימת מדדים">
+          <div id="leaf-cards"></div>
+          <div class="leaf-empty" id="leaf-empty" hidden>
+            לא נמצאו מדדים תואמים. נסו להסיר חלק מהפילטרים.
+          </div>
+        </section>
+
+        <aside class="filter-col" aria-label="פאנל סינון">
+          <div class="filter-panel" id="filter-panel"></div>
+        </aside>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Shared indicator-card component must load BEFORE the inline render script. -->
+<script src="assets/indicator-card.js?v=2"></script>
+<script src="assets/tag-bar.js?v=2"></script>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   DATA — TAGS_REGISTRY (semantic tags taxonomy, ~32 across 5 groups)
+   ════════════════════════════════════════════════════════════════ */
+const TAGS_REGISTRY = {
+  ages: {
+    label: 'גילאים',
+    iconKey: 'users',
+    tags: [
+      { id: 'children',      label: 'ילדים' },
+      { id: 'youth',         label: 'בני נוער' },
+      { id: 'young-adults',  label: 'צעירים' },
+      { id: 'adults',        label: 'מבוגרים' },
+      { id: 'seniors',       label: 'גיל הזהב' }
+    ]
+  },
+  geo: {
+    label: 'אזור גיאוגרפי',
+    iconKey: 'map-pin',
+    tags: [
+      { id: 'north',         label: 'צפון' },
+      { id: 'south',         label: 'דרום' },
+      { id: 'center',        label: 'מרכז' },
+      { id: 'jerusalem',     label: 'ירושלים' },
+      { id: 'periphery',     label: 'פריפריה' },
+      { id: 'mixed-cities',  label: 'ערים מעורבות' }
+    ]
+  },
+  population: {
+    label: 'אוכלוסיות',
+    iconKey: 'community',
+    tags: [
+      { id: 'olim',          label: 'עולים' },
+      { id: 'arab',          label: 'חברה ערבית' },
+      { id: 'haredi',        label: 'חברה חרדית' },
+      { id: 'bedouin',       label: 'בדואים' },
+      { id: 'ethiopian',     label: 'יוצאי אתיופיה' },
+      { id: 'fsu',           label: 'יוצאי בריה"מ' },
+      { id: 'disability',    label: 'אנשים עם מוגבלות' },
+      { id: 'lgbtq',         label: 'להט"ב' }
+    ]
+  },
+  themes: {
+    label: 'נושאים חוצי-תחומים',
+    iconKey: 'target',
+    tags: [
+      { id: 'poverty',       label: 'עוני' },
+      { id: 'resilience',    label: 'חוסן' },
+      { id: 'belonging',     label: 'שייכות' },
+      { id: 'violence',      label: 'אלימות' },
+      { id: 'dropout',       label: 'נשירה' },
+      { id: 'gender',        label: 'מגדר' },
+      { id: 'digital',       label: 'דיגיטל' },
+      { id: 'mobility',      label: 'ניידות חברתית' },
+      { id: 'climate',       label: 'אקלים וסביבה' }
+    ]
+  },
+  status: {
+    label: 'סטטוס משפחתי/אישי',
+    iconKey: 'shield',
+    tags: [
+      { id: 'single-parent',     label: 'משפחות חד-הוריות' },
+      { id: 'at-risk-women',     label: 'נשים בסיכון' },
+      { id: 'at-risk-children',  label: 'ילדים בסיכון' },
+      { id: 'homeless',          label: 'חסרי בית' }
+    ]
+  }
+};
+
+/* Flat lookup: tagId → { id, label, groupKey } — used by ICCard and chip rendering */
+const TAG_LOOKUP = (function () {
+  const out = {};
+  Object.keys(TAGS_REGISTRY).forEach(groupKey => {
+    TAGS_REGISTRY[groupKey].tags.forEach(t => {
+      out[t.id] = Object.assign({}, t, { groupKey });
+    });
+  });
+  return out;
+})();
+/* Expose for ICCard to render chip labels by id */
+window.TAG_LOOKUP = TAG_LOOKUP;
+
+/* ════════════════════════════════════════════════════════════════
+   DATA — TREE (life dimensions → topics → indicators, with tags)
+   ════════════════════════════════════════════════════════════════ */
+const TREE = [
+  {
+    id: 'dim-economic',
+    name: 'ביטחון כלכלי',
+    desc: 'מצב כלכלי, רווחה חומרית ותעסוקה.',
+    color: '#7C3AED',
+    iconKey: 'wallet',
+    domains: [
+      {
+        id: 'dom-welfare',
+        name: 'רווחה כלכלית',
+        color: '#7C3AED',
+        indicators: [
+          { id: 'card-1', name: 'מדד עוני ילדים ונוער',
+            type: 'outcome', typeLabel: 'תוצאה',
+            frequency: 'שנתי', ageRange: '0–18',
+            stage: 'evaluation', source: 'admin',
+            tags: ['children','youth','poverty','periphery','single-parent','at-risk-children'] },
+          { id: 'card-6', name: 'ניידות כלכלית בין-דורית',
+            type: 'impact',  typeLabel: 'אימפקט',
+            frequency: 'חמש-שנתי', ageRange: '18–25',
+            stage: 'evaluation', source: 'admin',
+            tags: ['young-adults','mobility','poverty','periphery'] },
+          { id: 'card-4', name: 'מדד חוסן משפחתי',
+            type: 'outcome', typeLabel: 'תוצאה',
+            frequency: 'שנתי', ageRange: '12–18',
+            stage: 'evaluation', source: 'survey',
+            tags: ['youth','resilience','single-parent','periphery','arab','haredi'] },
+          { name: 'הכנסה פנויה ממוצעת למשפחה',
+            type: 'output',  typeLabel: 'תפוקה',
+            frequency: 'שנתי', ageRange: 'משפחות',
+            stage: 'implementation', source: 'admin',
+            tags: ['adults','poverty','periphery','mixed-cities'] },
+          { name: 'שיעור ילדים בעוני עמוק',
+            type: 'outcome', typeLabel: 'תוצאה',
+            frequency: 'שנתי', ageRange: '0–18',
+            stage: 'evaluation', source: 'admin',
+            tags: ['children','poverty','south','periphery','bedouin','at-risk-children'] }
+        ]
+      },
+      {
+        id: 'dom-employment',
+        name: 'ביטחון תעסוקתי',
+        color: '#9333EA',
+        indicators: [
+          { id: 'card-5', name: 'שיעור תעסוקת בני נוער',
+            type: 'output',  typeLabel: 'תפוקה',
+            frequency: 'רבעוני', ageRange: '16–21',
+            stage: 'implementation', source: 'social-security',
+            tags: ['youth','young-adults','periphery','arab','olim'] },
+          { name: 'שיעור NEET (לא עובד, לא לומד)',
+            type: 'outcome', typeLabel: 'תוצאה',
+            frequency: 'שנתי', ageRange: '18–24',
+            stage: 'evaluation', source: 'social-security',
+            tags: ['young-adults','dropout','periphery','haredi','arab'] },
+          { name: 'גיל כניסה לשוק העבודה',
+            type: 'output',  typeLabel: 'תפוקה',
+            frequency: 'שנתי', ageRange: '18–25',
+            stage: 'implementation', source: 'social-security',
+            tags: ['young-adults','mobility','haredi','olim'] }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'dim-education',
+    name: 'חינוך ופיתוח',
+    desc: 'הישגים לימודיים, כישורי חיים ופיתוח אישי.',
+    color: '#0369A1',
+    iconKey: 'book',
+    domains: [
+      {
+        id: 'dom-academic',
+        name: 'הישגים לימודיים',
+        color: '#0369A1',
+        indicators: [
+          { id: 'card-2', name: 'שיעור נשירה מהמערכת החינוכית',
+            type: 'output',  typeLabel: 'תפוקה',
+            frequency: 'שנתי', ageRange: '12–18',
+            stage: 'implementation', source: 'admin',
+            tags: ['youth','dropout','periphery','arab','bedouin','at-risk-children'] },
+          { name: 'שיעור זכאות לבגרות',
+            type: 'output',  typeLabel: 'תפוקה',
+            frequency: 'שנתי', ageRange: '18',
+            stage: 'implementation', source: 'admin',
+            tags: ['youth','periphery','arab','olim','ethiopian'] },
+          { name: 'ציוני בגרות ממוצעים',
+            type: 'output',  typeLabel: 'תפוקה',
+            frequency: 'שנתי', ageRange: '18',
+            stage: 'implementation', source: 'admin',
+            tags: ['youth','periphery','jerusalem','mixed-cities'] },
+          { name: 'פערים בהישגים לימודיים',
+            type: 'impact',  typeLabel: 'אימפקט',
+            frequency: 'שנתי', ageRange: '12–18',
+            stage: 'evaluation', source: 'admin',
+            tags: ['youth','mobility','periphery','arab','ethiopian','olim'] }
+        ]
+      },
+      {
+        id: 'dom-life-skills',
+        name: 'כישורי חיים',
+        color: '#0EA5E9',
+        indicators: [
+          { name: 'שליטה בכישורי קריאה וכתיבה',
+            type: 'outcome', typeLabel: 'תוצאה',
+            frequency: 'שנתי', ageRange: '12–18',
+            stage: 'evaluation', source: 'survey',
+            tags: ['children','youth','olim','arab','periphery'] },
+          { name: 'מיומנויות דיגיטליות',
+            type: 'output',  typeLabel: 'תפוקה',
+            frequency: 'שנתי', ageRange: '12–21',
+            stage: 'implementation', source: 'survey',
+            tags: ['youth','young-adults','digital','periphery','haredi','disability'] },
+          { name: 'ביטחון עצמי לימודי',
+            type: 'outcome', typeLabel: 'תוצאה',
+            frequency: 'שנתי', ageRange: '12–18',
+            stage: 'evaluation', source: 'survey',
+            tags: ['youth','resilience','gender','at-risk-children'] }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'dim-wellbeing',
+    name: 'רווחה נפשית וחברתית',
+    desc: 'בריאות נפשית, קשרים חברתיים ואיכות חיים סובייקטיבית.',
+    color: '#059669',
+    iconKey: 'heart',
+    domains: [
+      {
+        id: 'dom-mental',
+        name: 'רווחה נפשית',
+        color: '#059669',
+        indicators: [
+          { name: 'מדד אושר סובייקטיבי — ילדים ונוער',
+            type: 'outcome', typeLabel: 'תוצאה',
+            frequency: 'שנתי', ageRange: '8–18',
+            stage: 'evaluation', source: 'survey',
+            tags: ['children','youth','resilience'],
+            href: 'indicator-card.html' },
+          { name: 'שיעור דיכאון בקרב בני נוער',
+            type: 'outcome', typeLabel: 'תוצאה',
+            frequency: 'שנתי', ageRange: '12–21',
+            stage: 'evaluation', source: 'survey',
+            tags: ['youth','young-adults','gender','at-risk-children','lgbtq'] },
+          { id: 'card-3', name: 'תחושת שייכות חברתית',
+            type: 'outcome', typeLabel: 'תוצאה',
+            frequency: 'חצי-שנתי', ageRange: '12–18',
+            stage: 'evaluation', source: 'survey',
+            tags: ['youth','belonging','olim','ethiopian','lgbtq','mixed-cities'] },
+          { name: 'מדד חוסן נפשי',
+            type: 'outcome', typeLabel: 'תוצאה',
+            frequency: 'שנתי', ageRange: '12–21',
+            stage: 'evaluation', source: 'survey',
+            tags: ['youth','young-adults','resilience','violence','at-risk-children'] }
+        ]
+      },
+      {
+        id: 'dom-social',
+        name: 'קשרים חברתיים',
+        color: '#10B981',
+        indicators: [
+          { name: 'איכות הקשרים הבין-אישיים',
+            type: 'outcome', typeLabel: 'תוצאה',
+            frequency: 'שנתי', ageRange: '12–18',
+            stage: 'evaluation', source: 'survey',
+            tags: ['youth','belonging','digital'] },
+          { name: 'מעורבות קהילתית',
+            type: 'output',  typeLabel: 'תפוקה',
+            frequency: 'שנתי', ageRange: '14–21',
+            stage: 'implementation', source: 'survey',
+            tags: ['youth','young-adults','belonging','periphery','arab'] }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'dim-health',
+    name: 'בריאות',
+    desc: 'בריאות גופנית, גישה לשירותי בריאות ובריאות הנפש.',
+    color: '#DC2626',
+    iconKey: 'activity',
+    domains: [
+      {
+        id: 'dom-physical',
+        name: 'בריאות גופנית',
+        color: '#DC2626',
+        indicators: [
+          { name: 'שיעור השמנת יתר בקרב בני נוער',
+            type: 'outcome', typeLabel: 'תוצאה',
+            frequency: 'שנתי', ageRange: '12–18',
+            stage: 'evaluation', source: 'admin',
+            tags: ['youth','periphery','arab','haredi'] },
+          { name: 'פעילות גופנית שבועית',
+            type: 'output',  typeLabel: 'תפוקה',
+            frequency: 'שנתי', ageRange: '12–21',
+            stage: 'implementation', source: 'survey',
+            tags: ['youth','young-adults','disability','gender'] },
+          { name: 'גישה לשירותי בריאות',
+            type: 'input',   typeLabel: 'תשומה',
+            frequency: 'שנתי', ageRange: '0–18',
+            stage: 'planning', source: 'admin',
+            tags: ['children','youth','periphery','bedouin','south','homeless'] }
+        ]
+      },
+      {
+        id: 'dom-mental-services',
+        name: 'שירותי בריאות הנפש',
+        color: '#EF4444',
+        indicators: [
+          { name: 'שיעור פנייה לשירותי בריאות הנפש',
+            type: 'output',  typeLabel: 'תפוקה',
+            frequency: 'שנתי', ageRange: '12–25',
+            stage: 'implementation', source: 'admin',
+            tags: ['youth','young-adults','at-risk-children','lgbtq','olim'] },
+          { name: 'זמינות שירותי בריאות הנפש',
+            type: 'input',   typeLabel: 'תשומה',
+            frequency: 'שנתי', ageRange: 'מוסדי',
+            stage: 'planning', source: 'admin',
+            tags: ['periphery','south','north','bedouin','arab'] }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'dim-belonging',
+    name: 'שייכות ומעורבות',
+    desc: 'שייכות חברתית, זהות ומעורבות אזרחית.',
+    color: '#D97706',
+    iconKey: 'users',
+    domains: [
+      {
+        id: 'dom-civic',
+        name: 'מעורבות אזרחית',
+        color: '#D97706',
+        indicators: [
+          { name: 'השתתפות בבחירות (גיל 18+)',
+            type: 'outcome', typeLabel: 'תוצאה',
+            frequency: 'רב-שנתי', ageRange: '18+',
+            stage: 'evaluation', source: 'admin',
+            tags: ['young-adults','adults','seniors','periphery','olim'] },
+          { name: 'מעורבות מתנדבים',
+            type: 'output',  typeLabel: 'תפוקה',
+            frequency: 'שנתי', ageRange: '14–21',
+            stage: 'implementation', source: 'survey',
+            tags: ['youth','young-adults','belonging','mixed-cities'] },
+          { name: 'תחושת השפעה על הקהילה',
+            type: 'outcome', typeLabel: 'תוצאה',
+            frequency: 'שנתי', ageRange: '14–21',
+            stage: 'evaluation', source: 'survey',
+            tags: ['youth','young-adults','belonging','arab','ethiopian'] }
+        ]
+      },
+      {
+        id: 'dom-identity',
+        name: 'זהות ושייכות',
+        color: '#F59E0B',
+        indicators: [
+          { name: 'זיהוי עם הקהילה המקומית',
+            type: 'outcome', typeLabel: 'תוצאה',
+            frequency: 'שנתי', ageRange: '12–21',
+            stage: 'evaluation', source: 'survey',
+            tags: ['youth','young-adults','belonging','olim','arab'] },
+          { name: 'תחושת הכלה חברתית',
+            type: 'outcome', typeLabel: 'תוצאה',
+            frequency: 'שנתי', ageRange: '12–21',
+            stage: 'evaluation', source: 'survey',
+            tags: ['youth','belonging','lgbtq','disability','ethiopian','olim'] }
+        ]
+      }
+    ]
+  }
+];
+
+/* ════════════════════════════════════════════════════════════════
+   STATE
+   path: [] = root grid (life dimensions)
+         [dimId] = grid of that dim's domains
+         [dimId, domId] = leaf view (indicators of that domain)
+   activeFilters: { type, frequency, tags }
+   ════════════════════════════════════════════════════════════════ */
+const STATE = { path: [] };
+const activeFilters = { type: new Set(), frequency: new Set(), stage: new Set(), source: new Set(), tags: new Set() };
+
+const getDim = () => TREE.find(d => d.id === STATE.path[0]);
+const getDom = () => { const dim = getDim(); return dim && dim.domains.find(x => x.id === STATE.path[1]); };
+
+/* ════════════════════════════════════════════════════════════════
+   DOM helpers (XSS-safe — no innerHTML in dynamic content)
+   ════════════════════════════════════════════════════════════════ */
+function el(tag, attrs, ...children) {
+  const e = document.createElement(tag);
+  if (attrs) {
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null) continue;
+      if (k === 'class')      e.className = v;
+      else if (k === 'text')  e.textContent = v;
+      else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
+      else if (k === 'style' && typeof v === 'object') Object.assign(e.style, v);
+      else                    e.setAttribute(k, v);
+    }
+  }
+  for (const c of children.flat()) {
+    if (c == null || c === false) continue;
+    if (typeof c === 'string')  e.appendChild(document.createTextNode(c));
+    else if (c instanceof Node) e.appendChild(c);
+  }
+  return e;
+}
+function clear(node) { node.textContent = ''; return node; }
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+function svgNode(tag, attrs) {
+  const e = document.createElementNS(SVG_NS, tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  return e;
+}
+function icon(name) {
+  const svg = svgNode('svg', {
+    viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor',
+    'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+    'aria-hidden': 'true'
+  });
+  const paths = {
+    /* Life-dimension icons (Lucide-style) */
+    wallet:   () => [
+      svgNode('path', { d: 'M20 12V8a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-1' }),
+      svgNode('path', { d: 'M18 12h4v4h-4a2 2 0 0 1 0-4z' })
+    ],
+    book:     () => [
+      svgNode('path', { d: 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20' }),
+      svgNode('path', { d: 'M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z' })
+    ],
+    heart:    () => [
+      svgNode('path', { d: 'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z' })
+    ],
+    activity: () => [
+      svgNode('polyline', { points: '22 12 18 12 15 21 9 3 6 12 2 12' })
+    ],
+    users:    () => [
+      svgNode('path', { d: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2' }),
+      svgNode('circle', { cx: '9', cy: '7', r: '4' }),
+      svgNode('path', { d: 'M23 21v-2a4 4 0 0 0-3-3.87' }),
+      svgNode('path', { d: 'M16 3.13a4 4 0 0 1 0 7.75' })
+    ],
+    /* Default for sub-domains (level 2) — small dot doesn't need an icon, use folder */
+    folder:   () => [
+      svgNode('path', { d: 'M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z' })
+    ]
+  };
+  const builder = paths[name];
+  if (builder) builder().forEach(p => svg.appendChild(p));
+  return svg;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   RENDER — main pipeline.
+   Single source of truth for what to show based on STATE.
+   Leaf mode triggers when path has both dim+dom OR semanticOnly is true.
+   ════════════════════════════════════════════════════════════════ */
+function render() {
+  renderDrillNav();
+
+  const isLeaf = STATE.path.length >= 2;
+  document.getElementById('cube-wrap').classList.toggle('active', !isLeaf);
+  document.getElementById('leaf-view').classList.toggle('active', isLeaf);
+
+  if (!isLeaf) renderGrid();
+  else renderLeaf();
+}
+
+/* ─── Drill nav (Back + Breadcrumbs).
+   Standard hierarchical breadcrumb:
+     "בית" → root (dim grid, level 0)
+     <dim name> → that dim's domain grid (level 1)
+     <dom name> → current leaf (level 2, not clickable)
+   Each crumb maps 1:1 to a navigable level. Back button steps one level up
+   (history-direction). Crumbs are direct jumps (semantic-direction). */
+function renderDrillNav() {
+  const back = document.getElementById('back-btn');
+  back.hidden = STATE.path.length === 0;
+
+  const crumbs = clear(document.getElementById('crumbs'));
+
+  /* "בית" crumb shown whenever we've drilled past the root.
+     At root itself, no crumbs (drill-nav is empty — title carries the context). */
+  if (STATE.path.length > 0) {
+    crumbs.appendChild(makeCrumb('בית', false, () => goRoot()));
+  }
+
+  if (STATE.path[0]) {
+    crumbs.appendChild(el('span', { class: 'crumb-sep', 'aria-hidden': 'true', text: '›' }));
+    const dim = getDim();
+    const isCurrent = STATE.path.length === 1;
+    /* Click dim → level 2 (its domains grid). */
+    crumbs.appendChild(makeCrumb(dim.name, isCurrent, () => navigateTo([dim.id])));
+  }
+  if (STATE.path[1]) {
+    crumbs.appendChild(el('span', { class: 'crumb-sep', 'aria-hidden': 'true', text: '›' }));
+    const dom = getDom();
+    crumbs.appendChild(makeCrumb(dom.name, true, null));
+  }
+}
+function makeCrumb(label, isCurrent, onClick) {
+  const attrs = {
+    class: 'crumb' + (isCurrent ? ' current' : ''),
+    type: 'button',
+    text: label
+  };
+  if (isCurrent) attrs['aria-current'] = 'page';
+  if (!isCurrent && onClick) attrs.onclick = onClick;
+  return el('button', attrs);
+}
+
+/* ─── GRID mode renderer ─── */
+function renderGrid() {
+  const grid = clear(document.getElementById('cube-grid'));
+
+  if (STATE.path.length === 0) {
+    /* Root: show life dimensions */
+    TREE.forEach(dim => grid.appendChild(buildDimCube(dim)));
+  } else if (STATE.path.length === 1) {
+    /* Dim selected: show sub-domains. Next click goes to leaf — show hint. */
+    const dim = getDim();
+    dim.domains.forEach(dom => grid.appendChild(buildDomCube(dim, dom)));
+  }
+}
+
+function buildDimCube(dim) {
+  const totalInds = dim.domains.reduce((s, d) => s + d.indicators.length, 0);
+  /* Cube is a <div>, not a <button> — it must contain <a> tags for the
+     sub-domain links. Hovering reveals them; clicking a tag navigates. */
+  const cube = el('div', {
+    class: 'cube',
+    role: 'group',
+    style: { '--cube-color': dim.color },
+    'aria-label': dim.name + ' — ' + dim.domains.length + ' תחומים, ' + totalInds + ' מדדים'
+  });
+
+  /* Default layer: icon + big name + desc + counts (shown when not hovered). */
+  const defaultLayer = el('div', { class: 'cube-default' },
+    el('div', { class: 'cube-icon', 'aria-hidden': 'true' }, icon(dim.iconKey)),
+    el('div', { class: 'cube-name', text: dim.name }),
+    el('div', { class: 'cube-desc', text: dim.desc }),
+    el('div', { class: 'cube-meta' },
+      el('span', { class: 'cube-meta-text',
+        text: dim.domains.length + ' תחומים · ' + totalInds + ' מדדים' })
+    )
+  );
+
+  /* Hover layer: icon + title in one row (title KEEPS its full size, just
+     moves up to sit next to the icon). Sub-domain tags below. */
+  const tagsRow = el('div', { class: 'cube-hover-tags' });
+  dim.domains.forEach(dom => {
+    tagsRow.appendChild(el('a', {
+      class: 'cube-domain-tag',
+      /* ?from=browse marker → search-results hides the view-toggle. The browse
+         flow is already "structural navigation"; the map view adds no value. */
+      href: 'search-results.html?q=' + encodeURIComponent(dom.name) + '&from=browse',
+      'aria-label': 'הצג מדדים בתחום ' + dom.name,
+      text: dom.name
+    }));
+  });
+  const hoverLayer = el('div', { class: 'cube-hover' },
+    el('div', { class: 'cube-hover-header' },
+      el('div', { class: 'cube-icon', 'aria-hidden': 'true' }, icon(dim.iconKey)),
+      el('div', { class: 'cube-hover-title', text: dim.name })
+    ),
+    tagsRow
+  );
+
+  cube.appendChild(defaultLayer);
+  cube.appendChild(hoverLayer);
+  return cube;
+}
+
+function buildDomCube(dim, dom) {
+  return el('button', {
+    class: 'cube',
+    type: 'button',
+    role: 'listitem',
+    style: { '--cube-color': dom.color },
+    onclick: () => navigateTo([dim.id, dom.id]),
+    'aria-label': dom.name + ' — ' + dom.indicators.length + ' מדדים'
+  },
+    el('div', { class: 'cube-hint', text: 'מדדים' }),
+    el('div', { class: 'cube-icon', 'aria-hidden': 'true' }, icon('folder')),
+    el('div', { class: 'cube-name', text: dom.name }),
+    el('div', { class: 'cube-desc', text: 'לחצו לפתיחת ' + dom.indicators.length + ' המדדים בתחום זה.' }),
+    el('div', { class: 'cube-meta' },
+      el('span', { class: 'cube-meta-text', text: dom.indicators.length + ' מדדים' }),
+      el('span', { class: 'cube-meta-chevron', 'aria-hidden': 'true', text: '‹' })
+    )
+  );
+}
+
+/* ─── LEAF mode renderer.
+   The drill-nav above the stage is the single navigation surface — no
+   in-leaf source breadcrumb. Crumbs there are clickable to jump back. */
+function renderLeaf() {
+  ensureTagBar();
+  renderFilterPanel();
+  renderLeafCards();
+}
+
+/* TagBar handle — null until first mount. We mount once (lazy) and reuse;
+   refresh() is cheap and keeps the count badges in sync with activeFilters. */
+let tagBarHandle = null;
+function ensureTagBar() {
+  if (!window.TagBar) return;        /* script not loaded yet — silent skip */
+  const host = document.getElementById('tag-bar-host');
+  if (!host) return;
+  if (tagBarHandle) { tagBarHandle.refresh(); return; }
+  tagBarHandle = window.TagBar.mount(host, {
+    registry: TAGS_REGISTRY,
+    isSelected: (id) => activeFilters.tags.has(id),
+    onToggle: (id, willSelect) => {
+      if (willSelect) activeFilters.tags.add(id);
+      else            activeFilters.tags.delete(id);
+      renderLeafCards();             /* updates cards + active filter pills */
+    }
+  });
+}
+
+function getLeafIndicators() {
+  /* Collect all indicators in scope (the current dim/dom OR all of them in semantic-only mode) */
+  const all = [];
+  TREE.forEach(dim => {
+    dim.domains.forEach(dom => {
+      dom.indicators.forEach(ind => all.push({ ind, dom, dim }));
+    });
+  });
+  if (STATE.semanticOnly) return all;
+  const dim = getDim();
+  const dom = getDom();
+  if (!dim) return all;
+  if (!dom) {
+    /* Shouldn't happen — we only enter leaf when both are set or semanticOnly is true.
+       Still, handle defensively: include all indicators of the dim. */
+    return all.filter(x => x.dim.id === dim.id);
+  }
+  return all.filter(x => x.dim.id === dim.id && x.dom.id === dom.id);
+}
+
+/* Map explicit frequency Hebrew text → bucket code (matches search-results). */
+function freqBucket(freqStr) {
+  if (!freqStr) return null;
+  if (/חצי|רבעוני/.test(freqStr)) return 'semi';
+  if (/רב-?שנתי|חמש/.test(freqStr)) return 'multi';
+  if (/שנתי/.test(freqStr)) return 'annual';
+  return 'annual';
+}
+
+/* Label maps for code-valued fields (kept centralised for re-use in renderFilterPanel
+   and any future display contexts like active filter chips). */
+const STAGE_LABEL  = { evaluation: 'הערכה', implementation: 'יישום', planning: 'תכנון' };
+const SOURCE_LABEL = {
+  admin: 'נתוני מינהל',
+  survey: 'שאלון',
+  'social-security': 'ביטוח לאומי'
+};
+
+function genericSnippet(ind, dom) {
+  return ind.name + ' — מדד ' + (ind.typeLabel || 'מדידה').toLowerCase()
+    + (dom ? ' בתחום "' + dom.name + '"' : '')
+    + '. מאפשר מעקב לאורך זמן והשוואה בין אוכלוסיות ואזורים.';
+}
+function genericRationale(ind) {
+  const m = {
+    outcome:  'מתמקדים בשינוי שיוצרת התכנית באוכלוסיית היעד — מתאים להערכה לאחר תקופת התערבות.',
+    output:   'מודדים מה התכנית מספקת בפועל — מתאים לשלב היישום, לפני שתוצאות מצטברות נמדדות.',
+    impact:   'מעריכים השפעה מערכתית ארוכת-טווח — מתאים לתכניות בנות 5+ שנים.',
+    input:    'מודדים תשומות שהושקעו — מתאים לשלב התכנון ולמעקב משאבים.'
+  };
+  return m[ind.type] || 'מתאים כאשר מעוניינים בנתון אובייקטיבי, ניתן להשוואה ומעקב.';
+}
+function treeToCardData(ind, dom) {
+  return {
+    id: ind.id || 'browse/' + (dom && dom.id || 'unknown') + '/' + ind.name,
+    name: ind.name,
+    type: ind.type,
+    typeLabel: ind.typeLabel,
+    domainLabel: dom && dom.name,
+    domainColor: dom && dom.color,
+    snippet: ind.snippet || genericSnippet(ind, dom),
+    rationale: ind.rationale || genericRationale(ind),
+    frequency: ind.frequency,    /* explicit field on indicator */
+    ageRange:  ind.ageRange,     /* explicit field on indicator */
+    source:    ind.source && SOURCE_LABEL[ind.source] /* code → Hebrew display string */
+                 ? SOURCE_LABEL[ind.source] : ind.source,
+    tags: ind.tags || [],        /* passed through to ICCard for chip rendering */
+    href: ind.href || 'indicator-card.html'
+  };
+}
+
+function renderLeafCards() {
+  const list = clear(document.getElementById('leaf-cards'));
+  const items = getLeafIndicators();
+
+  const filtered = items.filter(({ ind }) => {
+    if (activeFilters.type.size > 0 && !activeFilters.type.has(ind.type)) return false;
+    /* frequency filter — uses bucketing of the explicit `frequency` field */
+    const fb = freqBucket(ind.frequency);
+    if (activeFilters.frequency.size > 0 && !activeFilters.frequency.has(fb)) return false;
+    /* stage filter — direct code match */
+    if (activeFilters.stage.size > 0 && !activeFilters.stage.has(ind.stage)) return false;
+    /* source filter — direct code match */
+    if (activeFilters.source.size > 0 && !activeFilters.source.has(ind.source)) return false;
+    /* tag filter — indicator must have AT LEAST ONE of the selected tags (OR semantics) */
+    if (activeFilters.tags.size > 0) {
+      const indTags = new Set(ind.tags || []);
+      let any = false;
+      activeFilters.tags.forEach(t => { if (indTags.has(t)) any = true; });
+      if (!any) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('leaf-empty').hidden = filtered.length > 0;
+  document.getElementById('leaf-count').textContent = '';
+  const c = document.getElementById('leaf-count');
+  c.appendChild(document.createTextNode('נמצאו '));
+  c.appendChild(Object.assign(document.createElement('strong'), { textContent: String(filtered.length) }));
+  c.appendChild(document.createTextNode(' מדדים'));
+
+  filtered.forEach(({ ind, dom }) => {
+    const card = window.ICCard.render(treeToCardData(ind, dom));
+    card.dataset.type = ind.type;
+    list.appendChild(card);
+  });
+
+  /* Sync tag-bar count badges when activeFilters.tags changes from
+     elsewhere (clear-all). Safe no-op if not mounted yet. */
+  if (tagBarHandle) tagBarHandle.refresh();
+}
+
+/* ─── Filter panel (left sidebar) ─── */
+function renderFilterPanel() {
+  const panel = clear(document.getElementById('filter-panel'));
+
+  /* Header */
+  panel.appendChild(el('div', { class: 'filter-panel-header' },
+    el('h2', { class: 'filter-panel-title', text: 'סינון' }),
+    el('button', { class: 'filter-reset-btn', type: 'button',
+      onclick: () => clearAllFilters() }, 'נקה הכל')
+  ));
+
+  /* Group: type */
+  panel.appendChild(buildCheckboxGroup('סוג מדד', [
+    { value: 'outcome', label: 'תוצאה' },
+    { value: 'output',  label: 'תפוקה' },
+    { value: 'impact',  label: 'אימפקט' },
+    { value: 'input',   label: 'תשומה' }
+  ], 'type'));
+
+  /* Group: frequency */
+  panel.appendChild(buildCheckboxGroup('תדירות', [
+    { value: 'annual', label: 'שנתי' },
+    { value: 'semi',   label: 'חצי-שנתי / רבעוני' },
+    { value: 'multi',  label: 'רב-שנתי' }
+  ], 'frequency'));
+
+  /* Group: stage (where in the program lifecycle the indicator fits) */
+  panel.appendChild(buildCheckboxGroup('שלב בתכנית', [
+    { value: 'planning',       label: STAGE_LABEL.planning },
+    { value: 'implementation', label: STAGE_LABEL.implementation },
+    { value: 'evaluation',     label: STAGE_LABEL.evaluation }
+  ], 'stage'));
+
+  /* Group: source (how/where the data is collected). NB: "תחום חיים" filter
+     is intentionally absent — in browse the user is already inside a domain
+     via the cube drill-down, so domain-filtering would be redundant. */
+  panel.appendChild(buildCheckboxGroup('כלי מדידה', [
+    { value: 'admin',           label: SOURCE_LABEL.admin },
+    { value: 'survey',          label: SOURCE_LABEL.survey },
+    { value: 'social-security', label: SOURCE_LABEL['social-security'] }
+  ], 'source'));
+
+  /* Semantic tags moved OUT of the filter panel — they live in the
+     TagBar component (assets/tag-bar.js) above the leaf-view toolbar.
+     This separates "objective" filters (type/freq/stage/source) from the
+     cross-cutting semantic taxonomy. */
+}
+
+function buildCheckboxGroup(title, options, dimension) {
+  const items = el('div', { class: 'filter-items', role: 'group', 'aria-label': 'סינון לפי ' + title });
+  options.forEach(opt => {
+    const cb = el('input', { type: 'checkbox', value: opt.value });
+    cb.checked = activeFilters[dimension] && activeFilters[dimension].has(opt.value);
+    cb.addEventListener('change', () => {
+      if (cb.checked) activeFilters[dimension].add(opt.value);
+      else activeFilters[dimension].delete(opt.value);
+      renderLeafCards();
+    });
+    items.appendChild(el('label', { class: 'filter-item' },
+      cb,
+      el('span', { class: 'filter-item-label', text: opt.label })
+    ));
+  });
+  return el('div', { class: 'filter-group' },
+    el('p', { class: 'filter-group-title', text: title }),
+    items
+  );
+}
+
+/* Active filter pills bar removed — count badges on category pills + the open
+   filter panel checkboxes already show what's filtered. */
+
+function clearAllFilters() {
+  Object.keys(activeFilters).forEach(k => activeFilters[k].clear());
+  renderFilterPanel();
+  renderLeafCards();
+}
+
+/* ════════════════════════════════════════════════════════════════
+   NAVIGATION + ANIMATION
+   Single point of state mutation. Always goes through withAnimation()
+   so the stage transition is consistent.
+   ════════════════════════════════════════════════════════════════ */
+function withAnimation(mutate) {
+  const stage = document.getElementById('stage');
+  /* leaving phase */
+  stage.classList.remove('is-entering');
+  stage.classList.add('is-leaving');
+
+  setTimeout(() => {
+    mutate();
+    /* entering phase: re-render in target state, then animate in */
+    render();
+    stage.classList.remove('is-leaving');
+    stage.classList.add('is-entering');
+    /* Next frame: remove entering → triggers transition to natural */
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        stage.classList.remove('is-entering');
+      });
+    });
+  }, 180);
+}
+
+function navigateTo(newPath) {
+  /* clear any semantic-only mode and tag filters when navigating formal tree */
+  STATE.semanticOnly = false;
+  withAnimation(() => { STATE.path = newPath.slice(); });
+}
+function goRoot() {
+  STATE.semanticOnly = false;
+  withAnimation(() => { STATE.path = []; });
+}
+function goBack() {
+  if (STATE.semanticOnly) {
+    STATE.semanticOnly = false;
+    activeFilters.tags.clear();
+    withAnimation(() => { STATE.path = []; });
+    return;
+  }
+  if (STATE.path.length === 0) return;
+  withAnimation(() => { STATE.path.pop(); });
+}
+
+/* ════════════════════════════════════════════════════════════════
+   INIT
+   ════════════════════════════════════════════════════════════════ */
+render();
+</script>
+
+<script src="assets/search-sync.js?v=1"></script>
+<script src="assets/ai-fab.js?v=1"></script>
+</body>
+</html>

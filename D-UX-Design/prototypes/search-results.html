@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>תוצאות חיפוש — קטלוג מדדים חברתיים</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    ul, ol { list-style: none; }
+    button { cursor: pointer; font-family: inherit; }
+    a { text-decoration: none; }
+
+    :root {
+      --primary:        #334155;
+      --primary-hover:  #1E293B;
+      --primary-light:  #F1F5F9;
+      --primary-mid:    #64748B;
+
+      --bg-page:        #F8FAFC;
+      --bg-card:        #FFFFFF;
+
+      --border:         #E2E8F0;
+      --border-strong:  #CBD5E1;
+
+      --text-primary:   #0F172A;
+      --text-secondary: #475569;
+      --text-muted:     #94A3B8;
+      --text-inverse:   #FFFFFF;
+
+      --success:        #475569;
+
+      /* domain colors — wireframe grays */
+      --d-welfare:   #475569;
+      --d-edu:       #64748B;
+      --d-employ:    #334155;
+      --d-social:    #475569;
+      --d-resilience:#475569;
+      --d-early:     #64748B;
+      --d-health:    #334155;
+
+      /* badge type colors — wireframe grays */
+      --t-outcome:   #334155;
+      --t-output:    #475569;
+      --t-input:     #64748B;
+      --t-impact:    #1E293B;
+
+      --font: 'Heebo', 'Assistant', sans-serif;
+
+      --radius-sm:   4px;
+      --radius-md:   8px;
+      --radius-lg:   12px;
+      --radius-xl:   16px;
+      --radius-full: 9999px;
+
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-md: 0 4px 16px rgba(0,0,0,.08);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,.10);
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    html {
+      font-family: var(--font);
+      font-size: 16px;
+      line-height: 1.65;
+      color: var(--text-primary);
+      background: var(--bg-page);
+      -webkit-font-smoothing: antialiased;
+    }
+    /* App-shell layout: viewport-sized body, no page-level scroll. Header
+       sticks to top via flex (no scroll), cards scroll inside .cards-col only. */
+    body {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .global-nav, .search-header { flex-shrink: 0; }
+
+    /* ─── ICON HELPER ─── */
+    .icon { width: 16px; height: 16px; flex-shrink: 0; }
+    .icon-md { width: 20px; height: 20px; }
+
+    /* ─── NAV ─── */
+    .global-nav {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 100;
+      background: var(--bg-card);
+      border-block-end: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+    .global-nav-inner {
+      max-width: 1280px;
+      margin-inline: auto;
+      padding-inline: 32px;
+      padding-block: 14px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--primary);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .nav-logo-img { height: 18px; width: auto; display: block; }
+    .nav-logo-text { font-weight: 700; color: var(--primary); }
+    .nav-links {
+      display: flex;
+      gap: 4px;
+    }
+    .nav-links a {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      border-radius: var(--radius-md);
+      transition: all .15s;
+    }
+    .nav-links a:hover { background: var(--bg-page); color: var(--text-primary); }
+    .nav-links a[aria-current="page"] {
+      color: var(--primary);
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 6px;
+    }
+    .nav-search {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 320px;
+      max-width: 360px;
+      min-width: 200px;
+      margin-inline-start: auto;
+    }
+    .nav-search-icon {
+      position: absolute;
+      inset-inline-end: 12px;
+      width: 16px;
+      height: 16px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .nav-search-input {
+      width: 100%;
+      font-family: inherit;
+      font-size: 14px;
+      padding: 8px 14px;
+      padding-inline-end: 36px;
+      background: var(--bg-page);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      transition: border-color .15s, background .15s;
+    }
+    .nav-search-input::placeholder { color: var(--text-muted); }
+    .nav-search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: var(--bg-card);
+    }
+
+    /* ─── SEARCH HEADER ─── */
+    .search-header {
+      background: var(--bg-card);
+      border-block-end: 1px solid var(--border);
+      padding-block: 20px;
+      padding-inline: 32px;
+    }
+    .search-header-inner {
+      max-width: 1280px;
+      margin-inline: auto;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      padding: 6px 10px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: transparent;
+      white-space: nowrap;
+      transition: all .15s;
+    }
+    .back-btn:hover { background: var(--bg-page); color: var(--text-primary); border-color: var(--border-strong); }
+    .back-btn svg { transform: scaleX(-1); } /* RTL arrow flip */
+
+    .search-field-wrap {
+      position: relative;
+      flex: 1;
+      max-width: 640px;
+    }
+    .search-field {
+      width: 100%;
+      box-sizing: border-box;
+      padding-block: 10px;
+      padding-inline-start: 42px;
+      padding-inline-end: 16px;        /* No internal button → simple end padding */
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius-full);
+      font-family: var(--font);
+      font-size: 15px;
+      background: var(--bg-page);
+      outline: none;
+      color: var(--text-primary);
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .search-field:focus {
+      background: var(--bg-card);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(51,65,85,.1);
+    }
+    .search-field-icon {
+      position: absolute;
+      inset-block-start: 50%;
+      inset-inline-start: 14px;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .search-field-btn {
+      position: absolute;
+      inset-block-start: 50%;
+      inset-inline-end: 6px;
+      transform: translateY(-50%);
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-full);
+      padding: 6px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      transition: background .15s;
+    }
+    .search-field-btn:hover { background: var(--primary-hover); }
+
+    /* Result-count summary inside .results-toolbar — sits at start (RIGHT in
+       RTL). Sibling .sort-label has margin-inline-start:auto to push the sort
+       group to the end (LEFT in RTL). */
+    .search-count {
+      font-size: 14px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+    .search-count strong { color: var(--text-primary); font-weight: 700; }
+
+    /* Active filters bar */
+    .active-filters-bar {
+      background: var(--primary-light);
+      border-block-end: 1px solid #BAE6FD;
+      padding-block: 10px;
+      padding-inline: 32px;
+      display: none; /* shown via JS when filters active */
+    }
+    .active-filters-bar.visible { display: block; }
+    .active-filters-inner {
+      max-width: 1280px;
+      margin-inline: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .active-filters-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+    .filter-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--primary);
+      background: #fff;
+      border: 1px solid #BAE6FD;
+      border-radius: var(--radius-full);
+      padding: 3px 10px;
+    }
+    .filter-pill-remove {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 14px;
+      line-height: 1;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+    }
+    .filter-pill-remove:hover { color: var(--primary); }
+    .clear-all-btn {
+      margin-inline-start: auto;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--primary);
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    /* ─── MAIN LAYOUT ─── */
+    /* App-shell main: takes the remaining viewport height (flex:1 + min-height:0).
+       grid-template-rows: last row is 1fr so the cards area absorbs remaining
+       space — .cards-col then overflows internally instead of pushing the page. */
+    .search-layout {
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      max-width: 1280px;
+      margin-inline: auto;
+      box-sizing: border-box;
+      padding-inline: 32px;
+      padding-block: 18px;
+      display: grid;
+      grid-template-columns: 264px 1fr;
+      grid-template-rows: auto auto 1fr;
+      grid-template-areas:
+        "filter   tagbar"
+        "filter   toolbar"
+        "filter   cards";
+      column-gap: 28px;
+      row-gap: 16px;
+      align-items: start;
+    }
+    .tag-bar-host    { grid-area: tagbar; }
+    .results-toolbar { grid-area: toolbar; }
+    /* min-height:0 + overflow-y:auto = cards scroll INSIDE the column only. */
+    .cards-col       { grid-area: cards; min-width: 0; min-height: 0; height: 100%; overflow-y: auto; padding-inline-end: 4px; }
+    .filter-col      { grid-area: filter; max-height: 100%; overflow-y: auto; }
+
+    .results-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      /* spacing managed by parent grid row-gap — no margin needed here */
+    }
+    .sort-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      /* Push the sort group to the inline-end of the toolbar = LEFT edge of
+         the cards column in RTL. Matches the same pattern in browse.html. */
+      margin-inline-start: auto;
+    }
+    .sort-select {
+      font-family: var(--font);
+      font-size: 13px;
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 5px 10px;
+      background: var(--bg-card);
+      outline: none;
+      cursor: pointer;
+    }
+    .sort-select:focus { border-color: var(--primary); }
+
+    .view-toggle {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-inline-start: auto;
+    }
+    .view-toggle-btn {
+      background: transparent;
+      border: none;
+      padding: 6px 10px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      transition: all .15s;
+    }
+    .view-toggle-btn.active {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+    .view-toggle-btn:hover:not(.active) { background: var(--bg-page); }
+
+    /* ─── RESULT CARD ─── */
+    .result-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .result-card {
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 20px 24px;
+      transition: border-color .2s, box-shadow .2s;
+      position: relative;
+    }
+    .result-card:hover {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-md);
+    }
+    .result-card.in-comparison {
+      border-color: var(--primary);
+      background: #F0F9FF;
+    }
+
+    .result-card-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-block-end: 10px;
+    }
+    .result-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      flex: 1;
+    }
+
+    /* badge base */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      white-space: nowrap;
+    }
+    .badge-type-outcome  { background: #DCFCE7; color: var(--t-outcome); }
+    .badge-type-output   { background: var(--primary-light); color: var(--t-output); }
+    .badge-type-input    { background: #FEF3C7; color: var(--t-input); }
+    .badge-type-impact   { background: #F3E8FF; color: var(--t-impact); }
+    .badge-domain {
+      background: color-mix(in srgb, var(--domain-color, #7C3AED) 12%, white);
+      color: var(--domain-color, #7C3AED);
+      border: 1px solid color-mix(in srgb, var(--domain-color, #7C3AED) 25%, white);
+    }
+
+    .compare-btn {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+      background: var(--primary-light);
+      border: 1px solid #BAE6FD;
+      border-radius: var(--radius-full);
+      padding: 5px 12px;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .compare-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .compare-btn.added { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .compare-btn.added:hover { background: #0284C7; }
+
+    .result-title-link {
+      display: block;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-block-end: 6px;
+      transition: color .15s;
+      line-height: 1.35;
+    }
+    .result-title-link:hover { color: var(--primary); }
+
+    .result-snippet {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-block-end: 10px;
+    }
+
+    /* Rationale snippet — the "Michal moment" */
+    .result-rationale {
+      border-inline-start: 3px solid var(--primary);
+      padding-inline-start: 10px;
+      padding-block: 6px;
+      background: #F0F9FF;
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      margin-block-end: 12px;
+    }
+    .result-rationale-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--primary);
+      margin-block-end: 2px;
+    }
+    .result-rationale-text {
+      font-size: 13px;
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    .result-meta {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .result-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .result-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-block-start: 14px;
+      padding-block-start: 12px;
+      border-block-start: 1px solid var(--border);
+    }
+    .open-card-link {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: gap .15s;
+    }
+    .open-card-link svg { transform: scaleX(-1); } /* RTL arrow */
+    .open-card-link:hover { gap: 8px; }
+
+    .programs-used {
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ─── FILTER SIDEBAR ─── */
+    .filter-col {
+      position: sticky;
+      inset-block-start: 84px; /* aligned with browse.html .left-panel */
+    }
+    .filter-panel {
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+    }
+    .filter-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 18px;
+      border-block-end: 1px solid var(--border);
+    }
+    .filter-panel-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .filter-reset-btn {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: color .15s;
+    }
+    .filter-reset-btn:hover { color: var(--primary); }
+
+    .filter-group {
+      padding: 14px 18px;
+      border-block-end: 1px solid var(--border);
+    }
+    .filter-group:last-child { border-block-end: none; }
+    .filter-group-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--text-muted);
+      margin-block-end: 10px;
+    }
+
+    /* Checkbox filter items */
+    .filter-items {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .filter-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 4px 0;
+    }
+    .filter-item input[type="checkbox"] {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid var(--border-strong);
+      border-radius: 4px;
+      flex-shrink: 0;
+      cursor: pointer;
+      position: relative;
+      transition: all .15s;
+    }
+    .filter-item input[type="checkbox"]:checked {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+    .filter-item input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      inset-block-start: 2px;
+      inset-inline-start: 4px;
+      width: 5px;
+      height: 9px;
+      border: 2px solid #fff;
+      border-block-start: none;
+      border-inline-start: none;
+      transform: rotate(45deg);
+    }
+    .filter-item-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      flex: 1;
+    }
+    .filter-item-count {
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--bg-page);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      padding: 1px 7px;
+    }
+
+    /* Tag groups (accordion) — copied from browse.html so the panel structure
+       is identical across screens. Open/closed by data-open attribute. */
+    .tag-group { margin-block-end: 8px; }
+    .tag-group:last-child { margin-block-end: 0; }
+    .tag-group-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 6px 0;
+      background: none;
+      border: none;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      text-align: start;
+    }
+    .tag-group-toggle:hover { color: var(--text-primary); }
+    .tag-group-toggle-icon {
+      font-size: 11px;
+      color: var(--text-muted);
+      transition: transform .18s;
+    }
+    .tag-group[data-open="true"] .tag-group-toggle-icon { transform: rotate(-90deg); }
+    .tag-group-items {
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      padding-block-start: 4px;
+      padding-inline-start: 4px;
+    }
+    .tag-group[data-open="true"] .tag-group-items { display: flex; }
+
+    /* Domain chips */
+    .domain-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .domain-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      border: 1.5px solid transparent;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .domain-chip .chip-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .domain-chip:not(.active) {
+      background: var(--bg-page);
+      border-color: var(--border);
+      color: var(--text-secondary);
+    }
+    .domain-chip:not(.active):hover {
+      border-color: var(--border-strong);
+      color: var(--text-primary);
+    }
+    .domain-chip.active {
+      background: color-mix(in srgb, var(--chip-color) 12%, white);
+      border-color: color-mix(in srgb, var(--chip-color) 35%, white);
+      color: var(--chip-color);
+      font-weight: 600;
+    }
+
+    /* ─── EMPTY STATE ─── */
+    .empty-state {
+      text-align: center;
+      padding-block: 64px;
+      display: none;
+    }
+    .empty-state.visible { display: block; }
+    .empty-icon {
+      width: 48px;
+      height: 48px;
+      color: var(--text-muted);
+      margin-inline: auto;
+      margin-block-end: 16px;
+    }
+    .empty-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-block-end: 8px;
+    }
+    .empty-text {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    /* ─── COMPARISON TRAY ─── */
+    .comparison-tray {
+      position: fixed;
+      inset-block-end: 0;
+      inset-inline-start: 0;
+      inset-inline-end: 0;
+      z-index: 300;
+      background: #0F172A;
+      border-block-start: 3px solid var(--primary);
+      box-shadow: 0 -4px 24px rgba(0,0,0,.25);
+      transform: translateY(100%);
+      transition: transform .3s cubic-bezier(.4,0,.2,1);
+    }
+    .comparison-tray.visible { transform: translateY(0); }
+    .comparison-tray-inner {
+      max-width: 1280px;
+      margin-inline: auto;
+      padding-inline: 32px;
+      padding-block: 14px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .tray-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,.7);
+      white-space: nowrap;
+    }
+    .tray-items {
+      display: flex;
+      gap: 10px;
+      flex: 1;
+    }
+    .tray-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: var(--radius-md);
+      padding: 6px 10px;
+      min-width: 180px;
+    }
+    .tray-item-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: #fff;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tray-item-remove {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,.5);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      padding: 0;
+      display: flex;
+    }
+    .tray-item-remove:hover { color: #fff; }
+    .tray-slot-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,.04);
+      border: 1px dashed rgba(255,255,255,.2);
+      border-radius: var(--radius-md);
+      padding: 6px 24px;
+      min-width: 160px;
+      font-size: 12px;
+      color: rgba(255,255,255,.35);
+    }
+    .tray-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .tray-compare-btn {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 8px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: background .15s;
+      white-space: nowrap;
+    }
+    .tray-compare-btn:hover { background: var(--primary-hover); }
+    .tray-compare-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .tray-clear-btn {
+      background: none;
+      border: 1px solid rgba(255,255,255,.2);
+      color: rgba(255,255,255,.6);
+      border-radius: var(--radius-md);
+      padding: 8px 14px;
+      font-size: 13px;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .tray-clear-btn:hover { border-color: rgba(255,255,255,.5); color: #fff; }
+
+    /* ─── VIEW TOGGLE (inline segmented control inside .search-header) ─── */
+    /* `inline-grid` with two `1fr` columns guarantees the buttons are equal
+       width regardless of which one is active — both columns are sized to the
+       max-content of the wider button. `margin-inline-start: auto` anchors the
+       whole toggle to the end of the row (LEFT in RTL). */
+    .view-toggle {
+      display: inline-grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      padding: 4px;
+      background: var(--bg-page, #F8FAFC);
+      border: 1px solid var(--border, #E2E8F0);
+      border-radius: 999px;
+      flex-shrink: 0;
+      margin-inline-start: auto;
+    }
+    /* Hidden when JS sets [hidden] (e.g., for browse flow). Explicit override
+       is needed because CSS `display: inline-grid` above takes precedence over
+       the user-agent default for [hidden]. */
+    .view-toggle[hidden] { display: none; }
+    .view-toggle-btn {
+      /* Flex inside grid cell — content centers; cell width is dictated by
+         the wider button (max-content) and copied to BOTH columns via 1fr 1fr. */
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 7px 16px;
+      background: transparent;
+      border: none;
+      border-radius: 999px;
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-secondary, #475569);
+      cursor: pointer;
+      transition: background .15s, color .15s;
+      text-decoration: none;
+      white-space: nowrap;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .view-toggle-btn:hover {
+      background: var(--bg-page, #F8FAFC);
+      color: var(--text-primary, #0F172A);
+    }
+    .view-toggle-btn.active,
+    .view-toggle-btn[aria-current="page"] {
+      background: var(--primary, #334155);
+      color: #fff;
+      cursor: default;
+    }
+    .view-toggle-btn.active:hover {
+      background: var(--primary, #334155);
+      color: #fff;
+    }
+    .view-toggle-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+  </style>
+</head>
+
+<body>
+
+<!-- ══════════════ GLOBAL NAV ══════════════ -->
+<header class="global-nav" role="banner">
+  <nav class="global-nav-inner" aria-label="ניווט ראשי">
+    <a href="home.html" class="nav-logo"><svg class="nav-logo-img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 117 28" fill="none" role="img" aria-label="הג'וינט"><path d="M8.683 27.7342H2.46565L0 3.96457H5.82267L7.71625 22.7453H8.67857C12.7496 22.7453 14.2529 21.0424 14.2529 15.2552V8.95354H9.60984V3.96013H20.0756V15.2507C20.0756 24.7985 15.9691 27.7298 8.67857 27.7298L8.683 27.7342ZM20.5501 27.7342V22.7408H22.7275C24.5856 22.7408 25.0867 21.9071 25.0867 19.6898V8.95354H22.049V3.96013H30.9094V20.4792C30.9094 26.0269 29.5524 27.7298 24.9803 27.7298H20.5501V27.7342ZM33.6987 18.0667V3.96013H39.5569V18.0667H33.6987ZM42.5281 27.7342V3.96013H48.3862V27.7298H42.5281V27.7342ZM56.5681 0V4.11978L54.3198 11.2906H50.5681L51.7832 0H56.5681ZM57.5038 27.7342H56.3242V22.7408H57.5038C62.1114 22.7408 63.362 19.9293 62.7544 15.2507L61.9695 8.9491H57.8985V3.9557H66.7234L70.2977 27.7254H64.7234L63.974 22.457H63.7966C63.0471 25.6677 61.2955 27.7254 57.5083 27.7254L57.5038 27.7342ZM89.584 27.7342H83.7613V8.95354H71.0428V3.96013H89.584V27.7298V27.7342ZM76.9763 14.1421V27.7298H71.1182V14.1421H76.9763Z" fill="#3ABDDC"/><path d="M116.214 4.01074H94.1118V27.7095H116.214V4.01074Z" fill="#00C1DE"/><path d="M106.658 21.2671H103.256V21.9678H106.658V21.2671Z" fill="#fff"/><path d="M107.509 22.519H102.409V23.2197H107.509V22.519Z" fill="#fff"/><path d="M108.777 23.6973H101.127V24.3979H108.777V23.6973Z" fill="#fff"/><mask id="mask0_joint_logo" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="92" y="4" width="25" height="24"><path d="M116.209 4.01318H92.5146V27.7119H116.209V4.01318Z" fill="#fff"/></mask><g mask="url(#mask0_joint_logo)"><path d="M104.952 19.9261C101.945 19.9261 99.4575 17.7398 98.9786 14.8706H98.1626C98.646 18.1833 101.497 20.7288 104.952 20.7288C108.407 20.7288 111.254 18.1833 111.737 14.8706H110.921C110.442 17.7398 107.954 19.9261 104.948 19.9261" fill="#fff"/><path d="M105.504 9.27839C105.504 10.0988 105.264 10.4846 104.967 10.4846C104.67 10.4846 104.431 10.1121 104.431 9.27839C104.431 8.20077 104.967 7.32715 104.967 7.32715C104.967 7.32715 105.504 8.20077 105.504 9.27839Z" fill="#fff"/><path d="M99.1757 12.9356C99.1757 13.756 98.9363 14.1418 98.6391 14.1418C98.342 14.1418 98.1025 13.7649 98.1025 12.9356C98.1025 11.858 98.6391 10.9844 98.6391 10.9844C98.6391 10.9844 99.1757 11.858 99.1757 12.9356Z" fill="#fff"/><path d="M111.824 12.9185C111.824 13.7389 111.585 14.1247 111.288 14.1247C110.99 14.1247 110.751 13.7478 110.751 12.9185C110.751 11.8409 111.288 10.9673 111.288 10.9673C111.288 10.9673 111.824 11.8409 111.824 12.9185Z" fill="#fff"/><path d="M104.461 16.6443H104.847C105.441 16.6443 105.552 16.3339 105.552 15.3405V13.3538C105.552 12.4979 105.464 12.2097 104.781 12.2097H104.461V16.6443ZM103.663 11.54H104.954C106.248 11.54 106.355 11.9702 106.355 13.6554V15.376C106.355 16.8572 106.093 17.3228 104.825 17.3228H103.663V11.5445V11.54Z" fill="#fff"/><path d="M106.99 13.0099C106.99 12.2027 107.252 11.4888 108.343 11.4888C109.137 11.4888 109.505 11.8879 109.505 12.5398V13.1163H108.751V12.7172C108.751 12.3491 108.622 12.1185 108.285 12.1185C107.868 12.1185 107.788 12.4156 107.788 13.1118V15.9456C107.788 16.6241 108.006 16.7483 108.259 16.7483C108.556 16.7483 108.746 16.5398 108.746 16.0609V15.6618H109.5V16.3004C109.5 16.9079 109.252 17.3735 108.325 17.3735C107.318 17.3735 106.99 16.8369 106.99 15.9411V13.0187V13.0099Z" fill="#fff"/><path d="M102.891 11.54H102.089V15.9436C102.089 16.6221 101.871 16.7463 101.614 16.7463C101.317 16.7463 101.126 16.5379 101.126 16.0589V15.6598H100.373V16.2984C100.373 16.906 100.621 17.3716 101.548 17.3716C102.554 17.3716 102.887 16.835 102.887 15.9392V11.5445L102.891 11.54Z" fill="#fff"/><path d="M94.1125 23.7603H92.5205V27.7115H94.1125V23.7603Z" fill="#F8AE51"/><path d="M94.1125 19.814H92.5205V23.7652H94.1125V19.814Z" fill="#BD6095"/><path d="M94.1125 15.8613H92.5205V19.8126H94.1125V15.8613Z" fill="#E9485E"/><path d="M94.1125 7.96436H92.5205V11.9156H94.1125V7.96436Z" fill="#C5D984"/><path d="M94.1125 4.01074H92.5205V7.96201H94.1125V4.01074Z" fill="#00ABA3"/><path d="M94.1125 11.9106H92.5205V15.8619H94.1125V11.9106Z" fill="#0091CE"/></g></svg><span class="nav-logo-text">קטלוג מדדים חברתיים</span></a>
+    <ul class="nav-links" role="list">
+      <li><a href="home.html">בית</a></li>
+      <li><a href="browse.html">עיון</a></li>
+      <li><a href="#">אודות</a></li>
+    </ul>
+    <!-- nav-search form intentionally absent in the search flow:
+         the big search field in .search-header below is THE primary search
+         input on this row. Avoiding two competing fields keeps the user's
+         attention on one input. The nav-search form lives on every OTHER
+         page (home, browse, comparison, indicator-card, ai-chat). -->
+
+  </nav>
+</header>
+
+
+<!-- ══════════════ SEARCH HEADER ══════════════ -->
+<div class="search-header">
+  <div class="search-header-inner">
+
+    <!-- Back button removed — the nav-search and logo-link in the global
+         nav already provide ways back to home, and the search field is the
+         primary affordance on this row. -->
+
+    <div class="search-field-wrap" role="search">
+      <span class="search-field-icon" aria-hidden="true">
+        <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </span>
+      <input
+        id="search-input"
+        class="search-field"
+        type="search"
+        aria-label="שאילתת חיפוש"
+        placeholder="חיפוש מדד, תחום או מילת מפתח"
+        autocomplete="off"
+        onkeydown="if(event.key==='Enter') doSearch()"
+      >
+    </div>
+
+    <!-- View toggle (cards / map). Cards = active here. Sits on the same row
+         as the search field for consistency with node-chart.html. -->
+    <div class="view-toggle" role="tablist" aria-label="תצוגה">
+      <button class="view-toggle-btn active" type="button" aria-current="page" aria-label="כרטיסיות — נבחר">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        כרטיסיות
+      </button>
+      <a class="view-toggle-btn" id="viewToggleMap" href="node-chart.html" role="tab"
+         aria-label="עבור לתצוגת מפה סמנטית">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="6" cy="18" r="3"/>
+          <line x1="6" y1="9" x2="6" y2="15"/><line x1="9" y1="6" x2="15" y2="18"/>
+        </svg>
+        מפה סמנטית
+      </a>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- Active filters bar removed: tag count badges on category pills + visible
+     checkboxes in the open filter panel already convey "what's active". -->
+
+
+<!-- ══════════════ MAIN LAYOUT ══════════════
+     Row 1: tag-bar (full width). Row 2: toolbar (cards column only).
+     Row 3: cards + filter — top edges align exactly. -->
+<main class="search-layout" id="main-content">
+
+  <!-- Semantic tag bar — mounted by TagBar.mount, spans both columns. -->
+  <div id="tag-bar-host" class="tag-bar-host"></div>
+
+  <!-- Toolbar: count at start (RIGHT in RTL), sort group pushed to end (LEFT)
+       via .sort-label's margin-inline-start: auto. Mirrors browse.html toolbar. -->
+  <div class="results-toolbar" role="toolbar" aria-label="כלי מיון">
+    <span class="search-count" aria-live="polite">
+      נמצאו <strong id="result-count">6</strong> מדדים
+    </span>
+    <span class="sort-label">מיין לפי:</span>
+    <select class="sort-select" aria-label="אפשרות מיון" onchange="sortResults(this.value)">
+      <option value="relevance">רלוונטיות</option>
+      <option value="name">שם מדד</option>
+      <option value="domain">תחום חיים</option>
+      <option value="type">סוג מדד</option>
+    </select>
+  </div>
+
+  <!-- ── RESULTS (cards column) ── -->
+  <section class="cards-col" aria-labelledby="results-heading">
+
+    <!-- Result cards -->
+    <div class="result-list" id="result-list" role="list" aria-label="תוצאות חיפוש">
+      <!-- Cards rendered by JS using ICCard.render -->
+    </div>
+
+    <!-- Empty state (shown when filters exclude all results) -->
+    <div class="empty-state" id="empty-state" role="status">
+      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <p class="empty-title">לא נמצאו מדדים</p>
+      <p class="empty-text">נסו לשנות את הפילטרים או לנקות את הסינון</p>
+    </div>
+
+  </section>
+
+
+  <!-- ── FILTER SIDEBAR ──
+       Built dynamically by renderFilterPanel() so it stays in sync with the
+       browse.html leaf view — same groups, same order, same accordion. -->
+  <aside class="filter-col" aria-label="פאנל סינון">
+    <div class="filter-panel" id="filter-panel"></div>
+  </aside>
+
+</main>
+
+
+<!-- ══════════════ COMPARISON TRAY ══════════════ -->
+<div class="comparison-tray" id="comparison-tray" role="region" aria-label="מגש השוואה" aria-live="polite">
+  <div class="comparison-tray-inner">
+    <span class="tray-label">השוואה:</span>
+    <div class="tray-items" id="tray-items" aria-label="מדדים שנבחרו להשוואה"></div>
+    <div class="tray-actions">
+      <button class="tray-compare-btn" id="tray-compare-btn" onclick="openComparison()" disabled>
+        השווה
+      </button>
+      <button class="tray-clear-btn" onclick="clearComparison()">נקה</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Shared indicator-card component must load BEFORE the inline render script. -->
+<script src="assets/indicator-card.js?v=1"></script>
+<script src="assets/tag-bar.js?v=2"></script>
+
+<script>
+  // ─── SEARCH INDICATORS (data extracted from the previously hardcoded cards).
+  // Same shape as ai-chat.js INDICATORS and matches keys in comparison.html
+  // INDICATORS dictionary → end-to-end consistency.
+  /* Cross-page consistency: same tag taxonomy as browse.html.
+     Defined here in the structured form (groups → tags) so the filter panel
+     can render its accordion. Also produces a flat lookup on window.TAG_LOOKUP
+     for ICCard to resolve chip labels by id. */
+  const TAGS_REGISTRY = {
+    ages: {
+      label: 'גילאים',
+      iconKey: 'users',
+      tags: [
+        { id: 'children',      label: 'ילדים' },
+        { id: 'youth',         label: 'בני נוער' },
+        { id: 'young-adults',  label: 'צעירים' },
+        { id: 'adults',        label: 'מבוגרים' },
+        { id: 'seniors',       label: 'גיל הזהב' }
+      ]
+    },
+    geo: {
+      label: 'אזור גיאוגרפי',
+      iconKey: 'map-pin',
+      tags: [
+        { id: 'north',         label: 'צפון' },
+        { id: 'south',         label: 'דרום' },
+        { id: 'center',        label: 'מרכז' },
+        { id: 'jerusalem',     label: 'ירושלים' },
+        { id: 'periphery',     label: 'פריפריה' },
+        { id: 'mixed-cities',  label: 'ערים מעורבות' }
+      ]
+    },
+    population: {
+      label: 'אוכלוסיות',
+      iconKey: 'community',
+      tags: [
+        { id: 'olim',          label: 'עולים' },
+        { id: 'arab',          label: 'חברה ערבית' },
+        { id: 'haredi',        label: 'חברה חרדית' },
+        { id: 'bedouin',       label: 'בדואים' },
+        { id: 'ethiopian',     label: 'יוצאי אתיופיה' },
+        { id: 'fsu',           label: 'יוצאי בריה"מ' },
+        { id: 'disability',    label: 'אנשים עם מוגבלות' },
+        { id: 'lgbtq',         label: 'להט"ב' }
+      ]
+    },
+    themes: {
+      label: 'נושאים חוצי-תחומים',
+      iconKey: 'target',
+      tags: [
+        { id: 'poverty',       label: 'עוני' },
+        { id: 'resilience',    label: 'חוסן' },
+        { id: 'belonging',     label: 'שייכות' },
+        { id: 'violence',      label: 'אלימות' },
+        { id: 'dropout',       label: 'נשירה' },
+        { id: 'gender',        label: 'מגדר' },
+        { id: 'digital',       label: 'דיגיטל' },
+        { id: 'mobility',      label: 'ניידות חברתית' },
+        { id: 'climate',       label: 'אקלים וסביבה' }
+      ]
+    },
+    status: {
+      label: 'סטטוס משפחתי/אישי',
+      iconKey: 'shield',
+      tags: [
+        { id: 'single-parent',     label: 'משפחות חד-הוריות' },
+        { id: 'at-risk-women',     label: 'נשים בסיכון' },
+        { id: 'at-risk-children',  label: 'ילדים בסיכון' },
+        { id: 'homeless',          label: 'חסרי בית' }
+      ]
+    }
+  };
+  window.TAG_LOOKUP = (function () {
+    const out = {};
+    Object.keys(TAGS_REGISTRY).forEach(g => {
+      TAGS_REGISTRY[g].tags.forEach(t => { out[t.id] = Object.assign({}, t, { groupKey: g }); });
+    });
+    return out;
+  })();
+
+  const SEARCH_INDICATORS = [
+    {
+      id: 'card-1', name: 'מדד עוני ילדים ונוער',
+      type: 'outcome', typeLabel: 'תוצאה',
+      domain: 'welfare', domainLabel: 'רווחה כלכלית', domainColor: '#7C3AED',
+      stage: 'evaluation',
+      snippet: 'מודד את שיעור בני הנוער (12–18) החיים בעוני לפי קו העוני הלאומי, בהשוואה לאוכלוסייה הכללית ולפי פיזור גיאוגרפי.',
+      rationale: 'מעריכים השפעה ישירה של תכנית על המצב הכלכלי של משפחות בני נוער, במיוחד בפריפריה ובאשכולות 1–4.',
+      frequency: 'שנתי', source: 'admin',
+      tags: ['children','youth','poverty','periphery','single-parent','at-risk-children']
+    },
+    {
+      id: 'card-2', name: 'שיעור נשירה מהמערכת החינוכית',
+      type: 'output', typeLabel: 'תפוקה',
+      domain: 'edu', domainLabel: 'חינוך', domainColor: '#D97706',
+      stage: 'implementation',
+      snippet: 'אחוז בני נוער (12–18) שנשרו ממסגרת חינוכית מוכרת במהלך שנת לימודים, מחושב לפי מסד נתוני משרד החינוך.',
+      rationale: 'מתמקדים בשמירה על מסגרת ומניעת נשירה כגורם מגן מפני עוני — מדד תפוקה לשלב יישום התכנית.',
+      frequency: 'שנתי', source: 'admin',
+      tags: ['youth','dropout','periphery','arab','bedouin','at-risk-children']
+    },
+    {
+      id: 'card-3', name: 'תחושת שייכות חברתית',
+      type: 'outcome', typeLabel: 'תוצאה',
+      domain: 'social', domainLabel: 'רווחה חברתית', domainColor: '#059669',
+      stage: 'evaluation',
+      snippet: 'מדד מורכב של תחושת חיבור לקהילה, למוסדות, ולמעגלים חברתיים — נמדד בשאלון עצמי-דיווח, סקאלה מאומתת (Social Connectedness Scale).',
+      rationale: 'מודדים רווחה סובייקטיבית של בני נוער בקבוצות מוחלשות — בפרט כשהתכנית שמה דגש על חיזוק קשרים חברתיים.',
+      frequency: 'חצי-שנתי', source: 'survey',
+      tags: ['youth','belonging','olim','ethiopian','lgbtq','mixed-cities']
+    },
+    {
+      id: 'card-4', name: 'מדד חוסן משפחתי',
+      type: 'outcome', typeLabel: 'תוצאה',
+      domain: 'resilience', domainLabel: 'חוסן קהילתי', domainColor: '#DC2626',
+      stage: 'evaluation',
+      snippet: 'מדד מורכב של יכולת המשפחה לגייס משאבים, לשמור על תפקוד, ולהתמודד עם לחצים כלכליים וסביבתיים לאורך זמן.',
+      rationale: 'מעריכים השפעת תכנית על יציבות המשפחה לאורך זמן — ולא רק על מצב כלכלי נקודתי.',
+      frequency: 'שנתי', source: 'survey',
+      tags: ['youth','resilience','single-parent','periphery','arab','haredi']
+    },
+    {
+      id: 'card-5', name: 'שיעור תעסוקת בני נוער',
+      type: 'output', typeLabel: 'תפוקה',
+      domain: 'employ', domainLabel: 'תעסוקה', domainColor: '#0369A1',
+      stage: 'implementation',
+      snippet: 'אחוז בני הנוער (16–22) המועסקים בתעסוקה חלקית או מלאה, מתוך משתתפי התכנית — לפי נתוני ביטוח לאומי ודיווח עצמי.',
+      rationale: 'מתמקדים בהכנה לשוק העבודה ופיתוח כישורים — מדד תפוקה מרכזי לתכניות קידום תעסוקה בגילאי 16+.',
+      frequency: 'רבעוני', source: 'social-security',
+      tags: ['youth','young-adults','periphery','arab','olim']
+    },
+    {
+      id: 'card-6', name: 'ניידות כלכלית בין-דורית',
+      type: 'impact', typeLabel: 'אימפקט',
+      domain: 'welfare', domainLabel: 'רווחה כלכלית', domainColor: '#7C3AED',
+      stage: 'evaluation',
+      snippet: 'מידת השינוי במצב הכלכלי של ילדים לעומת הוריהם — מדד אימפקט ארוך-טווח, מחושב ממעקב אחר קבוצות גיל לאורך שנים.',
+      rationale: 'מעריכים השפעה מערכתית ארוכת-טווח על פערים מבניים — פחות מתאים לתכניות קצרות-מועד (פחות מ-5 שנים).',
+      frequency: 'רב-שנתי', source: 'admin',
+      tags: ['young-adults','mobility','poverty','periphery']
+    }
+  ];
+
+  // Label maps — code values on the data + Hebrew display via this lookup.
+  // Mirror of the maps in browse.html (single source of truth for filter labels).
+  const STAGE_LABEL  = { evaluation: 'הערכה', implementation: 'יישום', planning: 'תכנון' };
+  const SOURCE_LABEL = {
+    admin: 'נתוני מינהל',
+    survey: 'שאלון',
+    'social-security': 'ביטוח לאומי'
+  };
+  const DOMAIN_LABEL = {
+    welfare:    'רווחה כלכלית',
+    edu:        'חינוך',
+    social:     'רווחה חברתית',
+    resilience: 'חוסן קהילתי',
+    employ:     'תעסוקה'
+  };
+
+  // Map free-text frequency to one of three buckets — same logic as browse.html
+  // so the "תדירות" filter behaves identically across screens.
+  function freqBucket(freqStr) {
+    if (!freqStr) return null;
+    if (/חצי|רבעוני/.test(freqStr)) return 'semi';
+    if (/רב-?שנתי|חמש/.test(freqStr)) return 'multi';
+    if (/שנתי/.test(freqStr)) return 'annual';
+    return 'annual';
+  }
+
+  // ─── Render cards via shared ICCard component.
+  // ICCard expects display strings, so map source code → Hebrew label.
+  // dataset attrs carry the CODES for filter matching.
+  function renderCards() {
+    const list = document.getElementById('result-list');
+    if (!list) return;
+    list.textContent = '';
+    SEARCH_INDICATORS.forEach(ind => {
+      const cardData = Object.assign({}, ind, {
+        source: SOURCE_LABEL[ind.source] || ind.source   /* code → Hebrew for card meta */
+      });
+      const card = window.ICCard.render(cardData);
+      card.dataset.type = ind.type;
+      card.dataset.frequency = freqBucket(ind.frequency);
+      card.dataset.stage = ind.stage;
+      card.dataset.source = ind.source;
+      card.dataset.domain = ind.domain;
+      card.dataset.tags = (ind.tags || []).join(' ');
+      list.appendChild(card);
+    });
+  }
+
+
+  // ─── Comparison tray ─────────────────────────────────────────────────
+  const MAX_COMPARE = (window.ICCard && window.ICCard.compare.MAX) || 3;
+
+  function getCompareItems() {
+    return (window.ICCard && window.ICCard.compare.items()) || [];
+  }
+
+  function renderTray() {
+    const tray = document.getElementById('comparison-tray');
+    const itemsEl = document.getElementById('tray-items');
+    const compareBtn = document.getElementById('tray-compare-btn');
+    if (!tray || !itemsEl || !compareBtn) return;
+
+    const items = getCompareItems();
+    itemsEl.textContent = '';
+
+    items.forEach(item => {
+      const slot = document.createElement('div');
+      slot.className = 'tray-item';
+      const name = document.createElement('span');
+      name.className = 'tray-item-name';
+      name.textContent = item.name;
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'tray-item-remove';
+      removeBtn.setAttribute('aria-label', 'הסר ' + item.name + ' מההשוואה');
+      removeBtn.textContent = '×';
+      removeBtn.addEventListener('click', () => window.ICCard.compare.remove(item.id));
+      slot.appendChild(name);
+      slot.appendChild(removeBtn);
+      itemsEl.appendChild(slot);
+    });
+
+    const emptyCount = Math.max(0, MAX_COMPARE - items.length);
+    for (let i = 0; i < emptyCount; i++) {
+      const slot = document.createElement('div');
+      slot.className = 'tray-slot-empty';
+      slot.textContent = 'הוסף מדד';
+      itemsEl.appendChild(slot);
+    }
+
+    tray.classList.toggle('visible', items.length > 0);
+    compareBtn.disabled = items.length < 2;
+  }
+
+  function clearComparison() {
+    if (window.ICCard) window.ICCard.compare.clear();
+  }
+
+  function openComparison() {
+    if (getCompareItems().length >= 2) {
+      window.location.href = 'comparison.html';
+    }
+  }
+
+
+  // ─── Active filters state ─────────────────────────────────────────────
+  // Mirror browse.html + adds `domain` (only meaningful when searching across
+  // domains — browse doesn't need it since the user drilled INTO a domain).
+  const activeFilters = {
+    type: new Set(),
+    frequency: new Set(),
+    stage: new Set(),
+    source: new Set(),
+    domain: new Set(),
+    tags: new Set()
+  };
+
+  function applyFilter(dimension, value, checked) {
+    if (checked) activeFilters[dimension].add(value);
+    else activeFilters[dimension].delete(value);
+    updateResults();
+  }
+
+  function updateResults() {
+    const cards = document.querySelectorAll('.ic-card');
+    let visible = 0;
+
+    cards.forEach(card => {
+      const type   = card.dataset.type;
+      const freq   = card.dataset.frequency;
+      const stage  = card.dataset.stage;
+      const source = card.dataset.source;
+      const domain = card.dataset.domain;
+      const tagsList = (card.dataset.tags || '').split(' ').filter(Boolean);
+
+      const typeOk   = activeFilters.type.size   === 0 || activeFilters.type.has(type);
+      const freqOk   = activeFilters.frequency.size === 0 || activeFilters.frequency.has(freq);
+      const stageOk  = activeFilters.stage.size  === 0 || activeFilters.stage.has(stage);
+      const sourceOk = activeFilters.source.size === 0 || activeFilters.source.has(source);
+      const domainOk = activeFilters.domain.size === 0 || activeFilters.domain.has(domain);
+      let tagsOk = activeFilters.tags.size === 0;
+      if (!tagsOk) {
+        for (const t of activeFilters.tags) {
+          if (tagsList.indexOf(t) !== -1) { tagsOk = true; break; }
+        }
+      }
+
+      const show = typeOk && freqOk && stageOk && sourceOk && domainOk && tagsOk;
+      card.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+
+    const countEl = document.getElementById('result-count');
+    if (countEl) countEl.textContent = visible;
+    const emptyEl = document.getElementById('empty-state');
+    if (emptyEl) emptyEl.classList.toggle('visible', visible === 0);
+  }
+
+  function clearAllFilters() {
+    Object.keys(activeFilters).forEach(k => activeFilters[k].clear());
+    renderFilterPanel();
+    updateResults();
+    if (tagBarHandle) tagBarHandle.refresh();
+  }
+
+  function typeLabel(v) { return { outcome:'תוצאה', output:'תפוקה', impact:'אימפקט', input:'תשומה' }[v] || v; }
+  function freqLabel(v) { return { annual:'שנתי', semi:'חצי-שנתי / רבעוני', multi:'רב-שנתי' }[v] || v; }
+
+  // ─── Filter panel renderer (identical shape to browse.html leaf view) ──
+  function el(tag, attrs, ...children) {
+    const e = document.createElement(tag);
+    if (attrs) {
+      for (const [k, v] of Object.entries(attrs)) {
+        if (v == null) continue;
+        if (k === 'class')      e.className = v;
+        else if (k === 'text')  e.textContent = v;
+        else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
+        else                    e.setAttribute(k, v);
+      }
+    }
+    for (const c of children.flat()) {
+      if (c == null || c === false) continue;
+      if (typeof c === 'string')  e.appendChild(document.createTextNode(c));
+      else if (c instanceof Node) e.appendChild(c);
+    }
+    return e;
+  }
+  function buildCheckboxGroup(title, options, dimension) {
+    const items = el('div', { class: 'filter-items', role: 'group', 'aria-label': 'סינון לפי ' + title });
+    options.forEach(opt => {
+      const cb = el('input', { type: 'checkbox', value: opt.value });
+      cb.checked = activeFilters[dimension] && activeFilters[dimension].has(opt.value);
+      cb.addEventListener('change', () => applyFilter(dimension, opt.value, cb.checked));
+      items.appendChild(el('label', { class: 'filter-item' },
+        cb,
+        el('span', { class: 'filter-item-label', text: opt.label })
+      ));
+    });
+    return el('div', { class: 'filter-group' },
+      el('p', { class: 'filter-group-title', text: title }),
+      items
+    );
+  }
+  function renderFilterPanel() {
+    const panel = document.getElementById('filter-panel');
+    if (!panel) return;
+    panel.textContent = '';
+
+    panel.appendChild(el('div', { class: 'filter-panel-header' },
+      el('h2', { class: 'filter-panel-title', text: 'סינון' }),
+      el('button', { class: 'filter-reset-btn', type: 'button', onclick: () => clearAllFilters() }, 'נקה הכל')
+    ));
+
+    panel.appendChild(buildCheckboxGroup('סוג מדד', [
+      { value: 'outcome', label: 'תוצאה' },
+      { value: 'output',  label: 'תפוקה' },
+      { value: 'impact',  label: 'אימפקט' },
+      { value: 'input',   label: 'תשומה' }
+    ], 'type'));
+
+    panel.appendChild(buildCheckboxGroup('תדירות', [
+      { value: 'annual', label: 'שנתי' },
+      { value: 'semi',   label: 'חצי-שנתי / רבעוני' },
+      { value: 'multi',  label: 'רב-שנתי' }
+    ], 'frequency'));
+
+    panel.appendChild(buildCheckboxGroup('שלב בתכנית', [
+      { value: 'planning',       label: STAGE_LABEL.planning },
+      { value: 'implementation', label: STAGE_LABEL.implementation },
+      { value: 'evaluation',     label: STAGE_LABEL.evaluation }
+    ], 'stage'));
+
+    /* Domain filter — present here (search is cross-domain) but NOT in browse
+       (user is already inside a domain via cube drill-down). */
+    panel.appendChild(buildCheckboxGroup('תחום חיים', [
+      { value: 'welfare',    label: DOMAIN_LABEL.welfare },
+      { value: 'edu',        label: DOMAIN_LABEL.edu },
+      { value: 'social',     label: DOMAIN_LABEL.social },
+      { value: 'resilience', label: DOMAIN_LABEL.resilience },
+      { value: 'employ',     label: DOMAIN_LABEL.employ }
+    ], 'domain'));
+
+    panel.appendChild(buildCheckboxGroup('כלי מדידה', [
+      { value: 'admin',           label: SOURCE_LABEL.admin },
+      { value: 'survey',          label: SOURCE_LABEL.survey },
+      { value: 'social-security', label: SOURCE_LABEL['social-security'] }
+    ], 'source'));
+
+    /* Semantic tags moved OUT of the filter panel — they live in TagBar
+       (assets/tag-bar.js) mounted above the results column. */
+  }
+
+  // ─── Search ─────────────────────────────────────────────────────────
+  // Pressing Enter (or invoking via button) re-navigates to search-results
+  // with the new ?q= — preserves the rest of the URL params (e.g., &node=).
+  function doSearch() {
+    const val = document.getElementById('search-input').value.trim();
+    if (!val) return;
+    const params = new URLSearchParams(window.location.search);
+    params.set('q', val);
+    params.delete('node');  /* New search invalidates the previous map-centering */
+    window.location.href = 'search-results.html?' + params.toString();
+  }
+
+  // On load: populate the top search input from ?q= so it reflects current state.
+  (function syncSearchInputFromUrl() {
+    const inp = document.getElementById('search-input');
+    if (!inp) return;
+    const q = new URLSearchParams(window.location.search).get('q');
+    if (q) inp.value = q;
+  })();
+
+  // ─── Sort ───────────────────────────────────────────────────────────
+  function sortResults(val) {
+    // Visual prototype — just announce
+    console.log('Sort by:', val);
+  }
+
+  // ─── Tag bar — Notion-style category pills + flyout.
+  // Same shared component as browse.html. Host page owns the activeFilters.tags
+  // set; the bar just signals toggles via onToggle and re-renders cards.
+  let tagBarHandle = null;
+  function ensureTagBar() {
+    if (!window.TagBar) return;
+    const host = document.getElementById('tag-bar-host');
+    if (!host || tagBarHandle) return;
+    tagBarHandle = window.TagBar.mount(host, {
+      registry: TAGS_REGISTRY,
+      isSelected: (id) => activeFilters.tags.has(id),
+      onToggle: (id, willSelect) => {
+        if (willSelect) activeFilters.tags.add(id);
+        else            activeFilters.tags.delete(id);
+        updateResults();
+      }
+    });
+  }
+
+  // View-toggle "מפה סמנטית" link — forward EVERY param the map might care
+  // about. Most importantly: if cards was opened from the map (and the URL
+  // carries ?node=<id>), forward that node id so the map round-trips back to
+  // the exact same view. Otherwise just forward ?q for fresh-search behavior.
+  //
+  // The toggle is ALWAYS visible on this page — regardless of how the user
+  // arrived (search, browse-tag, or map round-trip). The map is always
+  // available as another view of the same result set. The ?from=browse param
+  // is preserved in the URL for analytics/history but no longer hides the UI.
+  (function wireViewToggleMapLink() {
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('q');
+    const node = params.get('node');
+    const mapLink = document.getElementById('viewToggleMap');
+    if (!mapLink) return;
+    const out = new URLSearchParams();
+    if (q) out.set('q', q);
+    if (node) out.set('node', node);
+    if (out.toString()) mapLink.href = 'node-chart.html?' + out.toString();
+  })();
+
+  // ─── Init ───────────────────────────────────────────────────────────
+  renderFilterPanel();
+  renderCards();
+  renderTray();
+  ensureTagBar();
+
+  // Sync UI when the shared compare store changes (e.g., card clicked elsewhere).
+  if (window.ICCard) {
+    window.ICCard.compare.onChange(() => {
+      renderCards();   // refresh selected-state on cards
+      renderTray();    // refresh tray contents
+      // Reapply filters since renderCards rebuilt the DOM
+      applyAllFilters();
+    });
+  }
+
+  // Helper to reapply current filters after re-rendering cards
+  function applyAllFilters() {
+    document.querySelectorAll('.ic-card').forEach(card => {
+      let visible = true;
+      ['type','stage','domain'].forEach(dim => {
+        const set = activeFilters[dim];
+        if (set && set.size > 0 && !set.has(card.dataset[dim])) visible = false;
+      });
+      card.style.display = visible ? '' : 'none';
+    });
+  }
+</script>
+
+<script src="assets/search-sync.js?v=1"></script>
+<script src="assets/ai-fab.js?v=1"></script>
+</body>
+</html>
