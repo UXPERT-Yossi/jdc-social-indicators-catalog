@@ -77,23 +77,27 @@
       flex-direction: column;
       overflow: hidden;
     }
-    .global-nav, .search-header, .breadcrumb-bar { flex-shrink: 0; }
+    .global-nav, .search-header { flex-shrink: 0; }
 
-    /* ─── BREADCRUMB BAR ─────────────────────────────────────
-       Shown only when arriving from the browse flow (?from=browse).
-       Sits between the global nav and the search header — a thin strip
-       that tells the user "here's where you came from, click to go back".
-       Hidden on every other path (fresh search, map round-trip) — those
-       have no hierarchical parent to climb. */
+    /* ─── BREADCRUMB (in-row inside .search-header-inner) ─────────────
+       Renders only when arriving from the browse flow (?from=browse).
+       Sits on the INLINE-START of the search-header row (right in RTL),
+       while the view-toggle stays anchored on the INLINE-END via its
+       own margin-inline-start:auto. The toggle defines the row's height,
+       so showing/hiding the breadcrumb causes NO vertical layout shift —
+       the row was the toggle's height before, stays the toggle's height
+       after.
+
+       The <nav> element keeps its `hidden` attribute by default; JS removes
+       it when the URL says from=browse. While hidden, the toggle is alone
+       on the row, naturally inline-end aligned. */
     .breadcrumb-bar {
-      background: var(--bg-card);
-      border-block-end: 1px solid var(--border);
-      padding-block: 8px;
-      padding-inline: 32px;
+      /* No background / border / padding here — those come from .search-header.
+         Just enough to lay out as an inline-flex item next to the toggle. */
+      display: inline-flex;
+      align-items: center;
     }
     .breadcrumb-list {
-      max-width: 1280px;
-      margin-inline: auto;
       display: flex;
       align-items: center;
       gap: 4px;
@@ -983,53 +987,46 @@
       <li><a href="browse.html">עיון</a></li>
       <li><a href="#">אודות</a></li>
     </ul>
-    <!-- nav-search form intentionally absent in the search flow:
-         the big search field in .search-header below is THE primary search
-         input on this row. Avoiding two competing fields keeps the user's
-         attention on one input. The nav-search form lives on every OTHER
-         page (home, browse, comparison, indicator-card, ai-chat). -->
+    <!-- nav-search — restored, mirrors home.html. ALL 7 pages now show the
+         same small search field in the global nav (top-end aligned). This
+         is the single search affordance — the big in-page field that used
+         to live in .search-header has been removed. search-sync.js fills
+         this from ?q= EXCEPT when ?from=browse (then it stays empty, since
+         the breadcrumb already carries the context). -->
+    <form class="nav-search" role="search" action="search-results.html" method="get">
+      <svg class="nav-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="nav-search-input" type="search" name="q" placeholder="חיפוש מדד, תחום או מילת מפתח..." aria-label="חיפוש מדד">
+    </form>
 
   </nav>
 </header>
 
 
-<!-- ══════════════ BREADCRUMB (browse flow only) ══════════════
-     Populated + un-hidden by JS when ?from=browse is in the URL.
-     Stays hidden in every other case (fresh search, direct link, map
-     round-trip) — the bar exists in the DOM only because injecting at
-     load is simpler than mounting later. -->
-<nav class="breadcrumb-bar" id="breadcrumb-bar" hidden aria-label="ניווט היררכי">
-  <ol class="breadcrumb-list" id="breadcrumb-list"></ol>
-</nav>
+<!-- ══════════════ TOOLBAR ROW (breadcrumb + view toggle) ══════════════
+     One row, two pieces:
+       - breadcrumb (inline-start / right in RTL) — visible only when
+         arriving from the browse flow; otherwise its <nav> stays `hidden`
+       - view-toggle (inline-end / left in RTL) — always present
+     The toggle defines the row's height, so showing/hiding the breadcrumb
+     causes NO vertical layout shift (no CLS).
 
-
-<!-- ══════════════ SEARCH HEADER ══════════════ -->
+     Single row was previously two: a thin breadcrumb-bar above a
+     separate search-header. Merging them eliminates the page-shift jump
+     the user saw between browse → search-results. -->
 <div class="search-header">
   <div class="search-header-inner">
 
-    <!-- Back button removed — the nav-search and logo-link in the global
-         nav already provide ways back to home, and the search field is the
-         primary affordance on this row. -->
+    <!-- Breadcrumb — unhidden by JS when ?from=browse is set. -->
+    <nav class="breadcrumb-bar" id="breadcrumb-bar" hidden aria-label="ניווט היררכי">
+      <ol class="breadcrumb-list" id="breadcrumb-list"></ol>
+    </nav>
 
-    <div class="search-field-wrap" role="search">
-      <span class="search-field-icon" aria-hidden="true">
-        <svg class="icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-      </span>
-      <input
-        id="search-input"
-        class="search-field"
-        type="search"
-        aria-label="שאילתת חיפוש"
-        placeholder="חיפוש מדד, תחום או מילת מפתח"
-        autocomplete="off"
-        onkeydown="if(event.key==='Enter') doSearch()"
-      >
-    </div>
-
-    <!-- View toggle (cards / map). Cards = active here. Sits on the same row
-         as the search field for consistency with node-chart.html. -->
+    <!-- View toggle (cards / map). Cards = active here. `margin-inline-start: auto`
+         on .view-toggle pushes it to the inline-end of this row regardless of
+         whether the breadcrumb is shown or not. -->
     <div class="view-toggle" role="tablist" aria-label="תצוגה">
       <button class="view-toggle-btn active" type="button" aria-current="page" aria-label="כרטיסיות — נבחר">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1047,7 +1044,6 @@
         מפה סמנטית
       </a>
     </div>
-
   </div>
 </div>
 
@@ -1522,25 +1518,16 @@
        (assets/tag-bar.js) mounted above the results column. */
   }
 
-  // ─── Search ─────────────────────────────────────────────────────────
-  // Pressing Enter (or invoking via button) re-navigates to search-results
-  // with the new ?q= — preserves the rest of the URL params (e.g., &node=).
-  function doSearch() {
-    const val = document.getElementById('search-input').value.trim();
-    if (!val) return;
-    const params = new URLSearchParams(window.location.search);
-    params.set('q', val);
-    params.delete('node');  /* New search invalidates the previous map-centering */
-    window.location.href = 'search-results.html?' + params.toString();
-  }
+  /* doSearch() removed along with the big in-page search field.
+     The small nav-search form (action="search-results.html" method="get")
+     handles new searches — Enter submits the form, which navigates to
+     search-results.html?q=<value> natively. No JS needed. */
 
-  // On load: populate the top search input from ?q= so it reflects current state.
-  (function syncSearchInputFromUrl() {
-    const inp = document.getElementById('search-input');
-    if (!inp) return;
-    const q = new URLSearchParams(window.location.search).get('q');
-    if (q) inp.value = q;
-  })();
+  /* Search-input sync moved out to the shared asset: assets/search-sync.js.
+     That script handles ALL search-input selectors on every page from a
+     single point — and crucially, it skips the sync when ?from=browse is
+     present (the breadcrumb owns the context in that flow, the search
+     field stays empty for a fresh query). */
 
   // ─── Sort ───────────────────────────────────────────────────────────
   function sortResults(val) {
@@ -1684,7 +1671,7 @@
   }
 </script>
 
-<script src="assets/search-sync.js?v=1"></script>
+<script src="assets/search-sync.js?v=2"></script>
 <script src="assets/ai-fab.js?v=1"></script>
 </body>
 </html>

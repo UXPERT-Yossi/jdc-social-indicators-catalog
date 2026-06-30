@@ -35,6 +35,14 @@
   function currentQuery() {
     try {
       var params = new URLSearchParams(window.location.search);
+      /* Browse-flow exception: when ?from=browse is present, the ?q= value
+         represents the SUB-DOMAIN the user drilled into (e.g. "ביטחון
+         תעסוקתי") — NOT a search query they typed. The breadcrumb bar
+         (rendered separately) already tells them where they are. Reflecting
+         that value inside the search field would be misleading: it'd look
+         like they had searched for it. So we leave every search field
+         empty, ready for a NEW search if they want one. */
+      if (params.get('from') === 'browse') return '';
       return params.get('q') || '';
     } catch (e) {
       return '';

@@ -914,10 +914,16 @@
         <li><a href="browse.html">עיון</a></li>
         <li><a href="#">אודות</a></li>
       </ul>
-    <!-- nav-search form intentionally absent in the search flow:
-         the big #searchTopInput in .search-header below is THE primary search
-         input on this row. Same as search-results.html — one search field on
-         the page, not two competing ones. -->
+    <!-- nav-search — restored, mirrors home.html and search-results.html.
+         The big in-page #searchTopInput that used to live in .search-header
+         has been removed. Single search affordance: the small nav field. -->
+    <form class="nav-search" role="search" action="search-results.html" method="get">
+      <svg class="nav-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="nav-search-input" type="search" name="q" placeholder="חיפוש מדד, תחום או מילת מפתח..." aria-label="חיפוש מדד">
+    </form>
 
   </nav>
   </header>
@@ -928,26 +934,11 @@
     <span class="breadcrumb-item current" data-id="root">כל התחומים</span>
   </nav>
 
-  <!-- ─── SEARCH HEADER (always visible) ───
-       Mirrors search-results.html top row exactly: search field + view-toggle.
-       Same row, same widths, same behavior across both tabs. -->
+  <!-- ─── VIEW TOGGLE ROW ───
+       Previously the search-header held a big field + the view-toggle. The
+       field was removed — search now lives only in the global nav above. -->
   <div class="search-header" id="searchHeader">
     <div class="search-header-inner">
-      <!-- Back button removed (same as search-results.html) — the global nav
-           handles "go home"; this row stays focused on search + view-toggle. -->
-
-      <div class="search-field-wrap" role="search">
-        <span class="search-field-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-        </span>
-        <input id="searchTopInput" class="search-field" type="search"
-               placeholder="חיפוש מדד, תחום או מילת מפתח"
-               aria-label="שאילתת חיפוש" autocomplete="off">
-        <div class="search-top-suggestions" id="searchTopSuggestions" role="listbox" hidden></div>
-      </div>
-
       <!-- View toggle (cards / map). Map = active here. -->
       <div class="view-toggle" role="tablist" aria-label="תצוגה">
         <a class="view-toggle-btn" id="viewToggleCards" href="search-results.html" role="tab"
@@ -2209,8 +2200,14 @@
     }
     const q = params.get('q');
     if (q) {
-      const topInp = document.getElementById('searchTopInput');
-      if (topInp) topInp.value = q;
+      /* Mirror the search-sync.js rule: when ?from=browse is set, the q
+         value is a SUB-DOMAIN drilled into, not a search the user typed.
+         Don't reflect it inside the search field (breadcrumb owns context). */
+      const fromBrowse = params.get('from') === 'browse';
+      if (!fromBrowse) {
+        const topInp = document.getElementById('searchTopInput');
+        if (topInp) topInp.value = q;
+      }
       /* ALWAYS render the search-results graph when arriving with ?q= —
          the cards page and the map page MUST display the same result set.
          The query just picks which result node sits at the center. */
@@ -2229,7 +2226,7 @@
   });
   </script>
 
-<script src="assets/search-sync.js?v=1"></script>
+<script src="assets/search-sync.js?v=2"></script>
 <script src="assets/ai-fab.js?v=1"></script>
 </body>
 </html>

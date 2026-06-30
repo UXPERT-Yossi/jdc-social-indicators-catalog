@@ -631,16 +631,21 @@ function removeItem(id) {
 }
 
 function chooseIndicator(id) {
-  const ind = INDICATORS[id];
-  if (!ind) return;
-  alert(`✓ בחרת: ${ind.name}\n\nמדד זה נשמר לסל המדדים שלך.\n\nבגרסה הסופית — תועברי לכרטיס המדד המלא.`);
+  /* Both call sites land here:
+     - the primary decision button in the decision section (one click = pick the winner)
+     - the per-card "choose" button inside each comparison column
+     Either way, "choosing" means: open the full indicator card page for that id.
+     The page currently shows BMI content statically; we still pass ?id= so the URL
+     is shareable + the page is ready to consume the id when it goes dynamic. */
+  if (!INDICATORS[id]) return;       /* guard: unknown id → do nothing */
+  window.location.href = 'indicator-card.html?id=' + encodeURIComponent(id);
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────
 render();
 </script>
 
-<script src="assets/search-sync.js?v=1"></script>
+<script src="assets/search-sync.js?v=2"></script>
 <script src="assets/ai-fab.js?v=1"></script>
 </body>
 </html>
