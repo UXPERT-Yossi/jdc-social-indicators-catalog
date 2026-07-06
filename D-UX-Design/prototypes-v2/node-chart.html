@@ -1,0 +1,2227 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>מפה סמנטית — קטלוג מדדים חברתיים</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    ul, ol { list-style: none; }
+    button { cursor: pointer; font-family: inherit; border: none; background: none; }
+    a { text-decoration: none; color: inherit; }
+
+    :root {
+      --primary:        #334155;
+      --primary-hover:  #1E293B;
+      --primary-light:  #F1F5F9;
+      --primary-mid:    #64748B;
+
+      --bg-page:        #F8FAFC;
+      --bg-card:        #FFFFFF;
+      --bg-canvas:      #FAFBFC;
+
+      --border:         #E2E8F0;
+      --border-strong:  #CBD5E1;
+
+      --text-primary:   #0F172A;
+      --text-secondary: #475569;
+      --text-muted:     #94A3B8;
+      --text-inverse:   #FFFFFF;
+
+      /* Node type colors — keep semantic colors (the map needs them) */
+      --node-domain:        #0369A1;
+      --node-domain-light:  #DBEAFE;
+      --node-topic:         #1D4ED8;
+      --node-topic-light:   #DBEAFE;
+      --node-outcome:       #059669;
+      --node-outcome-light: #D1FAE5;
+      --node-indicator:     #FFFFFF;
+      --node-indicator-stroke: #0369A1;
+      --node-method:        #F1F5F9;
+      --node-method-stroke: #94A3B8;
+
+      /* Link types — keep semantic colors */
+      --link-hierarchical: #94A3B8;
+      --link-complementary: #0EA5E9;
+      --link-alternative:  #F59E0B;
+
+      --font: 'Heebo', 'Assistant', sans-serif;
+
+      --radius-sm:   4px;
+      --radius-md:   8px;
+      --radius-lg:   12px;
+      --radius-xl:   16px;
+      --radius-full: 9999px;
+
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-md: 0 4px 16px rgba(0,0,0,.08);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,.10);
+      --shadow-xl: 0 20px 50px rgba(0,0,0,.12);
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: var(--font);
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--text-primary);
+      background: var(--bg-page);
+      -webkit-font-smoothing: antialiased;
+    }
+    /* App-shell layout: body is a flex column. Header (nav + search-header)
+       sticks at top via flex; canvas (main-layout) takes remaining space. */
+    body { display: flex; flex-direction: column; }
+    .global-nav, .search-header { flex-shrink: 0; }
+
+    /* ─── NAV ─── */
+    .global-nav {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 100;
+      background: var(--bg-card);
+      border-block-end: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+    .global-nav-inner {
+      max-width: 1280px;
+      margin-inline: auto;
+      padding-inline: 32px;
+      padding-block: 14px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--primary);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .nav-logo-img { height: 18px; width: auto; display: block; }
+    .nav-logo-text { font-weight: 700; color: var(--primary); }
+    .nav-links {
+      display: flex;
+      gap: 4px;
+    }
+    .nav-links a {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      border-radius: var(--radius-md);
+      transition: all .15s;
+    }
+    .nav-links a:hover { background: var(--bg-page); color: var(--text-primary); }
+    .nav-links a[aria-current="page"] {
+      color: var(--primary);
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 6px;
+    }
+    .nav-search {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 320px;
+      max-width: 360px;
+      min-width: 200px;
+      margin-inline-start: auto;
+    }
+    .nav-search-icon {
+      position: absolute;
+      inset-inline-end: 12px;
+      width: 16px;
+      height: 16px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .nav-search-input {
+      width: 100%;
+      font-family: inherit;
+      font-size: 14px;
+      padding: 8px 14px;
+      padding-inline-end: 36px;
+      background: var(--bg-page);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      transition: border-color .15s, background .15s;
+    }
+    .nav-search-input::placeholder { color: var(--text-muted); }
+    .nav-search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: var(--bg-card);
+    }
+
+    /* ─── PAGE HEADER ─── */
+    .page-header {
+      padding-inline: 32px;
+      padding-block: 14px 12px;
+      background: var(--bg-card);
+      border-block-end: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      position: relative;
+      z-index: 50;
+    }
+    .page-title-block { display: flex; align-items: center; gap: 12px; }
+    .page-icon {
+      width: 36px; height: 36px;
+      display: grid; place-items: center;
+      border-radius: var(--radius-md);
+      background: var(--primary-light);
+      color: var(--primary);
+      flex-shrink: 0;
+    }
+    .page-icon svg { width: 20px; height: 20px; }
+    .page-title { font-size: 18px; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+    .page-sub { font-size: 13px; color: var(--text-muted); }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-inline-start: auto;
+    }
+    .breadcrumb-item {
+      padding: 4px 10px;
+      background: var(--bg-page);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-weight: 500;
+      transition: all .15s;
+    }
+    .breadcrumb-item:hover { border-color: var(--primary); color: var(--primary); }
+    .breadcrumb-item.current {
+      background: var(--primary-light);
+      border-color: #BAE6FD;
+      color: var(--primary);
+      cursor: default;
+    }
+    .breadcrumb-item.current:hover { border-color: #BAE6FD; }
+    .breadcrumb-sep { color: var(--text-muted); font-size: 11px; }
+
+    /* ─── MAIN LAYOUT (canvas takes remaining viewport height via flex) ─── */
+    .main-layout {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      background: var(--bg-canvas);
+      overflow: hidden;
+    }
+
+    /* Subtle dot grid pattern */
+    .canvas-bg {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, #E2E8F0 1px, transparent 1px);
+      background-size: 24px 24px;
+      opacity: .5;
+      pointer-events: none;
+    }
+
+    /* SVG canvas */
+    #graph {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+    }
+    #graph:active { cursor: grabbing; }
+
+    /* ─── TOOLBAR ─── */
+    .toolbar {
+      position: absolute;
+      inset-block-start: 16px;
+      inset-inline-start: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 10;
+    }
+    .toolbar-group {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-md);
+      padding: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .tool-btn {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      transition: all .15s;
+    }
+    .tool-btn:hover { background: var(--bg-page); color: var(--primary); }
+    .tool-btn svg { width: 18px; height: 18px; }
+    .tool-divider { height: 1px; background: var(--border); margin: 2px 4px; }
+
+    /* ─── LEGEND (bottom inline-start) ─── */
+    .legend {
+      position: absolute;
+      inset-block-end: 16px;
+      inset-inline-start: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-md);
+      padding: 14px 16px;
+      min-width: 240px;
+      z-index: 10;
+    }
+    .legend-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-block-end: 10px;
+    }
+    .legend-section + .legend-section {
+      margin-block-start: 12px;
+      padding-block-start: 12px;
+      border-block-start: 1px solid var(--border);
+    }
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      padding-block: 3px;
+    }
+    .legend-row + .legend-row { margin-block-start: 0; }
+
+    .legend-line {
+      width: 28px;
+      height: 14px;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .legend-line::before {
+      content: '';
+      position: absolute;
+      inset-block-start: 50%;
+      inset-inline-start: 0;
+      width: 100%;
+      transform: translateY(-50%);
+    }
+    .legend-line.hierarchical::before { border-block-start: 1.5px solid var(--link-hierarchical); }
+    .legend-line.hierarchical::after {
+      content: '';
+      position: absolute;
+      inset-block-start: 50%;
+      inset-inline-end: 0;
+      width: 0; height: 0;
+      transform: translateY(-50%);
+      border-block-start: 4px solid transparent;
+      border-block-end: 4px solid transparent;
+      border-inline-end: 5px solid var(--link-hierarchical);
+    }
+    .legend-line.complementary::before { border-block-start: 1.5px solid var(--link-complementary); }
+    .legend-line.alternative::before { border-block-start: 1.5px dashed var(--link-alternative); }
+
+    .legend-node {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .legend-node.domain { background: var(--node-domain); }
+    .legend-node.topic { background: var(--node-topic); }
+    .legend-node.outcome { background: var(--node-outcome); width: 14px; height: 14px; }
+    .legend-node.indicator { background: var(--bg-card); border: 2px solid var(--node-indicator-stroke); width: 12px; height: 12px; }
+    .legend-node.method {
+      background: var(--node-method);
+      border: 1.5px dashed var(--node-method-stroke);
+      width: 10px; height: 10px;
+    }
+
+    /* ─── SIDE PANEL ─── */
+    .side-panel {
+      position: absolute;
+      inset-block-start: 0;
+      inset-inline-end: 0;
+      width: 380px;
+      height: 100%;
+      background: var(--bg-card);
+      border-inline-start: 1px solid var(--border);
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      transform: translateX(-100%);
+      transition: transform .3s ease;
+      z-index: 20;
+    }
+    .side-panel.open { transform: translateX(0); }
+
+    .panel-header {
+      padding: 20px 24px 16px;
+      border-block-end: 1px solid var(--border);
+      position: relative;
+    }
+    .panel-close {
+      position: absolute;
+      inset-block-start: 14px;
+      inset-inline-start: 14px;
+      width: 32px; height: 32px;
+      display: grid; place-items: center;
+      color: var(--text-muted);
+      border-radius: var(--radius-sm);
+    }
+    .panel-close:hover { background: var(--bg-page); color: var(--text-primary); }
+    .panel-type-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: var(--radius-full);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-block-end: 10px;
+    }
+    /* Panel badges — wireframe (intentionally not colorful) */
+    .panel-type-badge.domain    { background: #F1F5F9; color: #334155; }
+    .panel-type-badge.topic     { background: #F1F5F9; color: #475569; }
+    .panel-type-badge.outcome   { background: #F1F5F9; color: #64748B; }
+    .panel-type-badge.indicator { background: #F1F5F9; color: #334155; }
+    .panel-type-badge.method    { background: #F1F5F9; color: #475569; }
+
+    .panel-title {
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.25;
+      color: var(--text-primary);
+      margin-block-end: 4px;
+    }
+    .panel-meta {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+    }
+    .panel-section + .panel-section {
+      margin-block-start: 24px;
+      padding-block-start: 20px;
+      border-block-start: 1px solid var(--border);
+    }
+    .panel-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-block-end: 10px;
+    }
+    .panel-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+    .panel-stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .panel-stat {
+      background: var(--bg-page);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+    }
+    .panel-stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-block-end: 2px;
+    }
+    .panel-stat-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .relation-list { display: flex; flex-direction: column; gap: 6px; }
+    .relation-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      background: var(--bg-page);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all .15s;
+      width: 100%;
+      text-align: start;
+    }
+    .relation-item:hover {
+      background: var(--primary-light);
+      border-color: #BAE6FD;
+    }
+    .relation-line {
+      width: 24px; height: 12px;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .relation-line::before {
+      content: '';
+      position: absolute;
+      inset-block-start: 50%;
+      width: 100%;
+      transform: translateY(-50%);
+    }
+    /* Panel relation lines — wireframe (differentiation via line style only) */
+    .relation-line.hierarchical::before { border-block-start: 1.5px solid #94A3B8; }
+    .relation-line.complementary::before { border-block-start: 1.5px solid #475569; }
+    .relation-line.alternative::before { border-block-start: 1.5px dashed #94A3B8; }
+    .relation-name { flex: 1; font-weight: 500; }
+    .relation-arrow { color: var(--text-muted); font-size: 14px; }
+
+    .panel-footer {
+      padding: 16px 24px;
+      border-block-start: 1px solid var(--border);
+      background: var(--bg-page);
+    }
+    .btn-primary {
+      width: 100%;
+      padding: 10px 16px;
+      background: var(--primary);
+      color: var(--text-inverse);
+      font-weight: 600;
+      font-size: 14px;
+      border-radius: var(--radius-md);
+      transition: background .15s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary {
+      width: 100%;
+      padding: 10px 16px;
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 14px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      transition: all .15s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-block-start: 8px;
+    }
+    .btn-secondary:hover { background: var(--bg-page); border-color: var(--primary); }
+
+    /* ─── EMPTY STATE — small inline hint pointing to the top search ─── */
+    .empty-state {
+      position: absolute;
+      inset-block-start: 50%;
+      inset-inline-start: 50%;
+      transform: translate(50%, -50%);
+      text-align: center;
+      pointer-events: none;
+      z-index: 5;
+      transition: opacity .3s;
+    }
+    .empty-state.hidden { opacity: 0; }
+    .empty-state-hint {
+      font-size: 14px;
+      color: var(--text-muted);
+      max-width: 360px;
+    }
+    /* (search-empty-* styles removed — the centered search card is gone) */
+
+    .ss-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      width: 100%;
+      font-family: inherit;
+      text-align: start;
+      transition: background .12s;
+    }
+    .ss-item:hover, .ss-item:focus-visible {
+      background: var(--bg-page);
+      outline: none;
+    }
+    .ss-item-type {
+      flex-shrink: 0;
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      padding: 2px 8px;
+      border-radius: 999px;
+      color: #fff;
+      min-width: 56px;
+      text-align: center;
+    }
+    .ss-item-type.domain    { background: var(--node-domain); }
+    .ss-item-type.topic     { background: var(--node-topic); }
+    .ss-item-type.outcome   { background: var(--node-outcome); }
+    .ss-item-type.indicator { background: var(--text-secondary); }
+    .ss-item-type.method    { background: var(--text-muted); }
+    .ss-item-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ss-item-parent {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    /* ─── TOOLTIP ─── */
+    .node-tooltip {
+      position: absolute;
+      background: rgba(15, 23, 42, .95);
+      color: var(--text-inverse);
+      padding: 8px 12px;
+      border-radius: var(--radius-md);
+      font-size: 12px;
+      font-weight: 500;
+      pointer-events: none;
+      z-index: 30;
+      opacity: 0;
+      transition: opacity .15s;
+      box-shadow: var(--shadow-lg);
+      white-space: nowrap;
+      max-width: 280px;
+    }
+    .node-tooltip.visible { opacity: 1; }
+    .node-tooltip-title { font-weight: 600; }
+    .node-tooltip-meta { font-size: 11px; color: #CBD5E1; margin-block-start: 2px; }
+
+    .edge-tooltip {
+      position: absolute;
+      background: rgba(15, 23, 42, .95);
+      color: var(--text-inverse);
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 500;
+      pointer-events: none;
+      z-index: 30;
+      opacity: 0;
+      transition: opacity .15s;
+      box-shadow: var(--shadow-lg);
+      white-space: nowrap;
+    }
+    .edge-tooltip.visible { opacity: 1; }
+
+    /* ─── TOAST ─── */
+    .toast {
+      position: absolute;
+      inset-block-end: 24px;
+      inset-inline-start: 50%;
+      transform: translateX(50%) translateY(20px);
+      background: rgba(15, 23, 42, .95);
+      color: var(--text-inverse);
+      padding: 10px 18px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      z-index: 40;
+      opacity: 0;
+      transition: opacity .25s, transform .25s;
+    }
+    .toast.visible {
+      opacity: 1;
+      transform: translateX(50%) translateY(0);
+    }
+
+    /* ─── HELP HINT (bottom inline-end) ─── */
+    .help-hint {
+      position: absolute;
+      inset-block-end: 16px;
+      inset-inline-end: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      box-shadow: var(--shadow-md);
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      z-index: 10;
+    }
+    .help-hint-key {
+      font-family: monospace;
+      background: var(--bg-page);
+      border: 1px solid var(--border);
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .help-hint-item { display: flex; align-items: center; gap: 6px; }
+
+    /* SVG node styling */
+    .node-circle {
+      cursor: pointer;
+      transition: filter .2s, opacity .25s;
+    }
+    .node-circle:hover { filter: brightness(1.05); }
+    .node.disabled .node-circle {
+      opacity: .35;
+      cursor: not-allowed;
+    }
+    .node-label {
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 600;
+      pointer-events: none;
+      text-anchor: middle;
+      transition: opacity .25s;
+      paint-order: stroke fill;
+      stroke: white;
+      stroke-width: 3px;
+      stroke-linejoin: round;
+    }
+    .node.is-domain .node-label,
+    .node.is-topic .node-label { font-size: 13px; font-weight: 700; }
+    .node.is-method .node-label { font-size: 11px; }
+
+    .node-link {
+      fill: none;
+      transition: opacity .25s;
+    }
+    .node-link.hierarchical { stroke: var(--link-hierarchical); stroke-width: 1.4; }
+    .node-link.complementary { stroke: var(--link-complementary); stroke-width: 1.6; }
+    .node-link.alternative { stroke: var(--link-alternative); stroke-width: 1.6; stroke-dasharray: 5 4; }
+
+    .node.is-faded { opacity: .15; }
+    .node-link.is-faded { opacity: .08; }
+    .node.is-highlighted .node-circle { filter: drop-shadow(0 0 8px rgba(3,105,161,.4)); }
+    .node.is-selected .node-circle {
+      stroke: var(--primary) !important;
+      stroke-width: 3.5px !important;
+      filter: drop-shadow(0 0 0 3px rgba(3,105,161,.15));
+    }
+    .node.is-expanded .node-circle::after {
+      content: '';
+    }
+
+    /* The "expandable" indicator: small dot on bottom of node */
+    .expand-indicator {
+      fill: var(--primary);
+      stroke: white;
+      stroke-width: 2;
+    }
+    .expand-indicator-icon {
+      fill: white;
+      font-size: 10px;
+      font-weight: 800;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      pointer-events: none;
+    }
+
+    /* ─── SEARCH HEADER (top row, shown after a result is selected) ─── */
+    /* Mirrors search-results.html top row exactly. Hidden when in empty state. */
+    .search-header {
+      background: var(--bg-card);
+      border-block-end: 1px solid var(--border);
+      padding-block: 20px;
+      padding-inline: 32px;
+    }
+    .search-header[hidden] { display: none; }
+    .search-header-inner {
+      max-width: 1280px;
+      margin-inline: auto;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      padding: 6px 10px;
+      border-radius: var(--radius-md, 8px);
+      border: 1px solid var(--border);
+      background: transparent;
+      white-space: nowrap;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .back-btn:hover { background: var(--bg-page); color: var(--text-primary); border-color: var(--border-strong); }
+    .back-btn svg { transform: scaleX(-1); width: 16px; height: 16px; }
+    .search-field-wrap {
+      position: relative;
+      flex: 1;
+      max-width: 640px;
+    }
+    .search-field {
+      width: 100%;
+      box-sizing: border-box;
+      padding-block: 10px;
+      padding-inline-start: 42px;
+      padding-inline-end: 16px;
+      border: 1.5px solid var(--border-strong);
+      border-radius: 999px;
+      font-family: inherit;
+      font-size: 15px;
+      background: var(--bg-page);
+      outline: none;
+      color: var(--text-primary);
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .search-field:focus {
+      background: var(--bg-card);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(51,65,85,.1);
+    }
+    .search-field-icon {
+      position: absolute;
+      inset-block-start: 50%;
+      inset-inline-start: 14px;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    /* Top input's autocomplete dropdown — anchored to the wrap. Mirrors the
+       empty-state suggestions but positioned below the field. */
+    .search-top-suggestions {
+      position: absolute;
+      inset-block-start: calc(100% + 6px);
+      inset-inline: 0;
+      max-height: 320px;
+      overflow-y: auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 10px 28px rgba(15,23,42,.12), 0 2px 6px rgba(15,23,42,.06);
+      padding: 6px;
+      z-index: 60;
+    }
+    .search-top-suggestions[hidden] { display: none; }
+
+    /* main-layout uses flex:1 (see app-shell rules) — no manual height calc
+       needed. When search-header is shown, it pushes main-layout down via
+       flex flow, automatically. */
+
+    /* ─── VIEW TOGGLE (inline segmented control, inside search-header) ─── */
+    /* `inline-grid` with two `1fr` columns guarantees the two buttons are
+       equal width regardless of active state — both sized to the wider btn's
+       max-content. `margin-inline-start: auto` anchors the toggle to the end
+       of the row (LEFT in RTL). Identical to search-results. */
+    .view-toggle {
+      display: inline-grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      padding: 4px;
+      background: var(--bg-page, #F8FAFC);
+      border: 1px solid var(--border, #E2E8F0);
+      border-radius: 999px;
+      flex-shrink: 0;
+      margin-inline-start: auto;
+    }
+    .view-toggle-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 7px 16px;
+      background: transparent;
+      border: none;
+      border-radius: 999px;
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-secondary, #475569);
+      cursor: pointer;
+      transition: background .15s, color .15s;
+      text-decoration: none;
+      white-space: nowrap;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .view-toggle-btn:hover {
+      background: var(--bg-page, #F8FAFC);
+      color: var(--text-primary, #0F172A);
+    }
+    .view-toggle-btn.active,
+    .view-toggle-btn[aria-current="page"] {
+      background: var(--primary, #334155);
+      color: #fff;
+      cursor: default;
+    }
+    .view-toggle-btn.active:hover,
+    .view-toggle-btn[aria-current="page"]:hover {
+      background: var(--primary, #334155);
+      color: #fff;
+    }
+    .view-toggle-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+  <!-- ─── GLOBAL NAV ─── -->
+  <header class="global-nav" role="banner">
+    <nav class="global-nav-inner" aria-label="ניווט ראשי">
+      <a href="home.html" class="nav-logo"><svg class="nav-logo-img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 117 28" fill="none" role="img" aria-label="הג'וינט"><path d="M8.683 27.7342H2.46565L0 3.96457H5.82267L7.71625 22.7453H8.67857C12.7496 22.7453 14.2529 21.0424 14.2529 15.2552V8.95354H9.60984V3.96013H20.0756V15.2507C20.0756 24.7985 15.9691 27.7298 8.67857 27.7298L8.683 27.7342ZM20.5501 27.7342V22.7408H22.7275C24.5856 22.7408 25.0867 21.9071 25.0867 19.6898V8.95354H22.049V3.96013H30.9094V20.4792C30.9094 26.0269 29.5524 27.7298 24.9803 27.7298H20.5501V27.7342ZM33.6987 18.0667V3.96013H39.5569V18.0667H33.6987ZM42.5281 27.7342V3.96013H48.3862V27.7298H42.5281V27.7342ZM56.5681 0V4.11978L54.3198 11.2906H50.5681L51.7832 0H56.5681ZM57.5038 27.7342H56.3242V22.7408H57.5038C62.1114 22.7408 63.362 19.9293 62.7544 15.2507L61.9695 8.9491H57.8985V3.9557H66.7234L70.2977 27.7254H64.7234L63.974 22.457H63.7966C63.0471 25.6677 61.2955 27.7254 57.5083 27.7254L57.5038 27.7342ZM89.584 27.7342H83.7613V8.95354H71.0428V3.96013H89.584V27.7298V27.7342ZM76.9763 14.1421V27.7298H71.1182V14.1421H76.9763Z" fill="#3ABDDC"/><path d="M116.214 4.01074H94.1118V27.7095H116.214V4.01074Z" fill="#00C1DE"/><path d="M106.658 21.2671H103.256V21.9678H106.658V21.2671Z" fill="#fff"/><path d="M107.509 22.519H102.409V23.2197H107.509V22.519Z" fill="#fff"/><path d="M108.777 23.6973H101.127V24.3979H108.777V23.6973Z" fill="#fff"/><mask id="mask0_joint_logo" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="92" y="4" width="25" height="24"><path d="M116.209 4.01318H92.5146V27.7119H116.209V4.01318Z" fill="#fff"/></mask><g mask="url(#mask0_joint_logo)"><path d="M104.952 19.9261C101.945 19.9261 99.4575 17.7398 98.9786 14.8706H98.1626C98.646 18.1833 101.497 20.7288 104.952 20.7288C108.407 20.7288 111.254 18.1833 111.737 14.8706H110.921C110.442 17.7398 107.954 19.9261 104.948 19.9261" fill="#fff"/><path d="M105.504 9.27839C105.504 10.0988 105.264 10.4846 104.967 10.4846C104.67 10.4846 104.431 10.1121 104.431 9.27839C104.431 8.20077 104.967 7.32715 104.967 7.32715C104.967 7.32715 105.504 8.20077 105.504 9.27839Z" fill="#fff"/><path d="M99.1757 12.9356C99.1757 13.756 98.9363 14.1418 98.6391 14.1418C98.342 14.1418 98.1025 13.7649 98.1025 12.9356C98.1025 11.858 98.6391 10.9844 98.6391 10.9844C98.6391 10.9844 99.1757 11.858 99.1757 12.9356Z" fill="#fff"/><path d="M111.824 12.9185C111.824 13.7389 111.585 14.1247 111.288 14.1247C110.99 14.1247 110.751 13.7478 110.751 12.9185C110.751 11.8409 111.288 10.9673 111.288 10.9673C111.288 10.9673 111.824 11.8409 111.824 12.9185Z" fill="#fff"/><path d="M104.461 16.6443H104.847C105.441 16.6443 105.552 16.3339 105.552 15.3405V13.3538C105.552 12.4979 105.464 12.2097 104.781 12.2097H104.461V16.6443ZM103.663 11.54H104.954C106.248 11.54 106.355 11.9702 106.355 13.6554V15.376C106.355 16.8572 106.093 17.3228 104.825 17.3228H103.663V11.5445V11.54Z" fill="#fff"/><path d="M106.99 13.0099C106.99 12.2027 107.252 11.4888 108.343 11.4888C109.137 11.4888 109.505 11.8879 109.505 12.5398V13.1163H108.751V12.7172C108.751 12.3491 108.622 12.1185 108.285 12.1185C107.868 12.1185 107.788 12.4156 107.788 13.1118V15.9456C107.788 16.6241 108.006 16.7483 108.259 16.7483C108.556 16.7483 108.746 16.5398 108.746 16.0609V15.6618H109.5V16.3004C109.5 16.9079 109.252 17.3735 108.325 17.3735C107.318 17.3735 106.99 16.8369 106.99 15.9411V13.0187V13.0099Z" fill="#fff"/><path d="M102.891 11.54H102.089V15.9436C102.089 16.6221 101.871 16.7463 101.614 16.7463C101.317 16.7463 101.126 16.5379 101.126 16.0589V15.6598H100.373V16.2984C100.373 16.906 100.621 17.3716 101.548 17.3716C102.554 17.3716 102.887 16.835 102.887 15.9392V11.5445L102.891 11.54Z" fill="#fff"/><path d="M94.1125 23.7603H92.5205V27.7115H94.1125V23.7603Z" fill="#F8AE51"/><path d="M94.1125 19.814H92.5205V23.7652H94.1125V19.814Z" fill="#BD6095"/><path d="M94.1125 15.8613H92.5205V19.8126H94.1125V15.8613Z" fill="#E9485E"/><path d="M94.1125 7.96436H92.5205V11.9156H94.1125V7.96436Z" fill="#C5D984"/><path d="M94.1125 4.01074H92.5205V7.96201H94.1125V4.01074Z" fill="#00ABA3"/><path d="M94.1125 11.9106H92.5205V15.8619H94.1125V11.9106Z" fill="#0091CE"/></g></svg><span class="nav-logo-text">קטלוג מדדים לאומיים</span></a>
+    <!-- nav-search — restored, mirrors home.html and search-results.html.
+         The big in-page #searchTopInput that used to live in .search-header
+         has been removed. Single search affordance: the small nav field. -->
+    <form class="nav-search" role="search" action="search-results.html" method="get">
+      <svg class="nav-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="nav-search-input" type="search" name="q" placeholder="חיפוש מדד, תחום או מילת מפתח..." aria-label="חיפוש מדד">
+    </form>
+
+  </nav>
+  </header>
+
+  <!-- Hidden breadcrumb shell — JS may still reference #breadcrumb for path state.
+       The visible sub-header was removed for consistency with other screens. -->
+  <nav id="breadcrumb" hidden aria-hidden="true">
+    <span class="breadcrumb-item current" data-id="root">כל התחומים</span>
+  </nav>
+
+  <!-- ─── VIEW TOGGLE ROW ───
+       Previously the search-header held a big field + the view-toggle. The
+       field was removed — search now lives only in the global nav above. -->
+  <div class="search-header" id="searchHeader">
+    <div class="search-header-inner">
+      <!-- View toggle (cards / map). Map = active here. -->
+      <div class="view-toggle" role="tablist" aria-label="תצוגה">
+        <a class="view-toggle-btn" id="viewToggleCards" href="search-results.html" role="tab"
+           aria-label="עבור לתצוגת כרטיסיות">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+          </svg>
+          כרטיסיות
+        </a>
+        <button class="view-toggle-btn active" type="button" aria-current="page" aria-label="מפה סמנטית — נבחר">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="6" cy="18" r="3"/>
+            <line x1="6" y1="9" x2="6" y2="15"/><line x1="9" y1="6" x2="15" y2="18"/>
+          </svg>
+          מפה סמנטית
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── MAIN ─── -->
+  <main class="main-layout">
+    <div class="canvas-bg"></div>
+    <svg id="graph"></svg>
+
+    <!-- Empty state: small inline hint pointing the user to the top search.
+         The big centered search card is gone — the top search-header is the
+         single entry point, always visible. -->
+    <div class="empty-state" id="emptyState">
+      <div class="empty-state-hint">חפשו מדד, תחום או נושא בראש העמוד כדי לראות אותו במפה</div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-group">
+        <button class="tool-btn" id="zoomIn" title="הגדל">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+        <button class="tool-btn" id="zoomOut" title="הקטן">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+        <div class="tool-divider"></div>
+        <button class="tool-btn" id="zoomReset" title="התאם למסך">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="4 9 4 4 9 4"/>
+            <polyline points="20 9 20 4 15 4"/>
+            <polyline points="4 15 4 20 9 20"/>
+            <polyline points="20 15 20 20 15 20"/>
+          </svg>
+        </button>
+        <button class="tool-btn" id="resetGraph" title="התחל מחדש">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="1 4 1 10 7 10"/>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-section">
+        <div class="legend-title">סוגי צמתים</div>
+        <div class="legend-row"><span class="legend-node domain"></span>תחום חיים</div>
+        <div class="legend-row"><span class="legend-node topic"></span>נושא / תת-תחום</div>
+        <div class="legend-row"><span class="legend-node outcome"></span>תוצאה (Outcome)</div>
+        <div class="legend-row"><span class="legend-node indicator"></span>מדד</div>
+        <div class="legend-row"><span class="legend-node method"></span>מתודולוגיה</div>
+      </div>
+      <div class="legend-section">
+        <div class="legend-title">סוגי קשרים</div>
+        <div class="legend-row"><span class="legend-line hierarchical"></span>היררכי (Parent → Child)</div>
+        <div class="legend-row"><span class="legend-line complementary"></span>משלים</div>
+        <div class="legend-row"><span class="legend-line alternative"></span>חלופי</div>
+      </div>
+    </div>
+
+    <!-- Help hint -->
+    <div class="help-hint">
+      <div class="help-hint-item"><span class="help-hint-key">לחיצה</span>פתיחת קשרים</div>
+      <div class="help-hint-item"><span class="help-hint-key">דאבל-קליק</span>פתיחת כרטיס</div>
+      <div class="help-hint-item"><span class="help-hint-key">גלילה</span>זום</div>
+    </div>
+
+    <!-- Side panel -->
+    <aside class="side-panel" id="sidePanel">
+      <div class="panel-header">
+        <button class="panel-close" id="panelClose">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="6" y1="6" x2="18" y2="18"/>
+            <line x1="6" y1="18" x2="18" y2="6"/>
+          </svg>
+        </button>
+        <div id="panelTypeBadge" class="panel-type-badge domain">תחום חיים</div>
+        <h2 class="panel-title" id="panelTitle">—</h2>
+        <div class="panel-meta" id="panelMeta">—</div>
+      </div>
+      <div class="panel-body" id="panelBody"></div>
+      <div class="panel-footer" id="panelFooter"></div>
+    </aside>
+
+    <!-- Tooltip -->
+    <div class="node-tooltip" id="nodeTooltip"></div>
+    <div class="edge-tooltip" id="edgeTooltip"></div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+  </main>
+
+  <script>
+  /* ─────────────────────────────────────────────────
+     DATA — Catalog network
+     ───────────────────────────────────────────────── */
+  const DATA = {
+    nodes: [
+      // ─── Life domains (L1) ───
+      { id: 'health',   label: 'בריאות',           type: 'domain', active: true,
+        desc: 'תחום החיים המרכזי במלאי MVP. כולל קידום בריאות, בריאות הנפש, מערכת הבריאות ועוד.', counts:{topics:4, outcomes:14, indicators:48} },
+      { id: 'edu',      label: 'חינוך',            type: 'domain', active: false },
+      { id: 'welfare',  label: 'רווחה',            type: 'domain', active: false },
+      { id: 'employ',   label: 'תעסוקה ופרנסה',    type: 'domain', active: false },
+      { id: 'housing',  label: 'דיור',             type: 'domain', active: false },
+      { id: 'resilience', label: 'חוסן וקהילה',    type: 'domain', active: false },
+      { id: 'digital',  label: 'דיגיטל',           type: 'domain', active: false },
+      { id: 'sustain',  label: 'סביבה וקיימות',     type: 'domain', active: false },
+
+      // ─── Topics under בריאות (L2) ───
+      { id: 't.health-promotion', label: 'קידום בריאות',  type: 'topic', parent: 'health', active: true,
+        desc: 'מניעה ראשונית, חינוך לבריאות, ושינוי התנהגותי. בולט במיוחד באוכלוסיות במצבי סיכון.', counts:{outcomes:4, indicators:14} },
+      { id: 't.mental-health',    label: 'בריאות הנפש',  type: 'topic', parent: 'health', active: false },
+      { id: 't.health-system',    label: 'מערכת הבריאות', type: 'topic', parent: 'health', active: false },
+      { id: 't.community-health', label: 'בריאות בקהילה', type: 'topic', parent: 'health', active: false },
+
+      // ─── Outcomes under קידום בריאות (L3) ───
+      { id: 'o.nutrition',     label: 'תזונה',             type: 'outcome', parent: 't.health-promotion',
+        desc: 'שיפור המצב התזונתי ומניעת השמנה בקרב ילדים, נוער ומשפחותיהם.', counts:{indicators:4} },
+      { id: 'o.dental',        label: 'בריאות השן',        type: 'outcome', parent: 't.health-promotion',
+        desc: 'הפחתה בתחלואת השן בקרב ילדים ומשפחות.', counts:{indicators:3} },
+      { id: 'o.physical',      label: 'פעילות גופנית',     type: 'outcome', parent: 't.health-promotion',
+        desc: 'הגברת הפעילות הגופנית בקרב ילדים ובני נוער.', counts:{indicators:3} },
+      { id: 'o.environment',   label: 'סביבה תומכת בריאות', type: 'outcome', parent: 't.health-promotion',
+        desc: 'פיתוח סביבה תומכת בריאות על שלל היבטיה — תשתיות, נורמות, נגישות.', counts:{indicators:3} },
+
+      // ─── Indicators ───
+      // Nutrition
+      { id: 'i.bmi',         label: 'אחוז ילדים עם BMI > 30', type: 'indicator', parent: 'o.nutrition',
+        desc: 'אחוז הילדים בגיל בית-ספר שמדד מסת הגוף שלהם מעל הסף לאבחון השמנה.', counts:{methods:1, programs:7} },
+      { id: 'i.veggies',     label: 'צריכת ירקות יומית',     type: 'indicator', parent: 'o.nutrition',
+        desc: 'מספר מנות הירקות הממוצע ביום, בהתאם להמלצות משרד הבריאות.', counts:{methods:1, programs:5} },
+      { id: 'i.sugar',       label: 'צריכת משקאות ממותקים',   type: 'indicator', parent: 'o.nutrition',
+        desc: 'תדירות צריכה של משקאות ממותקים, מדד מנבא להשמנה ולסוכרת.', counts:{methods:1, programs:4} },
+      { id: 'i.knowledge',   label: 'ידע תזונתי',            type: 'indicator', parent: 'o.nutrition',
+        desc: 'מדד תפוקה — שיפור הידע התזונתי בקרב משתתפי תוכניות חינוך.', counts:{methods:1, programs:3} },
+      // Dental
+      { id: 'i.dmft',        label: 'אבחון עששת (DMFT)',     type: 'indicator', parent: 'o.dental',
+        desc: 'מדד תוצאה אובייקטיבי — סך השיניים הנגועות, החסרות והמטופלות.', counts:{methods:1, programs:6} },
+      { id: 'i.brushing',    label: 'שכיחות צחצוח שיניים',   type: 'indicator', parent: 'o.dental',
+        desc: 'מדד תפוקה / תוצאה התנהגותי. דיווח עצמי על תדירות צחצוח שיניים.', counts:{methods:1, programs:4} },
+      { id: 'i.dental-visit', label: 'ביקורים שנתיים אצל רופא שיניים', type: 'indicator', parent: 'o.dental',
+        desc: 'מדד מנבא — מספר ביקורי בדיקה שגרתיים אצל רופא שיניים בשנה.', counts:{methods:1, programs:3} },
+      // Physical
+      { id: 'i.activity-hours', label: 'שעות פעילות גופנית בשבוע', type: 'indicator', parent: 'o.physical',
+        desc: 'סך שעות פעילות גופנית מתונה-ערה במהלך שבוע ממוצע.', counts:{methods:2, programs:8} },
+      { id: 'i.who-rec',     label: 'אחוז ילדים העומדים בהמלצות WHO', type: 'indicator', parent: 'o.physical',
+        desc: 'אחוז הילדים שמבצעים 60+ דקות של פעילות גופנית מתונה-ערה ביום, בהתאם להמלצות ארגון הבריאות העולמי.', counts:{methods:1, programs:6} },
+      { id: 'i.steps',       label: 'צעדים יומיים',          type: 'indicator', parent: 'o.physical',
+        desc: 'מדד אובייקטיבי — מספר הצעדים היומי הממוצע, נמדד באמצעות accelerometer או pedometer.', counts:{methods:1, programs:5} },
+      // Environment
+      { id: 'i.facilities',  label: 'מתקני ספורט פעילים',    type: 'indicator', parent: 'o.environment',
+        desc: 'כמות מתקני ספורט ציבוריים זמינים ופעילים ברשות, יחס לאוכלוסייה.', counts:{methods:1, programs:5} },
+      { id: 'i.greenspace',  label: 'שטחים ירוקים נגישים',   type: 'indicator', parent: 'o.environment',
+        desc: 'אחוז התושבים החיים במרחק הליכה (10 דקות) משטח ירוק ציבורי.', counts:{methods:1, programs:4} },
+      { id: 'i.school-food', label: 'אכילה בריאה במוסדות חינוך', type: 'indicator', parent: 'o.environment',
+        desc: 'אחוז המוסדות החינוכיים המספקים מזון העומד בקריטריונים תזונתיים.', counts:{methods:1, programs:4} },
+
+      // ─── Methodologies ───
+      { id: 'm.eat26',       label: 'שאלון EAT-26',          type: 'method',
+        desc: 'שאלון מתוקף בינלאומית לזיהוי דפוסי אכילה לקויים. 26 פריטים, ניתן בעברית.' },
+      { id: 'm.bmi',         label: 'מדידה אנתרופומטרית',     type: 'method',
+        desc: 'מדידה ישירה של גובה ומשקל. סטנדרט זהב למדדי השמנה.' },
+      { id: 'm.dmft',        label: 'בדיקת DMFT',            type: 'method',
+        desc: 'בדיקה קלינית על-ידי רופא שיניים. סטנדרט WHO לאבחון עששת.' },
+      { id: 'm.who-steps',   label: 'WHO STEPS Survey',      type: 'method',
+        desc: 'פרוטוקול ניטור של גורמי סיכון למחלות לא-מדבקות. כולל פעילות גופנית, תזונה, אלכוהול.' },
+      { id: 'm.self-report', label: 'דיווח עצמי',            type: 'method',
+        desc: 'שאלון או יומן אישי. עלות נמוכה, אך פחות מדויק מתצפית או מדידה ישירה.' },
+      { id: 'm.observation', label: 'תצפית מובנית',          type: 'method',
+        desc: 'תצפית של חוקר/מורה לפי פרוטוקול קבוע. מתאים בעיקר במסגרות חינוך.' }
+    ],
+    links: [
+      // Hierarchical (parent → child) for active branch
+      { source: 'health',          target: 't.health-promotion', type: 'hierarchical' },
+      { source: 'health',          target: 't.mental-health',    type: 'hierarchical' },
+      { source: 'health',          target: 't.health-system',    type: 'hierarchical' },
+      { source: 'health',          target: 't.community-health', type: 'hierarchical' },
+
+      { source: 't.health-promotion', target: 'o.nutrition',     type: 'hierarchical' },
+      { source: 't.health-promotion', target: 'o.dental',        type: 'hierarchical' },
+      { source: 't.health-promotion', target: 'o.physical',      type: 'hierarchical' },
+      { source: 't.health-promotion', target: 'o.environment',   type: 'hierarchical' },
+
+      { source: 'o.nutrition',  target: 'i.bmi',       type: 'hierarchical' },
+      { source: 'o.nutrition',  target: 'i.veggies',   type: 'hierarchical' },
+      { source: 'o.nutrition',  target: 'i.sugar',     type: 'hierarchical' },
+      { source: 'o.nutrition',  target: 'i.knowledge', type: 'hierarchical' },
+
+      { source: 'o.dental',     target: 'i.dmft',         type: 'hierarchical' },
+      { source: 'o.dental',     target: 'i.brushing',     type: 'hierarchical' },
+      { source: 'o.dental',     target: 'i.dental-visit', type: 'hierarchical' },
+
+      { source: 'o.physical',   target: 'i.activity-hours', type: 'hierarchical' },
+      { source: 'o.physical',   target: 'i.who-rec',        type: 'hierarchical' },
+      { source: 'o.physical',   target: 'i.steps',          type: 'hierarchical' },
+
+      { source: 'o.environment', target: 'i.facilities',  type: 'hierarchical' },
+      { source: 'o.environment', target: 'i.greenspace',  type: 'hierarchical' },
+      { source: 'o.environment', target: 'i.school-food', type: 'hierarchical' },
+
+      // Indicator → method (hierarchical)
+      { source: 'i.bmi',          target: 'm.bmi',         type: 'hierarchical' },
+      { source: 'i.veggies',      target: 'm.eat26',       type: 'hierarchical' },
+      { source: 'i.sugar',        target: 'm.self-report', type: 'hierarchical' },
+      { source: 'i.knowledge',    target: 'm.self-report', type: 'hierarchical' },
+      { source: 'i.dmft',         target: 'm.dmft',        type: 'hierarchical' },
+      { source: 'i.brushing',     target: 'm.self-report', type: 'hierarchical' },
+      { source: 'i.dental-visit', target: 'm.self-report', type: 'hierarchical' },
+      { source: 'i.activity-hours', target: 'm.who-steps', type: 'hierarchical' },
+      { source: 'i.activity-hours', target: 'm.self-report', type: 'hierarchical' },
+      { source: 'i.who-rec',      target: 'm.who-steps',   type: 'hierarchical' },
+      { source: 'i.steps',        target: 'm.who-steps',   type: 'hierarchical' },
+      { source: 'i.facilities',   target: 'm.observation', type: 'hierarchical' },
+      { source: 'i.greenspace',   target: 'm.observation', type: 'hierarchical' },
+      { source: 'i.school-food',  target: 'm.observation', type: 'hierarchical' },
+
+      // Complementary cross-relationships (משלים) — same outcome or cross-outcome
+      { source: 'i.veggies',        target: 'i.knowledge',     type: 'complementary' },
+      { source: 'i.activity-hours', target: 'i.steps',         type: 'complementary' },
+      { source: 'i.facilities',     target: 'i.activity-hours', type: 'complementary' },
+      { source: 'i.greenspace',     target: 'i.steps',          type: 'complementary' },
+      { source: 'i.school-food',    target: 'i.veggies',        type: 'complementary' },
+
+      // Alternative — different ways to measure similar concept
+      { source: 'i.bmi',         target: 'i.sugar',          type: 'alternative' },
+      { source: 'i.who-rec',     target: 'i.activity-hours', type: 'alternative' },
+      { source: 'i.brushing',    target: 'i.dental-visit',   type: 'alternative' }
+    ]
+  };
+
+  /* ─────────────────────────────────────────────────
+     STATE
+     ───────────────────────────────────────────────── */
+  const STATE = {
+    expandedNodes: new Set(),     // node ids that have been clicked open
+    visibleNodeIds: new Set(),    // node ids currently rendered
+    selectedNodeId: null,
+    centerNodeId: null            // currently centered (pinned) node
+  };
+
+  /* ─────────────────────────────────────────────────
+     SETUP
+     ───────────────────────────────────────────────── */
+  const NODE_RADIUS = {
+    domain: 38,
+    topic: 30,
+    outcome: 24,
+    indicator: 18,
+    method: 14
+  };
+
+  const svg = d3.select('#graph');
+  const width = () => document.querySelector('.main-layout').clientWidth;
+  const height = () => document.querySelector('.main-layout').clientHeight;
+
+  let viewport = svg.append('g').attr('class','viewport');
+  let linkLayer = viewport.append('g').attr('class','link-layer');
+  let nodeLayer = viewport.append('g').attr('class','node-layer');
+
+  // Define arrow markers for hierarchical edges
+  svg.append('defs').html(`
+    <marker id="arrow-hier" viewBox="0 -5 10 10" refX="0" refY="0" markerWidth="6" markerHeight="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,-5 L10,0 L0,5" fill="${getCss('--link-hierarchical')}"/>
+    </marker>
+  `);
+
+  // Zoom & pan
+  const zoom = d3.zoom()
+    .scaleExtent([0.3, 3])
+    .on('zoom', (e) => viewport.attr('transform', e.transform));
+  svg.call(zoom);
+
+  /* ─────────────────────────────────────────────────
+     SIMULATION
+     ───────────────────────────────────────────────── */
+  const simulation = d3.forceSimulation()
+    .force('link', d3.forceLink().id(d => d.id).distance(d => {
+      if (d.type === 'complementary' || d.type === 'alternative') return 110;
+      const types = [d.source.type, d.target.type];
+      if (types.includes('domain')) return 130;
+      if (types.includes('topic')) return 110;
+      if (types.includes('outcome')) return 90;
+      return 75;
+    }).strength(d => d.type === 'hierarchical' ? 0.7 : 0.25))
+    .force('charge', d3.forceManyBody().strength(d => {
+      const r = NODE_RADIUS[d.type] || 20;
+      return -r * 12;
+    }))
+    .force('center', d3.forceCenter(width()/2, height()/2))
+    .force('x', d3.forceX(width()/2).strength(0.035))
+    .force('y', d3.forceY(height()/2).strength(0.05))
+    .force('collide', d3.forceCollide().radius(d => {
+      const r = NODE_RADIUS[d.type] || 20;
+      // Approximate label half-width so collisions respect the text, not just the circle
+      const labelHalfWidth = (d.label || '').length * 3.8;
+      return Math.max(r, labelHalfWidth) + 16;
+    }))
+    .alphaDecay(0.03);
+
+  /* ─────────────────────────────────────────────────
+     RENDER
+     ───────────────────────────────────────────────── */
+  function render() {
+    const visibleNodes = DATA.nodes.filter(n => STATE.visibleNodeIds.has(n.id));
+    const visibleNodeIds = new Set(visibleNodes.map(n => n.id));
+    const visibleLinks = DATA.links.filter(l => {
+      const src = typeof l.source === 'string' ? l.source : l.source.id;
+      const tgt = typeof l.target === 'string' ? l.target : l.target.id;
+      return visibleNodeIds.has(src) && visibleNodeIds.has(tgt);
+    });
+
+    // ─── Links ───
+    const link = linkLayer.selectAll('.node-link').data(visibleLinks, d => {
+      const s = typeof d.source === 'string' ? d.source : d.source.id;
+      const t = typeof d.target === 'string' ? d.target : d.target.id;
+      return `${s}|${t}|${d.type}`;
+    });
+    link.exit().remove();
+    const linkEnter = link.enter().append('line')
+      .attr('class', d => `node-link ${d.type}`)
+      .attr('marker-end', d => d.type === 'hierarchical' ? 'url(#arrow-hier)' : null)
+      .on('mouseenter', (e, d) => showEdgeTooltip(e, d))
+      .on('mouseleave', hideEdgeTooltip);
+
+    // ─── Nodes ───
+    const node = nodeLayer.selectAll('.node').data(visibleNodes, d => d.id);
+    node.exit().remove();
+
+    const nodeEnter = node.enter().append('g')
+      .attr('class', d => `node is-${d.type} ${d.active === false ? 'disabled' : ''}`)
+      .on('mouseenter', onNodeMouseEnter)
+      .on('mouseleave', onNodeMouseLeave)
+      .on('click', onNodeClick)
+      .on('dblclick', onNodeDblClick)
+      .call(d3.drag()
+        .on('start', dragStart)
+        .on('drag', dragMove)
+        .on('end', dragEnd));
+
+    // Circle
+    nodeEnter.append('circle')
+      .attr('class','node-circle')
+      .attr('r', d => NODE_RADIUS[d.type])
+      .attr('fill', d => nodeFill(d))
+      .attr('stroke', d => nodeStroke(d))
+      .attr('stroke-width', d => nodeStrokeWidth(d))
+      .attr('stroke-dasharray', d => d.type === 'method' ? '4 3' : null);
+
+    // Label
+    nodeEnter.append('text')
+      .attr('class','node-label')
+      .attr('dy', d => NODE_RADIUS[d.type] + 16)
+      .attr('fill', 'var(--text-primary)')
+      .text(d => d.label);
+
+    // Expand indicator (small "+" on bottom-end of expandable nodes)
+    nodeEnter.filter(isExpandable).append('circle')
+      .attr('class','expand-indicator')
+      .attr('r', 7)
+      .attr('cx', d => Math.cos(-Math.PI/4) * NODE_RADIUS[d.type])
+      .attr('cy', d => Math.sin(-Math.PI/4) * NODE_RADIUS[d.type]);
+    nodeEnter.filter(isExpandable).append('text')
+      .attr('class','expand-indicator-icon')
+      .attr('x', d => Math.cos(-Math.PI/4) * NODE_RADIUS[d.type])
+      .attr('y', d => Math.sin(-Math.PI/4) * NODE_RADIUS[d.type] + 1)
+      .text('+');
+
+    // Update existing
+    const allNodes = nodeEnter.merge(node);
+    allNodes.classed('is-expanded', d => STATE.expandedNodes.has(d.id));
+    allNodes.classed('is-selected', d => STATE.selectedNodeId === d.id);
+    // Update expand indicators on existing nodes
+    allNodes.selectAll('.expand-indicator, .expand-indicator-icon')
+      .style('display', d => isExpandable(d) ? null : 'none');
+
+    // ─── Simulation ───
+    simulation.nodes(visibleNodes).on('tick', () => {
+      linkLayer.selectAll('.node-link')
+        .attr('x1', d => d.source.x)
+        .attr('y1', d => d.source.y)
+        .attr('x2', d => endX(d))
+        .attr('y2', d => endY(d));
+      nodeLayer.selectAll('.node')
+        .attr('transform', d => `translate(${d.x},${d.y})`);
+    });
+    simulation.force('link').links(visibleLinks);
+    simulation.alpha(0.6).restart();
+
+    // Update breadcrumb
+    updateBreadcrumb();
+
+    // Toggle empty-state hint visibility (hidden when results are present).
+    const showResults = STATE.expandedNodes.size > 0 || STATE.selectedNodeId !== null;
+    document.getElementById('emptyState').classList.toggle('hidden', showResults);
+
+    // search-header is ALWAYS visible — never hidden. Just update the top
+    // input's value + cards-link's href when there's a centered node.
+    if (showResults && STATE.centerNodeId) {
+      const center = DATA.nodes.find(n => n.id === STATE.centerNodeId);
+      if (center) {
+        const topInp = document.getElementById('searchTopInput');
+        if (topInp && document.activeElement !== topInp) topInp.value = center.label;
+        /* Cards link carries BOTH q (search text) and node (id) so that the
+           reverse trip (cards → map) lands back on the SAME node. */
+        const cardsLink = document.getElementById('viewToggleCards');
+        if (cardsLink) {
+          const p = new URLSearchParams();
+          p.set('q', center.label);
+          p.set('node', center.id);
+          cardsLink.href = 'search-results.html?' + p.toString();
+        }
+      }
+    }
+  }
+
+  // Stop the line slightly before the target circle so arrows don't overlap
+  function endX(d) {
+    const dx = d.target.x - d.source.x;
+    const dy = d.target.y - d.source.y;
+    const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+    const r = (NODE_RADIUS[d.target.type] || 20) + (d.type === 'hierarchical' ? 4 : 0);
+    return d.target.x - (dx/dist) * r;
+  }
+  function endY(d) {
+    const dx = d.target.x - d.source.x;
+    const dy = d.target.y - d.source.y;
+    const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+    const r = (NODE_RADIUS[d.target.type] || 20) + (d.type === 'hierarchical' ? 4 : 0);
+    return d.target.y - (dy/dist) * r;
+  }
+
+  function nodeFill(d) {
+    if (d.type === 'domain')   return getCss('--node-domain');
+    if (d.type === 'topic')    return getCss('--node-topic');
+    if (d.type === 'outcome')  return getCss('--node-outcome');
+    if (d.type === 'indicator')return getCss('--node-indicator');
+    if (d.type === 'method')   return getCss('--node-method');
+    return '#999';
+  }
+  function nodeStroke(d) {
+    if (d.type === 'indicator') return getCss('--node-indicator-stroke');
+    if (d.type === 'method')    return getCss('--node-method-stroke');
+    if (d.type === 'domain' || d.type === 'topic' || d.type === 'outcome') return 'rgba(255,255,255,.5)';
+    return 'transparent';
+  }
+  function nodeStrokeWidth(d) {
+    if (d.type === 'indicator') return 2;
+    if (d.type === 'method') return 1.5;
+    return 2;
+  }
+  function isExpandable(d) {
+    if (d.active === false) return false;
+    if (STATE.expandedNodes.has(d.id)) return false;
+    // expandable if it has any unexpanded children in DATA
+    const children = DATA.links.filter(l => {
+      const s = typeof l.source === 'string' ? l.source : l.source.id;
+      return s === d.id && l.type === 'hierarchical';
+    });
+    if (children.length === 0) return false;
+    // are any children invisible?
+    return children.some(l => {
+      const t = typeof l.target === 'string' ? l.target : l.target.id;
+      return !STATE.visibleNodeIds.has(t);
+    });
+  }
+
+  function getCss(varName) {
+    return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+  }
+
+  /* ─────────────────────────────────────────────────
+     INTERACTIONS
+     ───────────────────────────────────────────────── */
+  function onNodeClick(e, d) {
+    e.stopPropagation();
+    if (d.active === false) {
+      showToast('תחום זה יתווסף בגרסאות עתידיות');
+      return;
+    }
+    // Open panel first so centerNode can account for its width
+    selectNode(d);
+    centerNode(d);
+    expandNode(d);
+  }
+
+  // Width of the side panel — must match CSS .side-panel width
+  const PANEL_WIDTH = 380;
+
+  function visibleCenterX() {
+    const panelOpen = document.getElementById('sidePanel').classList.contains('open');
+    if (!panelOpen) return width() / 2;
+    // Panel is anchored to inline-end (left in RTL): visible canvas runs from x=PANEL_WIDTH to x=width()
+    return (PANEL_WIDTH + width()) / 2;
+  }
+
+  function centerNode(d) {
+    // Release any previously pinned center node so it can flow freely
+    if (STATE.centerNodeId && STATE.centerNodeId !== d.id) {
+      const prev = DATA.nodes.find(n => n.id === STATE.centerNodeId);
+      if (prev) { prev.fx = null; prev.fy = null; }
+    }
+    STATE.centerNodeId = d.id;
+
+    // Pin the clicked node to the visible center (excluding the panel area when open)
+    d.fx = visibleCenterX();
+    d.fy = height() / 2;
+
+    // Animate the viewport back to identity so the user always sees the centered node
+    svg.transition().duration(550).call(zoom.transform, d3.zoomIdentity);
+
+    simulation.alpha(0.7).restart();
+  }
+
+  function onNodeDblClick(e, d) {
+    e.stopPropagation();
+    if (d.active === false) return;
+    if (d.type === 'indicator') {
+      showToast('פותח כרטיס מדד...');
+      setTimeout(() => window.location.href = 'indicator-card.html', 700);
+    } else {
+      selectNode(d);
+    }
+  }
+
+  function expandNode(d) {
+    if (d.active === false) return;
+    if (STATE.expandedNodes.has(d.id)) return;
+
+    STATE.expandedNodes.add(d.id);
+    STATE.centerNodeId = d.id;
+
+    // Find hierarchical children
+    const childIds = DATA.links
+      .filter(l => normId(l.source) === d.id && l.type === 'hierarchical')
+      .map(l => normId(l.target));
+
+    const newChildren = childIds
+      .map(id => DATA.nodes.find(n => n.id === id))
+      .filter(c => c && !STATE.visibleNodeIds.has(c.id));
+
+    // Pre-position new children in a radial pattern around the parent
+    // This avoids the "explosion from origin" chaos when many appear at once
+    const parentX = (d.x !== undefined && d.x !== null) ? d.x : visibleCenterX();
+    const parentY = (d.y !== undefined && d.y !== null) ? d.y : height() / 2;
+
+    const childType = newChildren[0]?.type;
+    const radius = childType === 'topic' ? 170 :
+                   childType === 'outcome' ? 140 :
+                   childType === 'indicator' ? 110 :
+                   childType === 'method' ? 80 : 130;
+
+    // Spread children around a 270° arc (top to almost-full-circle), starting from top
+    const arcSpan = newChildren.length > 1 ? Math.PI * 1.6 : 0;
+    const startAngle = -Math.PI / 2 - arcSpan / 2;
+
+    newChildren.forEach((c, i) => {
+      const angle = newChildren.length === 1
+        ? -Math.PI / 2
+        : startAngle + (i / (newChildren.length - 1)) * arcSpan;
+      c.x = parentX + Math.cos(angle) * radius;
+      c.y = parentY + Math.sin(angle) * radius;
+      // Brief soft pin so the simulation respects the chosen position for one tick
+      c.vx = 0; c.vy = 0;
+      STATE.visibleNodeIds.add(c.id);
+    });
+
+    render();
+  }
+
+  function selectNode(d) {
+    STATE.selectedNodeId = d.id;
+    populateSidePanel(d);
+    document.getElementById('sidePanel').classList.add('open');
+    nodeLayer.selectAll('.node').classed('is-selected', n => n.id === d.id);
+  }
+
+  function deselectNode() {
+    STATE.selectedNodeId = null;
+    document.getElementById('sidePanel').classList.remove('open');
+    nodeLayer.selectAll('.node').classed('is-selected', false);
+    // Re-center the pinned node now that the panel is closed
+    if (STATE.centerNodeId) {
+      const c = DATA.nodes.find(n => n.id === STATE.centerNodeId);
+      if (c) {
+        c.fx = visibleCenterX();
+        c.fy = height() / 2;
+        simulation.alpha(0.4).restart();
+      }
+    }
+  }
+
+  function onNodeMouseEnter(e, d) {
+    if (d.active === false) {
+      showNodeTooltip(e, `<div class="node-tooltip-title">${d.label}</div><div class="node-tooltip-meta">תחום נעול ב-MVP</div>`);
+      return;
+    }
+    showNodeTooltip(e, nodeTooltipHtml(d));
+    highlightNeighbors(d);
+  }
+  function onNodeMouseLeave() {
+    hideNodeTooltip();
+    clearHighlight();
+  }
+  function highlightNeighbors(d) {
+    const neighborIds = new Set([d.id]);
+    DATA.links.forEach(l => {
+      const s = typeof l.source === 'string' ? l.source : l.source.id;
+      const t = typeof l.target === 'string' ? l.target : l.target.id;
+      if (s === d.id) neighborIds.add(t);
+      if (t === d.id) neighborIds.add(s);
+    });
+    nodeLayer.selectAll('.node').classed('is-faded', n => !neighborIds.has(n.id));
+    nodeLayer.selectAll('.node').classed('is-highlighted', n => n.id === d.id);
+    linkLayer.selectAll('.node-link').classed('is-faded', l => {
+      const s = typeof l.source === 'string' ? l.source : l.source.id;
+      const t = typeof l.target === 'string' ? l.target : l.target.id;
+      return !(s === d.id || t === d.id);
+    });
+  }
+  function clearHighlight() {
+    nodeLayer.selectAll('.node').classed('is-faded', false).classed('is-highlighted', false);
+    linkLayer.selectAll('.node-link').classed('is-faded', false);
+  }
+
+  function nodeTooltipHtml(d) {
+    const typeLabel = {
+      domain: 'תחום חיים',
+      topic: 'נושא / תת-תחום',
+      outcome: 'תוצאה',
+      indicator: 'מדד',
+      method: 'מתודולוגיה'
+    }[d.type] || '';
+    const conn = DATA.links.filter(l => {
+      const s = typeof l.source === 'string' ? l.source : l.source.id;
+      const t = typeof l.target === 'string' ? l.target : l.target.id;
+      return s === d.id || t === d.id;
+    }).length;
+    let extra = `${typeLabel} · ${conn} קשרים`;
+    if (isExpandable(d)) extra += ' · לחיצה לפתיחה';
+    return `<div class="node-tooltip-title">${d.label}</div><div class="node-tooltip-meta">${extra}</div>`;
+  }
+
+  /* Drag */
+  function dragStart(e, d) {
+    if (!e.active) simulation.alphaTarget(0.3).restart();
+    d.fx = d.x; d.fy = d.y;
+  }
+  function dragMove(e, d) { d.fx = e.x; d.fy = e.y; }
+  function dragEnd(e, d) {
+    if (!e.active) simulation.alphaTarget(0);
+    d.fx = null; d.fy = null;
+  }
+
+  /* ─────────────────────────────────────────────────
+     SIDE PANEL
+     ───────────────────────────────────────────────── */
+  function populateSidePanel(d) {
+    const typeLabels = {
+      domain: 'תחום חיים', topic: 'נושא / תת-תחום',
+      outcome: 'תוצאה (Outcome)', indicator: 'מדד', method: 'מתודולוגיה'
+    };
+    const badge = document.getElementById('panelTypeBadge');
+    badge.className = `panel-type-badge ${d.type}`;
+    badge.textContent = typeLabels[d.type] || '';
+
+    document.getElementById('panelTitle').textContent = d.label;
+    document.getElementById('panelMeta').textContent = breadcrumbPath(d).join(' › ');
+
+    const body = document.getElementById('panelBody');
+    body.innerHTML = '';
+
+    // Description
+    if (d.desc) {
+      const sec = el('div','panel-section');
+      sec.append(el('div','panel-section-title','תיאור'));
+      sec.append(el('p','panel-desc',d.desc));
+      body.append(sec);
+    }
+
+    // Stats
+    if (d.counts) {
+      const sec = el('div','panel-section');
+      sec.append(el('div','panel-section-title','סטטיסטיקה'));
+      const grid = el('div','panel-stat-grid');
+      Object.entries(d.counts).forEach(([k,v]) => {
+        const labels = { topics:'נושאים', outcomes:'תוצאות', indicators:'מדדים', methods:'מתודולוגיות', programs:'תוכניות' };
+        const stat = el('div','panel-stat');
+        stat.append(el('div','panel-stat-label', labels[k] || k));
+        stat.append(el('div','panel-stat-value', v));
+        grid.append(stat);
+      });
+      sec.append(grid);
+      body.append(sec);
+    }
+
+    // Relations
+    const incomingHier  = DATA.links.filter(l => normId(l.target) === d.id && l.type === 'hierarchical');
+    const outgoingHier  = DATA.links.filter(l => normId(l.source) === d.id && l.type === 'hierarchical');
+    const complementary = DATA.links.filter(l => (normId(l.source) === d.id || normId(l.target) === d.id) && l.type === 'complementary');
+    const alternative   = DATA.links.filter(l => (normId(l.source) === d.id || normId(l.target) === d.id) && l.type === 'alternative');
+
+    if (outgoingHier.length || incomingHier.length || complementary.length || alternative.length) {
+      const sec = el('div','panel-section');
+      sec.append(el('div','panel-section-title','קשרים סמנטיים'));
+      const list = el('div','relation-list');
+      [...incomingHier, ...outgoingHier, ...complementary, ...alternative].forEach(l => {
+        const isOutgoing = normId(l.source) === d.id;
+        const otherId = isOutgoing ? normId(l.target) : normId(l.source);
+        const other = DATA.nodes.find(n => n.id === otherId);
+        if (!other) return;
+        const item = el('button','relation-item');
+        const line = el('span', `relation-line ${l.type}`);
+        const name = el('span','relation-name', other.label);
+        const arrow = el('span','relation-arrow', l.type === 'hierarchical' ? (isOutgoing ? '↓' : '↑') : '↔');
+        item.append(line, name, arrow);
+        item.addEventListener('click', () => {
+          STATE.visibleNodeIds.add(other.id);
+          render();
+          centerNode(other);
+          selectNode(other);
+        });
+        list.append(item);
+      });
+      sec.append(list);
+      body.append(sec);
+    }
+
+    // Footer actions
+    const footer = document.getElementById('panelFooter');
+    footer.innerHTML = '';
+    if (d.type === 'indicator') {
+      const btn = el('button','btn-primary','פתח כרטיס מדד מלא');
+      btn.addEventListener('click', () => window.location.href = 'indicator-card.html');
+      footer.append(btn);
+    }
+    if (isExpandable(d)) {
+      const btn = el('button','btn-primary','הרחב צמתים מקושרים');
+      btn.addEventListener('click', () => expandNode(d));
+      footer.append(btn);
+    }
+    if (d.active === false) {
+      const btn = el('button','btn-secondary','בקש להוסיף לתחום זה');
+      btn.disabled = true;
+      btn.style.opacity = '.5';
+      btn.style.cursor = 'not-allowed';
+      footer.append(btn);
+    }
+  }
+
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function normId(ref) { return typeof ref === 'string' ? ref : ref.id; }
+
+  function breadcrumbPath(d) {
+    const path = [d.label];
+    let curr = d;
+    while (curr.parent) {
+      const p = DATA.nodes.find(n => n.id === curr.parent);
+      if (!p) break;
+      path.unshift(p.label);
+      curr = p;
+    }
+    return path;
+  }
+
+  /* ─────────────────────────────────────────────────
+     BREADCRUMB
+     ───────────────────────────────────────────────── */
+  function updateBreadcrumb() {
+    const bc = document.getElementById('breadcrumb');
+    bc.innerHTML = '';
+    const items = [{ id: 'root', label: 'כל התחומים' }];
+    if (STATE.selectedNodeId) {
+      const sel = DATA.nodes.find(n => n.id === STATE.selectedNodeId);
+      const path = [];
+      let c = sel;
+      while (c) {
+        path.unshift({ id: c.id, label: c.label });
+        c = c.parent ? DATA.nodes.find(n => n.id === c.parent) : null;
+      }
+      items.push(...path);
+    } else if (STATE.centerNodeId) {
+      const center = DATA.nodes.find(n => n.id === STATE.centerNodeId);
+      const path = [];
+      let c = center;
+      while (c) {
+        path.unshift({ id: c.id, label: c.label });
+        c = c.parent ? DATA.nodes.find(n => n.id === c.parent) : null;
+      }
+      items.push(...path);
+    }
+    items.forEach((it, i) => {
+      const span = document.createElement('span');
+      span.className = 'breadcrumb-item' + (i === items.length - 1 ? ' current' : '');
+      span.textContent = it.label;
+      span.dataset.id = it.id;
+      span.addEventListener('click', () => {
+        if (it.id === 'root') {
+          resetGraph();
+        } else {
+          const node = DATA.nodes.find(n => n.id === it.id);
+          if (node) selectNode(node);
+        }
+      });
+      bc.append(span);
+      if (i < items.length - 1) {
+        const sep = document.createElement('span');
+        sep.className = 'breadcrumb-sep';
+        sep.textContent = '›';
+        bc.append(sep);
+      }
+    });
+  }
+
+  /* ─────────────────────────────────────────────────
+     TOOLTIPS / TOAST
+     ───────────────────────────────────────────────── */
+  const tooltip = document.getElementById('nodeTooltip');
+  const edgeTooltip = document.getElementById('edgeTooltip');
+  const toast = document.getElementById('toast');
+
+  function showNodeTooltip(e, html) {
+    tooltip.innerHTML = html;
+    tooltip.style.left = (e.clientX + 14) + 'px';
+    tooltip.style.top = (e.clientY + 14) + 'px';
+    tooltip.classList.add('visible');
+  }
+  function hideNodeTooltip() { tooltip.classList.remove('visible'); }
+
+  function showEdgeTooltip(e, l) {
+    const labels = { hierarchical: 'קשר היררכי', complementary: 'קשר משלים', alternative: 'מדדים חלופיים' };
+    edgeTooltip.textContent = labels[l.type] || '';
+    edgeTooltip.style.left = (e.clientX + 14) + 'px';
+    edgeTooltip.style.top = (e.clientY + 14) + 'px';
+    edgeTooltip.classList.add('visible');
+  }
+  function hideEdgeTooltip() { edgeTooltip.classList.remove('visible'); }
+
+  let toastTimer;
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('visible');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('visible'), 2200);
+  }
+
+  /* ─────────────────────────────────────────────────
+     CONTROLS
+     ───────────────────────────────────────────────── */
+  document.getElementById('zoomIn').addEventListener('click', () => svg.transition().call(zoom.scaleBy, 1.3));
+  document.getElementById('zoomOut').addEventListener('click', () => svg.transition().call(zoom.scaleBy, 0.77));
+  document.getElementById('zoomReset').addEventListener('click', () => svg.transition().call(zoom.transform, d3.zoomIdentity));
+  document.getElementById('resetGraph').addEventListener('click', resetGraph);
+  document.getElementById('panelClose').addEventListener('click', deselectNode);
+
+  // Click on canvas (not on a node) deselects
+  svg.on('click', () => deselectNode());
+
+  function resetGraph() {
+    // Release any pinned positions
+    DATA.nodes.forEach(n => { n.fx = null; n.fy = null; });
+    STATE.expandedNodes.clear();
+    STATE.visibleNodeIds.clear();
+    STATE.selectedNodeId = null;
+    STATE.centerNodeId = null;
+    document.getElementById('sidePanel').classList.remove('open');
+
+    // Blank canvas — top header's search field is the entry point.
+    render();
+    svg.transition().call(zoom.transform, d3.zoomIdentity);
+    /* Clear & focus the top search input so user can re-search */
+    const topInp = document.getElementById('searchTopInput');
+    if (topInp) { topInp.value = ''; topInp.focus(); }
+    const topSugg = document.getElementById('searchTopSuggestions');
+    if (topSugg) topSugg.hidden = true;
+  }
+
+  /* ─────────────────────────────────────────────────
+     SEARCH-FIRST EMPTY STATE
+     ─────────────────────────────────────────────────
+     Input → filter DATA.nodes by label match → show top N as autocomplete.
+     Click suggestion → call centerOnSearchResult() to populate graph centered
+     on that node + its immediate neighbors (parent and children). */
+  const TYPE_LABEL = {
+    domain: 'תחום',
+    topic: 'נושא',
+    outcome: 'תוצאה',
+    indicator: 'מדד',
+    method: 'מתודולוגיה'
+  };
+  const MAX_SUGGESTIONS = 8;
+
+  function nodeParentLabel(node) {
+    if (!node.parent) return '';
+    const p = DATA.nodes.find(n => n.id === node.parent);
+    return p ? p.label : '';
+  }
+
+  function searchNodes(q) {
+    const needle = (q || '').trim();
+    if (!needle) return [];
+    /* Case-insensitive, simple includes. Hebrew naturally case-insensitive,
+       so toLowerCase mostly affects mixed Hebrew/English/digits. */
+    const lc = needle.toLowerCase();
+    const matches = DATA.nodes.filter(n => {
+      if ((n.label || '').toLowerCase().includes(lc)) return true;
+      if ((n.desc  || '').toLowerCase().includes(lc)) return true;
+      return false;
+    });
+    /* Rank: exact label match first, then label-starts-with, then label-contains, then desc-only. */
+    matches.sort((a, b) => {
+      const aL = (a.label || '').toLowerCase();
+      const bL = (b.label || '').toLowerCase();
+      const score = (lab) => lab === lc ? 0 : lab.startsWith(lc) ? 1 : lab.includes(lc) ? 2 : 3;
+      return score(aL) - score(bL);
+    });
+    return matches.slice(0, MAX_SUGGESTIONS);
+  }
+
+  function showSuggestions(results) {
+    const box = document.getElementById('searchEmptySuggestions');
+    box.textContent = '';
+    if (results.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'search-empty-empty';
+      empty.textContent = 'אין תוצאות תואמות. נסו מילה אחרת.';
+      box.appendChild(empty);
+      box.hidden = false;
+      return;
+    }
+    results.forEach(node => {
+      const btn = document.createElement('button');
+      btn.className = 'ss-item';
+      btn.type = 'button';
+      btn.setAttribute('role', 'option');
+      btn.setAttribute('data-node-id', node.id);
+      const typeChip = document.createElement('span');
+      typeChip.className = 'ss-item-type ' + node.type;
+      typeChip.textContent = TYPE_LABEL[node.type] || node.type;
+      const label = document.createElement('span');
+      label.className = 'ss-item-label';
+      label.textContent = node.label;
+      btn.appendChild(typeChip);
+      btn.appendChild(label);
+      const parentLabel = nodeParentLabel(node);
+      if (parentLabel) {
+        const parent = document.createElement('span');
+        parent.className = 'ss-item-parent';
+        parent.textContent = parentLabel;
+        btn.appendChild(parent);
+      }
+      btn.addEventListener('click', () => centerOnSearchResult(node));
+      box.appendChild(btn);
+    });
+    box.hidden = false;
+  }
+  function hideSuggestions() {
+    const box = document.getElementById('searchEmptySuggestions');
+    if (box) box.hidden = true;
+  }
+
+  /* Wire input events. Two inputs share the same searchNodes logic but render
+     into separate dropdown containers (empty-state uses #searchEmptySuggestions,
+     top-header uses #searchTopSuggestions). */
+  function showSuggestionsIn(container, results) {
+    container.textContent = '';
+    if (results.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'search-empty-empty';
+      empty.textContent = 'אין תוצאות תואמות. נסו מילה אחרת.';
+      container.appendChild(empty);
+      container.hidden = false;
+      return;
+    }
+    results.forEach(node => {
+      const btn = document.createElement('button');
+      btn.className = 'ss-item';
+      btn.type = 'button';
+      btn.setAttribute('role', 'option');
+      btn.setAttribute('data-node-id', node.id);
+      const typeChip = document.createElement('span');
+      typeChip.className = 'ss-item-type ' + node.type;
+      typeChip.textContent = TYPE_LABEL[node.type] || node.type;
+      const label = document.createElement('span');
+      label.className = 'ss-item-label';
+      label.textContent = node.label;
+      btn.appendChild(typeChip);
+      btn.appendChild(label);
+      const parentLabel = nodeParentLabel(node);
+      if (parentLabel) {
+        const parent = document.createElement('span');
+        parent.className = 'ss-item-parent';
+        parent.textContent = parentLabel;
+        btn.appendChild(parent);
+      }
+      btn.addEventListener('click', () => centerOnSearchResult(node));
+      container.appendChild(btn);
+    });
+    container.hidden = false;
+  }
+
+  function wireSearchInput(inputId, dropdownId, wrapSelector) {
+    const input = document.getElementById(inputId);
+    const dropdown = document.getElementById(dropdownId);
+    if (!input || !dropdown) return;
+    input.addEventListener('input', () => {
+      const results = searchNodes(input.value);
+      if (!input.value.trim()) dropdown.hidden = true;
+      else showSuggestionsIn(dropdown, results);
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { dropdown.hidden = true; }
+      if (e.key === 'Enter') {
+        const first = dropdown.querySelector('.ss-item');
+        if (first) first.click();
+      }
+    });
+    /* Hide on outside click (relative to this input's wrap). */
+    document.addEventListener('click', (e) => {
+      const wrap = input.closest(wrapSelector);
+      if (wrap && !wrap.contains(e.target)) dropdown.hidden = true;
+    });
+  }
+  /* Original empty-state input: keep existing #searchEmptySuggestions logic. */
+  wireSearchInput('searchEmptyInput', 'searchEmptySuggestions', '.search-empty-field-wrap');
+  /* New top-header input: same behavior, different anchor + dropdown. */
+  wireSearchInput('searchTopInput',   'searchTopSuggestions',   '.search-field-wrap');
+
+  /* Center-on-search: clear state, place chosen node at center, add its
+     direct neighbors (links in either direction) so the user sees context. */
+  function centerOnSearchResult(node) {
+    DATA.nodes.forEach(n => { n.fx = null; n.fy = null; });
+    STATE.expandedNodes.clear();
+    STATE.visibleNodeIds.clear();
+    STATE.selectedNodeId = null;
+
+    /* Pin the chosen node to the visual center BEFORE rendering — this
+       prevents the force simulation from re-arranging it during the first
+       frames. We release the pin after a short settle (in centerNode()). */
+    node.x = width() / 2;
+    node.y = height() / 2;
+    node.fx = width() / 2;
+    node.fy = height() / 2;
+    STATE.visibleNodeIds.add(node.id);
+    STATE.centerNodeId = node.id;
+
+    /* Add direct neighbors via links (both directions) */
+    DATA.links.forEach(l => {
+      const s = typeof l.source === 'string' ? l.source : l.source.id;
+      const t = typeof l.target === 'string' ? l.target : l.target.id;
+      if (s === node.id) STATE.visibleNodeIds.add(t);
+      else if (t === node.id) STATE.visibleNodeIds.add(s);
+    });
+
+    /* Mark chosen node as expanded so the "+" icon on it switches to "−" */
+    STATE.expandedNodes.add(node.id);
+
+    /* Hide the empty state explicitly (render() will also do this based on
+       STATE.expandedNodes.size > 0, but we hide early to feel snappy) */
+    document.getElementById('emptyState').classList.add('hidden');
+    hideSuggestions();
+
+    render();
+
+    /* Release the center pin after the simulation settles a bit, so the
+       graph can rearrange naturally with chosen node still roughly centered. */
+    setTimeout(() => { node.fx = null; node.fy = null; }, 600);
+  }
+
+  /* ─────────────────────────────────────────────────
+     SEARCH-RESULTS GRAPH VIEW
+     ─────────────────────────────────────────────────
+     The cards page and the map page are TWO VIEWS of the SAME result set.
+     When the user arrives here via ?q= from search-results.html (or via the
+     view-toggle), we render the same 6 indicators the cards page shows — as
+     a graph. The health-tree (BMI, nutrition, dental ...) is a separate
+     dataset used for "browse the catalog" interactions; here we view results.
+
+     SEARCH_RESULTS mirrors SEARCH_INDICATORS in search-results.html. Treat
+     this as a duplicated source of truth for the prototype — same convention
+     as TAGS_REGISTRY (per CLAUDE.md). */
+  const SEARCH_RESULTS = [
+    { id:'card-1', name:'מדד עוני ילדים ונוער',       domain:'welfare',    snippet:'מודד את שיעור בני הנוער (12–18) החיים בעוני לפי קו העוני הלאומי.' },
+    { id:'card-2', name:'שיעור נשירה מהמערכת החינוכית', domain:'edu',        snippet:'אחוז בני נוער (12–18) שנשרו ממסגרת חינוכית מוכרת.' },
+    { id:'card-3', name:'תחושת שייכות חברתית',          domain:'social',     snippet:'מדד מורכב של תחושת חיבור לקהילה, למוסדות, ולמעגלים חברתיים.' },
+    { id:'card-4', name:'מדד חוסן משפחתי',              domain:'resilience', snippet:'מדד מורכב של יכולת המשפחה לגייס משאבים ולהתמודד עם לחצים.' },
+    { id:'card-5', name:'שיעור תעסוקת בני נוער',        domain:'employ',     snippet:'אחוז בני הנוער (16–22) המועסקים בתעסוקה חלקית או מלאה.' },
+    { id:'card-6', name:'ניידות כלכלית בין-דורית',      domain:'welfare',    snippet:'מידת השינוי במצב הכלכלי של ילדים לעומת הוריהם.' }
+  ];
+
+  /* One-time DATA enrichment. Reuses existing domain nodes (welfare/edu/employ/
+     resilience already exist as `active: false`) and adds `social`. Then adds
+     6 result-indicator nodes (id prefixed with `r.` to avoid collision with
+     the health-tree indicator ids), each linked hierarchically to its domain. */
+  let searchResultsInjected = false;
+  function injectSearchResultsIntoData() {
+    if (searchResultsInjected) return;
+    const DOMAIN_LABEL = {
+      welfare:    'רווחה כלכלית',
+      edu:        'חינוך',
+      social:     'רווחה חברתית',
+      resilience: 'חוסן קהילתי',
+      employ:     'תעסוקה'
+    };
+    const usedDomains = new Set(SEARCH_RESULTS.map(r => r.domain));
+    usedDomains.forEach(domId => {
+      let dn = DATA.nodes.find(n => n.id === domId);
+      if (!dn) {
+        /* `social` doesn't exist in the health-tree DATA — create it now. */
+        DATA.nodes.push({
+          id: domId, label: DOMAIN_LABEL[domId], type: 'domain', active: true,
+          desc: 'תחום חיים: ' + DOMAIN_LABEL[domId] + '.'
+        });
+      } else {
+        /* Activate the domain so it renders in full color (not faded). */
+        dn.active = true;
+      }
+    });
+    SEARCH_RESULTS.forEach(r => {
+      const nodeId = 'r.' + r.id;
+      if (DATA.nodes.some(n => n.id === nodeId)) return;
+      DATA.nodes.push({
+        id: nodeId, label: r.name, type: 'indicator', parent: r.domain,
+        desc: r.snippet, counts: { methods: 1, programs: 3 }
+      });
+      DATA.links.push({ source: r.domain, target: nodeId, type: 'hierarchical' });
+    });
+    /* Add complementary links between same-domain result indicators so the
+       graph has some lateral structure beyond pure parent-child trees. */
+    const byDomain = {};
+    SEARCH_RESULTS.forEach(r => {
+      (byDomain[r.domain] = byDomain[r.domain] || []).push('r.' + r.id);
+    });
+    Object.values(byDomain).forEach(ids => {
+      for (let i = 0; i < ids.length - 1; i++) {
+        DATA.links.push({ source: ids[i], target: ids[i+1], type: 'complementary' });
+      }
+    });
+    searchResultsInjected = true;
+  }
+
+  /* Render the full result set as a graph: all 5 used domains + all 6 result
+     indicators, centered on the best-matching indicator by query (or the
+     first one if no query). Mirrors centerOnSearchResult's lifecycle. */
+  function showSearchResultsGraph(query) {
+    injectSearchResultsIntoData();
+    DATA.nodes.forEach(n => { n.fx = null; n.fy = null; });
+    STATE.expandedNodes.clear();
+    STATE.visibleNodeIds.clear();
+    STATE.selectedNodeId = null;
+
+    const usedDomains = new Set(SEARCH_RESULTS.map(r => r.domain));
+    usedDomains.forEach(d => {
+      STATE.visibleNodeIds.add(d);
+      /* Mark domain as expanded so it doesn't show the "+" expand affordance
+         (its children are already visible). */
+      STATE.expandedNodes.add(d);
+    });
+    SEARCH_RESULTS.forEach(r => STATE.visibleNodeIds.add('r.' + r.id));
+
+    /* Pick best match — exact > startsWith > includes (name or snippet) > first. */
+    let center = null;
+    const lc = (query || '').trim().toLowerCase();
+    if (lc) {
+      const score = (r) => {
+        const n = (r.name || '').toLowerCase();
+        const s = (r.snippet || '').toLowerCase();
+        if (n === lc) return 0;
+        if (n.startsWith(lc)) return 1;
+        if (n.includes(lc)) return 2;
+        if (s.includes(lc)) return 3;
+        return 99;
+      };
+      const sorted = SEARCH_RESULTS.slice().sort((a,b) => score(a) - score(b));
+      if (score(sorted[0]) < 99) {
+        center = DATA.nodes.find(n => n.id === 'r.' + sorted[0].id);
+      }
+    }
+    if (!center) center = DATA.nodes.find(n => n.id === 'r.' + SEARCH_RESULTS[0].id);
+
+    if (center) {
+      center.x = width() / 2;
+      center.y = height() / 2;
+      center.fx = width() / 2;
+      center.fy = height() / 2;
+      STATE.centerNodeId = center.id;
+    }
+    document.getElementById('emptyState').classList.add('hidden');
+    hideSuggestions();
+    render();
+    if (center) setTimeout(() => { center.fx = null; center.fy = null; }, 600);
+  }
+
+  // Initial: blank canvas + focused search field.
+  // Deep-link support:
+  //   ?node=<id>  → center on that specific node (precise round-trip).
+  //   ?q=<text>   → show the search-results graph (the SAME 6 result
+  //                 indicators the cards page shows), centered on the
+  //                 best-matching one. Map = "another view of the results".
+  resetGraph();
+  (function deepLinkFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const nodeId = params.get('node');
+    if (nodeId) {
+      /* First try health-tree (existing catalog) match — supports deep-links
+         like ?node=i.bmi from indicator-card.html. */
+      let node = DATA.nodes.find(n => n.id === nodeId);
+      if (!node) {
+        /* Not in health-tree: maybe it's a search-result indicator (r.card-N).
+           Inject results data and try again. */
+        injectSearchResultsIntoData();
+        node = DATA.nodes.find(n => n.id === nodeId);
+      }
+      if (node) {
+        const topInp = document.getElementById('searchTopInput');
+        if (topInp) topInp.value = node.label;
+        /* For result-indicators we need the full result graph visible so the
+           user has context (siblings + their domain parent). */
+        if (nodeId.startsWith('r.')) {
+          setTimeout(() => {
+            showSearchResultsGraph('');
+            /* Re-center on the requested specific node. */
+            centerNode(node);
+            selectNode(node);
+          }, 50);
+        } else {
+          setTimeout(() => centerOnSearchResult(node), 50);
+        }
+        return;
+      }
+    }
+    const q = params.get('q');
+    if (q) {
+      /* Mirror the search-sync.js rule: when ?from=browse is set, the q
+         value is a SUB-DOMAIN drilled into, not a search the user typed.
+         Don't reflect it inside the search field (breadcrumb owns context). */
+      const fromBrowse = params.get('from') === 'browse';
+      if (!fromBrowse) {
+        const topInp = document.getElementById('searchTopInput');
+        if (topInp) topInp.value = q;
+      }
+      /* ALWAYS render the search-results graph when arriving with ?q= —
+         the cards page and the map page MUST display the same result set.
+         The query just picks which result node sits at the center. */
+      setTimeout(() => showSearchResultsGraph(q), 50);
+    }
+  })();
+
+  // Resize
+  window.addEventListener('resize', () => {
+    simulation.force('center', d3.forceCenter(width()/2, height()/2));
+    if (STATE.centerNodeId) {
+      const c = DATA.nodes.find(n => n.id === STATE.centerNodeId);
+      if (c) { c.fx = width()/2; c.fy = height()/2; }
+    }
+    simulation.alpha(0.3).restart();
+  });
+  </script>
+
+<script src="assets/search-sync.js?v=2"></script>
+<script src="assets/ai-fab.js?v=4"></script>
+</body>
+</html>

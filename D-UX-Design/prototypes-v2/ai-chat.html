@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>שיחה — קטלוג מדדים חברתיים</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* ─── DESIGN TOKENS ─── */
+    :root {
+      --font: 'Heebo', system-ui, sans-serif;
+      --primary:        #334155;
+      --primary-hover:  #1e293b;
+      --primary-light:  #E2E8F0;
+      --bg-page:        #F8FAFC;
+      --bg-card:        #FFFFFF;
+      --bg-canvas:      #FAFBFC;
+      --bg-chat:        #F1F5F9;
+      --text-primary:   #0F172A;
+      --text-secondary: #475569;
+      --text-muted:     #64748B;
+      --border:         #E2E8F0;
+      --border-strong:  #CBD5E1;
+      --radius-sm:   4px;
+      --radius-md:   8px;
+      --radius-lg:   12px;
+      --radius-xl:   16px;
+      --radius-full: 9999px;
+      --shadow-sm: 0 1px 2px rgba(15,23,42,.04);
+      --shadow-md: 0 4px 12px rgba(15,23,42,.06);
+      --shadow-lg: 0 12px 32px rgba(15,23,42,.08);
+      --d-health:   #DC2626;
+      --d-edu:      #2563EB;
+      --d-welfare:  #059669;
+      --d-employ:   #D97706;
+    }
+
+    /* ─── RESET ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: var(--font);
+      background: var(--bg-page);
+      color: var(--text-primary);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      flex-direction: column;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+    ul { list-style: none; }
+    input, textarea { font-family: inherit; }
+
+    /* ─── GLOBAL NAV (identical across screens) ─── */
+    .global-nav {
+      position: sticky; inset-block-start: 0; z-index: 100;
+      background: var(--bg-card);
+      border-block-end: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      flex-shrink: 0;
+    }
+    .global-nav-inner {
+      max-width: 1280px; margin-inline: auto;
+      padding-inline: 32px; padding-block: 14px;
+      display: flex; align-items: center; gap: 24px;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 17px; font-weight: 700; color: var(--primary);
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .nav-logo-img { height: 18px; width: auto; display: block; }
+    .nav-logo-text { font-weight: 700; color: var(--primary); }
+    .nav-links { display: flex; gap: 4px; }
+    .nav-links a {
+      font-size: 14px; font-weight: 500; color: var(--text-secondary);
+      padding: 6px 12px; border-radius: var(--radius-md);
+      transition: all .15s;
+    }
+    .nav-links a:hover { background: var(--bg-page); color: var(--text-primary); }
+    .nav-links a[aria-current="page"] {
+      color: var(--primary);
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 6px;
+    }
+    .nav-search {
+      position: relative; display: flex; align-items: center;
+      width: 320px; max-width: 360px; min-width: 200px;
+      margin-inline-start: auto;
+    }
+    .nav-search-icon {
+      position: absolute; inset-inline-end: 12px;
+      width: 16px; height: 16px;
+      color: var(--text-muted); pointer-events: none;
+    }
+    .nav-search-input {
+      width: 100%; font-family: inherit; font-size: 14px;
+      padding: 8px 14px; padding-inline-end: 36px;
+      background: var(--bg-page);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      transition: border-color .15s, background .15s;
+    }
+    .nav-search-input::placeholder { color: var(--text-muted); }
+    .nav-search-input:focus {
+      outline: none; border-color: var(--primary); background: var(--bg-card);
+    }
+
+    /* ─── CHAT LAYOUT (two panes) ─── */
+    .chat-layout {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      max-width: 1440px;
+      width: 100%;
+      margin-inline: auto;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    /* ─── CHAT PANE (right side in RTL) ─── */
+    .chat-pane {
+      display: flex; flex-direction: column;
+      background: var(--bg-card);
+      border-inline-end: 1px solid var(--border);
+      min-height: 0;
+    }
+    .chat-pane-header {
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 16px 20px;
+      border-block-end: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+    .chat-pane-title {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 15px; font-weight: 700; color: var(--text-primary);
+    }
+    .chat-pane-title-icon {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: grid; place-items: center;
+      background: var(--primary); color: #fff;
+      font-size: 12px; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .chat-pane-title-text { display: flex; flex-direction: column; gap: 2px; line-height: 1.2; }
+    .chat-pane-title-text small { font-size: 11px; font-weight: 500; color: var(--text-muted); }
+    .chat-pane-clear {
+      font-size: 12px; font-weight: 600; color: var(--text-secondary);
+      padding: 6px 10px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      transition: all .15s;
+    }
+    .chat-pane-clear:hover {
+      color: var(--primary); border-color: var(--primary); background: var(--bg-page);
+    }
+
+    .chat-messages {
+      flex: 1; overflow-y: auto;
+      padding: 20px;
+      display: flex; flex-direction: column; gap: 16px;
+      background: var(--bg-chat);
+    }
+
+    .ai-msg { display: flex; gap: 10px; align-items: flex-start; }
+    .ai-msg-avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      display: grid; place-items: center;
+      font-size: 11px; font-weight: 700; flex-shrink: 0;
+    }
+    .ai-msg.user .ai-msg-avatar { background: var(--border-strong); color: var(--text-primary); }
+    .ai-msg.bot .ai-msg-avatar { background: var(--primary); color: #fff; }
+    .ai-msg-bubble {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 12px 14px;
+      font-size: 14px; line-height: 1.65;
+      color: var(--text-primary);
+      box-shadow: var(--shadow-sm);
+      flex: 1; min-width: 0;
+    }
+    .ai-msg.user .ai-msg-bubble {
+      background: var(--primary-light);
+      border-color: var(--border-strong);
+    }
+    .ai-msg-bubble p { margin-block-end: 8px; }
+    .ai-msg-bubble p:last-child { margin-block-end: 0; }
+    .ai-msg-bubble strong { font-weight: 700; color: var(--text-primary); }
+
+    .ai-msg-pointer {
+      display: inline-flex; align-items: center; gap: 4px;
+      margin-block-start: 8px;
+      font-size: 12.5px; font-weight: 600; color: var(--primary);
+      padding: 4px 10px;
+      background: var(--primary-light);
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-strong);
+    }
+    .ai-msg-pointer:hover { background: var(--bg-card); }
+
+    .quick-replies {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      margin-block-start: 10px;
+    }
+    .quick-reply {
+      font-size: 12.5px; font-weight: 600; color: var(--text-secondary);
+      padding: 5px 11px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-full);
+      background: var(--bg-card);
+      transition: all .15s;
+    }
+    .quick-reply:hover {
+      color: var(--primary); border-color: var(--primary); background: var(--primary-light);
+    }
+
+    .ai-typing { display: inline-flex; gap: 4px; padding-block: 4px; }
+    .ai-typing span {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--text-muted);
+      animation: ai-blink 1.2s infinite both;
+    }
+    .ai-typing span:nth-child(2) { animation-delay: .2s; }
+    .ai-typing span:nth-child(3) { animation-delay: .4s; }
+    @keyframes ai-blink { 0%,80%,100%{opacity:.25} 40%{opacity:1} }
+
+    /* Composer */
+    .chat-composer {
+      flex-shrink: 0;
+      padding: 14px 20px 18px;
+      background: var(--bg-card);
+      border-block-start: 1px solid var(--border);
+    }
+    .chat-composer-wrap {
+      background: var(--bg-card);
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      padding: 10px 12px 8px;
+      box-shadow: var(--shadow-sm);
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .chat-composer-wrap:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(51,65,85,.10);
+    }
+    .chat-composer-input {
+      width: 100%;
+      border: none; outline: none; background: transparent;
+      font-size: 14px; line-height: 1.55;
+      color: var(--text-primary);
+      resize: none;
+      min-height: 40px; max-height: 120px;
+    }
+    .chat-composer-input::placeholder { color: var(--text-muted); }
+    /* The .chat-composer-wrap:focus-within ring already indicates focus —
+       suppress the global :focus-visible outline on the inner textarea. */
+    .chat-composer-input:focus-visible { outline: none; }
+    .chat-composer-bottom {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-block-start: 6px;
+    }
+    .chat-composer-hint { font-size: 11px; color: var(--text-muted); }
+    .chat-composer-send {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--primary); color: #fff;
+      display: grid; place-items: center;
+      transition: background .15s, transform .15s;
+    }
+    .chat-composer-send:hover { background: var(--primary-hover); }
+    .chat-composer-send:active { transform: scale(.94); }
+    .chat-composer-send svg { width: 16px; height: 16px; }
+
+    /* ─── RESULTS PANE (left side in RTL) ─── */
+    .results-pane {
+      display: flex; flex-direction: column;
+      background: var(--bg-page);
+      min-height: 0;
+    }
+    .results-pane-header {
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px;
+      padding: 16px 24px;
+      background: var(--bg-card);
+      border-block-end: 1px solid var(--border);
+    }
+    .results-pane-title { display: flex; flex-direction: column; gap: 2px; line-height: 1.2; }
+    .results-pane-title h2 { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+    .results-pane-title small { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+    .results-pane-title strong { color: var(--primary); font-weight: 700; }
+
+    .results-tabs {
+      display: flex; gap: 2px;
+      background: var(--bg-page);
+      padding: 3px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+    }
+    .results-tab {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12.5px; font-weight: 600; color: var(--text-secondary);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      transition: all .15s;
+    }
+    .results-tab svg { width: 14px; height: 14px; }
+    .results-tab:hover { color: var(--primary); }
+    .results-tab[aria-selected="true"] {
+      background: var(--bg-card); color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .results-content {
+      flex: 1; overflow-y: auto;
+      padding: 24px;
+    }
+    .results-view[hidden] { display: none; }
+
+    .results-cards {
+      display: flex; flex-direction: column; gap: 14px;
+      max-width: 760px; margin-inline: auto;
+    }
+    .results-card {
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 18px 22px;
+      transition: border-color .15s, box-shadow .15s, transform .15s;
+      animation: card-in .35s ease-out;
+    }
+    .results-card:hover {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+    @keyframes card-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .results-card-top {
+      display: flex; align-items: flex-start; gap: 10px;
+      margin-block-end: 10px;
+    }
+    .results-card-badges {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      flex: 1;
+    }
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 11px; font-weight: 600;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-strong);
+      background: var(--bg-page);
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+    .badge-type-outcome { color: var(--d-welfare); border-color: var(--d-welfare); background: #ECFDF5; }
+    .badge-type-output  { color: var(--d-edu);     border-color: var(--d-edu);     background: #EFF6FF; }
+    .badge-type-context { color: var(--d-employ);  border-color: var(--d-employ);  background: #FFFBEB; }
+    .badge-domain {
+      color: var(--domain-color, var(--text-secondary));
+      border-color: var(--domain-color, var(--border-strong));
+      background: color-mix(in srgb, var(--domain-color, #CBD5E1) 12%, #fff);
+    }
+    .badge-new { color: #fff; background: var(--primary); border-color: var(--primary); }
+
+    .results-card-add {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 12px; font-weight: 600; color: var(--text-secondary);
+      padding: 5px 10px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-full);
+      background: var(--bg-card);
+      flex-shrink: 0;
+      transition: all .15s;
+    }
+    .results-card-add svg { width: 13px; height: 13px; }
+    .results-card-add:hover {
+      color: var(--primary); border-color: var(--primary); background: var(--primary-light);
+    }
+    .results-card-add.added {
+      color: #fff; background: var(--primary); border-color: var(--primary);
+    }
+
+    .results-card-title {
+      display: block;
+      font-size: 16px; font-weight: 700;
+      color: var(--text-primary);
+      margin-block-end: 6px;
+    }
+    .results-card-title:hover { color: var(--primary); text-decoration: underline; }
+    .results-card-snippet {
+      font-size: 13.5px; line-height: 1.65;
+      color: var(--text-secondary);
+      margin-block-end: 12px;
+    }
+    .results-card-rationale {
+      background: var(--bg-page);
+      border-inline-start: 3px solid var(--primary);
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      margin-block-end: 12px;
+    }
+    .results-card-rationale-label {
+      font-size: 11px; font-weight: 700; color: var(--primary);
+      margin-block-end: 4px;
+    }
+    .results-card-rationale-text {
+      font-size: 13px; line-height: 1.55;
+      color: var(--text-primary);
+    }
+    .results-card-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-block-start: 12px;
+      border-block-start: 1px solid var(--border);
+    }
+    .results-card-open {
+      font-size: 13px; font-weight: 600; color: var(--primary);
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+    .results-card-open svg { width: 14px; height: 14px; }
+    .results-card-open:hover { text-decoration: underline; }
+    .results-card-meta { display: flex; gap: 12px; font-size: 12px; color: var(--text-muted); }
+    .results-card-meta-item { display: inline-flex; align-items: center; gap: 4px; }
+    .results-card-meta-item svg { width: 13px; height: 13px; }
+
+    /* ─── COMPARISON TRAY (identical to search-results, sticky to pane bottom) ─── */
+    .comparison-tray {
+      flex-shrink: 0;
+      background: #0F172A;
+      border-block-start: 3px solid var(--primary);
+      box-shadow: 0 -4px 24px rgba(0,0,0,.25);
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .3s cubic-bezier(.4,0,.2,1);
+    }
+    .comparison-tray.visible {
+      max-height: 200px;
+    }
+    .comparison-tray-inner {
+      padding-inline: 24px;
+      padding-block: 14px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .tray-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,.7);
+      white-space: nowrap;
+    }
+    .tray-items {
+      display: flex;
+      gap: 10px;
+      flex: 1;
+      min-width: 0;
+      overflow-x: auto;
+    }
+    .tray-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: var(--radius-md);
+      padding: 6px 10px;
+      min-width: 140px;
+      flex-shrink: 0;
+    }
+    .tray-item-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: #fff;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tray-item-remove {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,.5);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      padding: 0;
+      display: flex;
+    }
+    .tray-item-remove:hover { color: #fff; }
+    .tray-slot-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,.04);
+      border: 1px dashed rgba(255,255,255,.2);
+      border-radius: var(--radius-md);
+      padding: 6px 16px;
+      min-width: 120px;
+      font-size: 12px;
+      color: rgba(255,255,255,.35);
+      flex-shrink: 0;
+    }
+    .tray-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .tray-compare-btn {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 8px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: background .15s;
+      white-space: nowrap;
+    }
+    .tray-compare-btn:hover { background: var(--primary-hover); }
+    .tray-compare-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .tray-clear-btn {
+      background: none;
+      border: 1px solid rgba(255,255,255,.2);
+      color: rgba(255,255,255,.6);
+      border-radius: var(--radius-md);
+      padding: 8px 14px;
+      font-size: 13px;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .tray-clear-btn:hover { border-color: rgba(255,255,255,.5); color: #fff; }
+
+    /* Selected card indicator (matches search-results) */
+    .results-card.in-comparison {
+      border-color: var(--primary);
+      background: #F0F9FF;
+    }
+
+    /* ─── MAP VIEW ─── */
+    .results-map {
+      max-width: 760px; margin-inline: auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      min-height: 480px;
+      position: relative;
+    }
+    .results-map-svg {
+      width: 100%;
+      height: 460px;
+      display: block;
+    }
+    .map-node-circle { cursor: pointer; transition: filter .15s; }
+    .map-node-circle:hover { filter: brightness(1.06); }
+    .map-node-label {
+      font-family: var(--font);
+      font-size: 12px; font-weight: 600;
+      fill: var(--text-primary);
+      pointer-events: none;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+    .map-node-label-white { fill: #fff; }
+    .map-link { stroke: var(--border-strong); stroke-width: 1.5; fill: none; }
+    .map-link.highlight { stroke: var(--primary); stroke-width: 2; }
+
+    .results-map-legend {
+      display: flex; flex-wrap: wrap; gap: 14px;
+      margin-block-start: 14px;
+      padding-block-start: 14px;
+      border-block-start: 1px solid var(--border);
+      font-size: 12px; color: var(--text-secondary);
+    }
+    .results-map-legend-item { display: inline-flex; align-items: center; gap: 6px; }
+    .results-map-legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    .results-map-link-open {
+      position: absolute;
+      inset-block-start: 18px; inset-inline-end: 18px;
+      font-size: 12.5px; font-weight: 600; color: var(--primary);
+      padding: 6px 12px;
+      border: 1px solid var(--primary);
+      border-radius: var(--radius-md);
+      background: var(--bg-card);
+      transition: all .15s;
+    }
+    .results-map-link-open:hover { background: var(--primary); color: #fff; }
+
+    .icon { width: 16px; height: 16px; flex-shrink: 0; }
+    :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 2px; }
+
+    @media (max-width: 880px) {
+      .chat-layout { grid-template-columns: 1fr; }
+      .chat-pane { border-inline-end: none; border-block-end: 1px solid var(--border); max-height: 50vh; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ NAV ══════════════ -->
+<header class="global-nav" role="banner">
+  <nav class="global-nav-inner" aria-label="ניווט ראשי">
+    <a href="home.html" class="nav-logo"><svg class="nav-logo-img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 117 28" fill="none" role="img" aria-label="הג'וינט"><path d="M8.683 27.7342H2.46565L0 3.96457H5.82267L7.71625 22.7453H8.67857C12.7496 22.7453 14.2529 21.0424 14.2529 15.2552V8.95354H9.60984V3.96013H20.0756V15.2507C20.0756 24.7985 15.9691 27.7298 8.67857 27.7298L8.683 27.7342ZM20.5501 27.7342V22.7408H22.7275C24.5856 22.7408 25.0867 21.9071 25.0867 19.6898V8.95354H22.049V3.96013H30.9094V20.4792C30.9094 26.0269 29.5524 27.7298 24.9803 27.7298H20.5501V27.7342ZM33.6987 18.0667V3.96013H39.5569V18.0667H33.6987ZM42.5281 27.7342V3.96013H48.3862V27.7298H42.5281V27.7342ZM56.5681 0V4.11978L54.3198 11.2906H50.5681L51.7832 0H56.5681ZM57.5038 27.7342H56.3242V22.7408H57.5038C62.1114 22.7408 63.362 19.9293 62.7544 15.2507L61.9695 8.9491H57.8985V3.9557H66.7234L70.2977 27.7254H64.7234L63.974 22.457H63.7966C63.0471 25.6677 61.2955 27.7254 57.5083 27.7254L57.5038 27.7342ZM89.584 27.7342H83.7613V8.95354H71.0428V3.96013H89.584V27.7298V27.7342ZM76.9763 14.1421V27.7298H71.1182V14.1421H76.9763Z" fill="#3ABDDC"/><path d="M116.214 4.01074H94.1118V27.7095H116.214V4.01074Z" fill="#00C1DE"/><path d="M106.658 21.2671H103.256V21.9678H106.658V21.2671Z" fill="#fff"/><path d="M107.509 22.519H102.409V23.2197H107.509V22.519Z" fill="#fff"/><path d="M108.777 23.6973H101.127V24.3979H108.777V23.6973Z" fill="#fff"/><mask id="mask0_joint_logo" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="92" y="4" width="25" height="24"><path d="M116.209 4.01318H92.5146V27.7119H116.209V4.01318Z" fill="#fff"/></mask><g mask="url(#mask0_joint_logo)"><path d="M104.952 19.9261C101.945 19.9261 99.4575 17.7398 98.9786 14.8706H98.1626C98.646 18.1833 101.497 20.7288 104.952 20.7288C108.407 20.7288 111.254 18.1833 111.737 14.8706H110.921C110.442 17.7398 107.954 19.9261 104.948 19.9261" fill="#fff"/><path d="M105.504 9.27839C105.504 10.0988 105.264 10.4846 104.967 10.4846C104.67 10.4846 104.431 10.1121 104.431 9.27839C104.431 8.20077 104.967 7.32715 104.967 7.32715C104.967 7.32715 105.504 8.20077 105.504 9.27839Z" fill="#fff"/><path d="M99.1757 12.9356C99.1757 13.756 98.9363 14.1418 98.6391 14.1418C98.342 14.1418 98.1025 13.7649 98.1025 12.9356C98.1025 11.858 98.6391 10.9844 98.6391 10.9844C98.6391 10.9844 99.1757 11.858 99.1757 12.9356Z" fill="#fff"/><path d="M111.824 12.9185C111.824 13.7389 111.585 14.1247 111.288 14.1247C110.99 14.1247 110.751 13.7478 110.751 12.9185C110.751 11.8409 111.288 10.9673 111.288 10.9673C111.288 10.9673 111.824 11.8409 111.824 12.9185Z" fill="#fff"/><path d="M104.461 16.6443H104.847C105.441 16.6443 105.552 16.3339 105.552 15.3405V13.3538C105.552 12.4979 105.464 12.2097 104.781 12.2097H104.461V16.6443ZM103.663 11.54H104.954C106.248 11.54 106.355 11.9702 106.355 13.6554V15.376C106.355 16.8572 106.093 17.3228 104.825 17.3228H103.663V11.5445V11.54Z" fill="#fff"/><path d="M106.99 13.0099C106.99 12.2027 107.252 11.4888 108.343 11.4888C109.137 11.4888 109.505 11.8879 109.505 12.5398V13.1163H108.751V12.7172C108.751 12.3491 108.622 12.1185 108.285 12.1185C107.868 12.1185 107.788 12.4156 107.788 13.1118V15.9456C107.788 16.6241 108.006 16.7483 108.259 16.7483C108.556 16.7483 108.746 16.5398 108.746 16.0609V15.6618H109.5V16.3004C109.5 16.9079 109.252 17.3735 108.325 17.3735C107.318 17.3735 106.99 16.8369 106.99 15.9411V13.0187V13.0099Z" fill="#fff"/><path d="M102.891 11.54H102.089V15.9436C102.089 16.6221 101.871 16.7463 101.614 16.7463C101.317 16.7463 101.126 16.5379 101.126 16.0589V15.6598H100.373V16.2984C100.373 16.906 100.621 17.3716 101.548 17.3716C102.554 17.3716 102.887 16.835 102.887 15.9392V11.5445L102.891 11.54Z" fill="#fff"/><path d="M94.1125 23.7603H92.5205V27.7115H94.1125V23.7603Z" fill="#F8AE51"/><path d="M94.1125 19.814H92.5205V23.7652H94.1125V19.814Z" fill="#BD6095"/><path d="M94.1125 15.8613H92.5205V19.8126H94.1125V15.8613Z" fill="#E9485E"/><path d="M94.1125 7.96436H92.5205V11.9156H94.1125V7.96436Z" fill="#C5D984"/><path d="M94.1125 4.01074H92.5205V7.96201H94.1125V4.01074Z" fill="#00ABA3"/><path d="M94.1125 11.9106H92.5205V15.8619H94.1125V11.9106Z" fill="#0091CE"/></g></svg><span class="nav-logo-text">קטלוג מדדים לאומיים</span></a>
+    <form class="nav-search" role="search" action="search-results.html" method="get">
+      <svg class="nav-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="nav-search-input" type="search" name="q" placeholder="חיפוש מדד, תחום או מילת מפתח..." aria-label="חיפוש מדד">
+    </form>
+
+  </nav>
+</header>
+
+
+<!-- ══════════════ MAIN: TWO-PANE CHAT ══════════════ -->
+<main class="chat-layout" id="chat-layout">
+
+  <!-- ─────── CHAT PANE (right in RTL) ─────── -->
+  <section class="chat-pane" aria-label="שיחה">
+    <div class="chat-pane-header">
+      <div class="chat-pane-title">
+        <div class="chat-pane-title-icon" aria-hidden="true">AI</div>
+        <div class="chat-pane-title-text">
+          <span>שיחה — בחירת מדדים</span>
+          <small>נפתחה כעת</small>
+        </div>
+      </div>
+      <a href="home.html" class="chat-pane-clear" aria-label="התחל שיחה חדשה">התחלה חדשה</a>
+    </div>
+
+    <div class="chat-messages" id="chat-messages" aria-live="polite">
+      <!-- Messages injected by JS -->
+    </div>
+
+    <form class="chat-composer" id="chat-composer" onsubmit="event.preventDefault(); sendMessage();">
+      <div class="chat-composer-wrap">
+        <textarea
+          class="chat-composer-input"
+          id="chat-input"
+          placeholder="הוסיפו פרטים, שאלו על מדד, או בקשו לדייק..."
+          rows="1"
+          aria-label="כתבו הודעה"
+          onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); sendMessage();}"
+        ></textarea>
+        <div class="chat-composer-bottom">
+          <span class="chat-composer-hint">Enter לשליחה · Shift+Enter לשורה חדשה</span>
+          <button type="submit" class="chat-composer-send" aria-label="שלח">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 5 5 12 12 19"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <!-- ─────── RESULTS PANE (left in RTL) ─────── -->
+  <section class="results-pane" aria-label="תוצאות החקירה">
+    <div class="results-pane-header">
+      <div class="results-pane-title">
+        <h2>תוצאות החקירה</h2>
+        <small><strong id="results-count">3</strong> מדדים מומלצים · מתעדכן לפי השיחה</small>
+      </div>
+      <div class="results-tabs" role="tablist" aria-label="תצוגת תוצאות">
+        <button class="results-tab" role="tab" aria-selected="true" data-view="cards" onclick="switchView('cards')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+          </svg>
+          כרטיסים
+        </button>
+        <button class="results-tab" role="tab" aria-selected="false" data-view="map" onclick="switchView('map')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/>
+            <line x1="12" y1="9" x2="6" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/>
+          </svg>
+          מפה סמנטית
+        </button>
+      </div>
+    </div>
+
+    <div class="results-content">
+
+      <div class="results-view" id="view-cards" role="tabpanel">
+        <div class="results-cards" id="results-cards">
+          <!-- Cards injected by JS -->
+        </div>
+      </div>
+
+      <div class="results-view" id="view-map" role="tabpanel" hidden>
+        <div class="results-map">
+          <a href="node-chart.html" class="results-map-link-open" aria-label="פתח מפה מלאה">
+            פתח מפה מלאה
+          </a>
+          <svg class="results-map-svg" viewBox="0 0 700 460" role="img" aria-label="מפה סמנטית של תחום השיחה">
+            <line class="map-link highlight" x1="350" y1="230" x2="200" y2="120"/>
+            <line class="map-link highlight" x1="350" y1="230" x2="500" y2="120"/>
+            <line class="map-link highlight" x1="350" y1="230" x2="200" y2="350"/>
+            <line class="map-link highlight" x1="350" y1="230" x2="500" y2="350"/>
+            <line class="map-link" x1="200" y1="120" x2="80" y2="60"/>
+            <line class="map-link" x1="500" y1="120" x2="620" y2="60"/>
+            <line class="map-link" x1="200" y1="350" x2="80" y2="420"/>
+            <line class="map-link" x1="500" y1="350" x2="620" y2="420"/>
+
+            <g>
+              <circle class="map-node-circle" cx="350" cy="230" r="52" fill="#334155"/>
+              <text class="map-node-label map-node-label-white" x="350" y="225">בריאות הנוער</text>
+              <text class="map-node-label map-node-label-white" x="350" y="242" style="font-size:10px;font-weight:500;opacity:.85">תחום השיחה</text>
+            </g>
+
+            <g>
+              <circle class="map-node-circle" cx="200" cy="120" r="38" fill="#DC2626" opacity="0.92"/>
+              <text class="map-node-label map-node-label-white" x="200" y="120">תזונה</text>
+            </g>
+            <g>
+              <circle class="map-node-circle" cx="500" cy="120" r="38" fill="#D97706" opacity="0.92"/>
+              <text class="map-node-label map-node-label-white" x="500" y="120">פעילות גופנית</text>
+            </g>
+            <g>
+              <circle class="map-node-circle" cx="200" cy="350" r="36" fill="#2563EB" opacity="0.92"/>
+              <text class="map-node-label map-node-label-white" x="200" y="350">ידע ועמדות</text>
+            </g>
+            <g>
+              <circle class="map-node-circle" cx="500" cy="350" r="36" fill="#059669" opacity="0.92"/>
+              <text class="map-node-label map-node-label-white" x="500" y="350">סביבה</text>
+            </g>
+
+            <g onclick="goToCard()">
+              <circle class="map-node-circle" cx="80" cy="60" r="28" fill="#FCA5A5"/>
+              <text class="map-node-label" x="80" y="60">BMI</text>
+            </g>
+            <g onclick="goToCard()">
+              <circle class="map-node-circle" cx="620" cy="60" r="28" fill="#FCD34D"/>
+              <text class="map-node-label" x="620" y="56" style="font-size:10px">שעות</text>
+              <text class="map-node-label" x="620" y="68" style="font-size:10px">פעילות</text>
+            </g>
+            <g onclick="goToCard()">
+              <circle class="map-node-circle" cx="80" cy="420" r="28" fill="#93C5FD"/>
+              <text class="map-node-label" x="80" y="416" style="font-size:10px">ידע</text>
+              <text class="map-node-label" x="80" y="428" style="font-size:10px">תזונתי</text>
+            </g>
+            <g opacity="0.4">
+              <circle class="map-node-circle" cx="620" cy="420" r="22" fill="#6EE7B7"/>
+              <text class="map-node-label" x="620" y="420" style="font-size:10px">+ אפשרויות</text>
+            </g>
+          </svg>
+
+          <div class="results-map-legend" aria-label="מקרא">
+            <div class="results-map-legend-item">
+              <span class="results-map-legend-dot" style="background: var(--primary)"></span>
+              תחום השיחה
+            </div>
+            <div class="results-map-legend-item">
+              <span class="results-map-legend-dot" style="background: var(--d-health)"></span>
+              נושאים
+            </div>
+            <div class="results-map-legend-item">
+              <span class="results-map-legend-dot" style="background: #FCA5A5; border: 1px solid var(--border-strong)"></span>
+              מדדים מומלצים
+            </div>
+            <div class="results-map-legend-item">
+              <span style="display:inline-block;width:18px;border-top:2px solid var(--primary);"></span>
+              קשר חזק
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Sticky comparison tray (identical to search-results) ── -->
+    <div class="comparison-tray" id="comparison-tray" role="region" aria-label="מגש השוואה" aria-live="polite">
+      <div class="comparison-tray-inner">
+        <span class="tray-label">השוואה:</span>
+        <div class="tray-items" id="tray-items" aria-label="מדדים שנבחרו להשוואה"></div>
+        <div class="tray-actions">
+          <button class="tray-compare-btn" id="tray-compare-btn" onclick="openComparison()" disabled>השווה</button>
+          <button class="tray-clear-btn" onclick="clearComparison()">נקה</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ai-chat.html already has its own full chat pane — suppress the global AI FAB here. -->
+<script>window.AI_FAB_DISABLED = true;</script>
+<script src="assets/indicator-card.js?v=1"></script>
+<script src="assets/ai-chat.js?v=4"></script>
+<script src="assets/search-sync.js?v=2"></script>
+<script src="assets/ai-fab.js?v=4"></script>
+</body>
+</html>
