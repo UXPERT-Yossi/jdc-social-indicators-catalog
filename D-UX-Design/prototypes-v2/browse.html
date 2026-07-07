@@ -474,8 +474,11 @@
     .leaf-layout {
       display: grid;
       grid-template-columns: 280px 1fr;
+      /* Filter panel is intentionally OUT of the toolbar row (first row is
+         empty in the filter column) so its top edge aligns with the FIRST
+         CARD, not with the toolbar. */
       grid-template-areas:
-        "filter  toolbar"
+        ".       toolbar"
         "filter  cards";
       column-gap: 28px;
       row-gap: 16px;
@@ -819,7 +822,7 @@
 <!-- Shared indicator-card component must load BEFORE the inline render script.
      tag-bar.js is no longer loaded: semantic tags are now rendered inline
      as checkbox groups inside the filter panel (see renderFilterPanel). -->
-<script src="assets/indicator-card.js?v=3"></script>
+<script src="assets/indicator-card.js?v=4"></script>
 
 <script>
 /* ════════════════════════════════════════════════════════════════

@@ -165,18 +165,23 @@
         background: #F0F9FF;
       }
 
-      .ic-card-top {
+      /* Title row: title on inline-start (right in RTL), compare button
+         on inline-end (left in RTL). Both baseline-aligned so the button
+         sits on the same visual line as the title's first row. */
+      .ic-card-header {
         display: flex;
         align-items: flex-start;
         gap: 10px;
       }
-      .ic-card-badges {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
+      .ic-card-header .ic-card-title {
         flex: 1;
         min-width: 0;
       }
+      /* .ic-card-top / .ic-card-badges — legacy shells (empty since badges
+         were removed). Kept as no-op selectors in case downstream code
+         still queries them. Safe to delete outright. */
+      .ic-card-top { display: none; }
+      .ic-card-badges { display: none; }
       .ic-badge {
         display: inline-flex;
         align-items: center;
@@ -417,12 +422,17 @@
     const href = ind.href || 'indicator-card.html';
     const isSelected = ind.id ? compare.has(ind.id) : false;
 
-    /* Top row: type/domain badges intentionally hidden — the filter panel
-       already surfaces both facets (type · domain) as filters. Keeping the
-       card top row for the compare button placement only. */
-    const badges = el('div', { class: 'ic-card-badges' });
+    /* Title + compare button live on a SINGLE row (title-row). Type/domain
+       badges intentionally not rendered — the filter panel surfaces both
+       facets as filters, so the badges were redundant. */
+    const title = el('a', {
+      href: href,
+      class: 'ic-card-title',
+      text: ind.name,
+      onclick: (e) => e.stopPropagation()
+    });
 
-    const topChildren = [badges];
+    const headerChildren = [title];
     if (showCompare && ind.id) {
       const btn = el('button', {
         class: 'ic-card-compare' + (isSelected ? ' added' : ''),
@@ -436,17 +446,9 @@
       });
       btn.appendChild(icon(isSelected ? 'check' : 'plus'));
       btn.appendChild(document.createTextNode(' ' + (isSelected ? 'נוסף' : 'השווה')));
-      topChildren.push(btn);
+      headerChildren.push(btn);
     }
-    const top = el('div', { class: 'ic-card-top' }, topChildren);
-
-    /* Title (link) */
-    const title = el('a', {
-      href: href,
-      class: 'ic-card-title',
-      text: ind.name,
-      onclick: (e) => e.stopPropagation()
-    });
+    const header = el('div', { class: 'ic-card-header' }, headerChildren);
 
     /* Snippet (description) */
     const snippet = ind.snippet ? el('p', { class: 'ic-card-snippet', text: ind.snippet }) : null;
@@ -516,7 +518,7 @@
       'data-ic-id': ind.id || '',
       role: 'listitem',
       onclick: () => { window.location.href = href; }
-    }, top, title, snippet, tagsRow, rationale, footer);
+    }, header, snippet, tagsRow, rationale, footer);
 
     return article;
   }
