@@ -1289,50 +1289,8 @@
     .map-node.filter-faded { opacity: .28; }
     .map-link.filter-faded { opacity: .12; }
 
-    /* Layout toggle — top-inline-end of the map (LEFT in RTL).
-       "By proximity" (cluster, force-directed) vs "By causal chain" (logic-model). */
-    .map-layout-toggle {
-      position: absolute;
-      inset-inline-end: 16px;
-      inset-block-start: 16px;
-      background: rgba(255,255,255,.95);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-full);
-      padding: 4px 4px 4px 10px;
-      z-index: 4;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      box-shadow: var(--shadow-sm);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-    .map-layout-toggle-label {
-      font-size: 11.5px;
-      color: var(--text-muted);
-      font-weight: 600;
-      padding-inline-end: 2px;
-    }
-    .map-layout-btn {
-      font-family: inherit;
-      font-size: 12px; font-weight: 600;
-      padding: 5px 12px;
-      border-radius: var(--radius-full);
-      color: var(--text-secondary);
-      cursor: pointer;
-      transition: background .15s, color .15s;
-      border: none;
-      background: transparent;
-      white-space: nowrap;
-    }
-    .map-layout-btn:hover:not(.active) {
-      background: var(--bg-page);
-      color: var(--text-primary);
-    }
-    .map-layout-btn.active {
-      background: var(--primary);
-      color: #fff;
-    }
+    /* Layout toggle CSS (.map-layout-toggle, .map-layout-btn, etc.)
+       removed alongside the causal-chain view. */
 
     /* Legend — bottom-inline-end of the map (bottom-LEFT in RTL). When the
        detail panel opens on the same side, the legend slides inward to stay
@@ -1394,142 +1352,6 @@
     .results-workspace.blade-open .map-legend {
       inset-inline-end: 352px;
     }
-
-    /* ═══════════════ LOGIC-MODE OVERLAYS ═══════════════
-       Header banner + column headers + related-outcome chips.
-       Hidden by default (opacity 0, pointer-events none). Visible when
-       .map-view has .logic-mode class (toggled by applyLayout('logic')). */
-    .logic-header,
-    .logic-columns,
-    .logic-related {
-      position: absolute;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity .3s ease;
-      z-index: 3;                     /* below panels (z-index 4-5), above SVG */
-    }
-    .map-view.logic-mode .logic-header,
-    .map-view.logic-mode .logic-columns,
-    .map-view.logic-mode .logic-related {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    /* Central outcome banner — top-center, above column headers */
-    .logic-header {
-      inset-block-start: 60px;
-      left: 50%;
-      transform: translateX(-50%);
-      text-align: center;
-      background: rgba(255,255,255,.95);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 10px 24px;
-      box-shadow: var(--shadow-sm);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      max-width: 560px;
-    }
-    .logic-header-label {
-      font-size: 10.5px;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      margin-block-end: 3px;
-    }
-    .logic-header-title {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin: 0;
-      line-height: 1.3;
-    }
-
-    /* Column headers — a horizontal row of 4 labeled columns at fixed x
-       positions matching the D3 layout in applyLayout('logic'). */
-    .logic-columns {
-      inset-block-start: 130px;
-      inset-inline-start: 0;
-      inset-inline-end: 0;
-      display: grid;
-      /* Column widths mirror the x-anchors in applyLayout (fractions .15/.35/.60/.85).
-         Using a 4-col grid with center-x per column. */
-      grid-template-columns: repeat(4, 1fr);
-      pointer-events: none;
-    }
-    .logic-column {
-      text-align: center;
-      padding-inline: 12px;
-    }
-    /* IN RTL, DOM order maps right→left visually. So DOM order predictor,
-       output, outcome, impact renders RIGHT→LEFT as we want. */
-    .logic-column-title {
-      display: inline-block;
-      font-size: 12.5px;
-      font-weight: 700;
-      color: var(--text-primary);
-      background: var(--bg-card);
-      border: 1px solid var(--border-strong);
-      border-radius: var(--radius-full);
-      padding: 4px 14px;
-      margin-block-end: 6px;
-    }
-    .logic-column-desc {
-      font-size: 11.5px;
-      color: var(--text-muted);
-      font-weight: 500;
-    }
-
-    /* Related-outcome chips — bottom center, below the map controls */
-    .logic-related {
-      inset-block-end: 60px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(255,255,255,.95);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-full);
-      padding: 6px 12px;
-      box-shadow: var(--shadow-sm);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      flex-wrap: wrap;
-      max-width: calc(100% - 40px);
-      justify-content: center;
-    }
-    .logic-related-label {
-      font-size: 11.5px;
-      font-weight: 600;
-      color: var(--text-muted);
-      white-space: nowrap;
-    }
-    .logic-related-chip {
-      display: inline-flex; align-items: center;
-      font-size: 12px; font-weight: 600;
-      padding: 4px 10px;
-      background: var(--bg-page);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-full);
-      color: var(--text-primary);
-      text-decoration: none;
-      transition: border-color .12s, background .12s, color .12s;
-      white-space: nowrap;
-    }
-    .logic-related-chip:hover {
-      border-color: var(--primary);
-      color: var(--primary);
-      background: var(--primary-light);
-    }
-
-    /* In Logic mode: fade OUTCOMES + ALL edges. Only indicator nodes
-       remain visible — the columns THEMSELVES communicate role/position,
-       so lines connecting indicators to (now-hidden) outcomes would just
-       be visual noise pointing to nothing. */
-    .map-view.logic-mode .map-node.outcome-node { opacity: 0; pointer-events: none; }
-    .map-view.logic-mode .map-link { opacity: 0 !important; pointer-events: none; }
 
     /* ─── INSIGHTS BLOCK — wireframe SaaS: no icon-in-colored-square,
        no full-color callouts, no rounded pills of decoration. Just
@@ -2023,14 +1845,8 @@
               </button>
             </div>
 
-            <!-- Layout mode toggle — "By proximity" (default, force-directed
-                 cluster) vs "By causal chain" (fixed columns: predictor →
-                 output → outcome → impact). Sits at top-inline-end (LEFT in RTL). -->
-            <div class="map-layout-toggle" role="radiogroup" aria-label="סדר צמתים לפי">
-              <span class="map-layout-toggle-label">סדר לפי:</span>
-              <button type="button" class="map-layout-btn active" data-layout="cluster" role="radio" aria-checked="true">קרבה</button>
-              <button type="button" class="map-layout-btn" data-layout="logic" role="radio" aria-checked="false">שרשרת סיבתית</button>
-            </div>
+            <!-- Layout mode toggle (cluster ↔ causal chain) removed —
+                 the map is cluster-only. Filter chips above stay. -->
 
             <!-- Legend — explains what edge COLORS and STYLES mean.
                  Since role now lives on edges (same node can play different
@@ -2086,47 +1902,9 @@
                 <strong>תפעול:</strong> גררו לזיזה · גלגלת לזום · לחצו על צומת לפרטים
               </div>
             </div>
-            <!-- ══════════════ LOGIC-MODE OVERLAYS ══════════════
-                 Hidden by default; shown when .map-view has .logic-mode.
-                 Nothing here is D3 — pure HTML overlays positioned
-                 absolutely inside .map-view. -->
-
-            <!-- Central outcome banner — replaces the outcome node in the
-                 chain. The chain is FOR this goal. -->
-            <div class="logic-header" aria-hidden="true">
-              <div class="logic-header-label">התוצאה שאנחנו מודדים</div>
-              <h3 class="logic-header-title">שיפור זכאות לתעודת בגרות</h3>
-            </div>
-
-            <!-- Column headers with semantic explanations. Positioned to
-                 match the D3 column x-coordinates set in applyLayout(). -->
-            <div class="logic-columns" aria-hidden="true">
-              <div class="logic-column" data-col="predictor">
-                <div class="logic-column-title">מנבא</div>
-                <div class="logic-column-desc">מה יגרום לשינוי?</div>
-              </div>
-              <div class="logic-column" data-col="output">
-                <div class="logic-column-title">תפוקה</div>
-                <div class="logic-column-desc">מה קורה בפועל?</div>
-              </div>
-              <div class="logic-column" data-col="outcome">
-                <div class="logic-column-title">תוצאה</div>
-                <div class="logic-column-desc">האם השינוי קרה?</div>
-              </div>
-              <div class="logic-column" data-col="impact">
-                <div class="logic-column-title">אימפקט</div>
-                <div class="logic-column-desc">השלכות ארוכות טווח</div>
-              </div>
-            </div>
-
-            <!-- Related outcomes as chips at the bottom. Clicking one
-                 re-runs canvas for that outcome. -->
-            <div class="logic-related" aria-hidden="true">
-              <span class="logic-related-label">קשור גם:</span>
-              <a class="logic-related-chip" href="canvas.html?q=%D7%9E%D7%95%D7%9B%D7%A0%D7%95%D7%AA+%D7%9C%D7%91%D7%92%D7%A8%D7%95%D7%AA&stage=refine">מוכנות לבגרות בכיתה י'</a>
-              <a class="logic-related-chip" href="canvas.html?q=%D7%9E%D7%A1%D7%95%D7%92%D7%9C%D7%95%D7%AA+%D7%9C%D7%99%D7%9E%D7%95%D7%93%D7%99%D7%AA&stage=refine">מסוגלות עצמית לימודית</a>
-              <a class="logic-related-chip" href="canvas.html?q=%D7%AA%D7%9E%D7%99%D7%9B%D7%94+%D7%A4%D7%A1%D7%99%D7%9B%D7%95-%D7%97%D7%91%D7%A8%D7%AA%D7%99%D7%AA&stage=refine">תמיכה פסיכו-חברתית</a>
-            </div>
+            <!-- Logic-mode overlays (central banner + 4-column headers +
+                 related-outcome chips) removed together with the layout
+                 toggle. Cluster is the only view now. -->
 
             <!-- SVG goes here — injected by D3 -->
           </div>
@@ -3369,10 +3147,7 @@
       node.exit().remove();
 
       const nodeEnter = node.enter().append('g')
-        /* Add outcome-node class for CSS targeting in logic-mode */
-        .attr('class', function (d) {
-          return 'map-node new-in' + (d.type && d.type.indexOf('outcome') === 0 ? ' outcome-node' : '');
-        })
+        .attr('class', 'map-node new-in')
         .call(dragBehaviour)
         .on('mouseenter', onNodeEnter)
         .on('mouseleave', onNodeLeave)
@@ -3506,80 +3281,11 @@
       });
     });
 
-    /* ── LAYOUT MODE — cluster (force-directed) OR logic (fixed columns) ── */
-    let currentLayout = 'cluster';
-    const CENTRAL_OUTCOME_ID = 'o.eligibility';
-
-    /* Derive an indicator's role for the LOGIC column. Priority:
-       1. role on the edge from the central outcome, if such an edge exists
-       2. role on any measures-edge involving the node (first match)
-       Falls back to 'outcome' for outcomes and 'output' otherwise. */
-    function nodeLogicRole(node) {
-      if (node.type && node.type.indexOf('outcome') === 0) return 'outcome';
-      /* Prefer role vs central outcome */
-      const central = MAP_DATA.links.find(function (l) {
-        if (l.type !== 'measures') return false;
-        const s = l.source.id || l.source;
-        const t = l.target.id || l.target;
-        return s === CENTRAL_OUTCOME_ID && t === node.id;
-      });
-      if (central) return central.role;
-      /* Fall back to any measures-edge */
-      const any = MAP_DATA.links.find(function (l) {
-        if (l.type !== 'measures') return false;
-        const t = l.target.id || l.target;
-        return t === node.id;
-      });
-      return (any && any.role) || 'output';
-    }
-
-    function applyLayout(mode) {
-      currentLayout = mode;
-
-      /* Update toggle visuals */
-      document.querySelectorAll('.map-layout-btn').forEach(function (btn) {
-        const active = btn.getAttribute('data-layout') === mode;
-        btn.classList.toggle('active', active);
-        btn.setAttribute('aria-checked', active ? 'true' : 'false');
-      });
-
-      /* Toggle the .logic-mode class on .map-view — CSS handles the
-         overlay reveals + hides outcome-node + related-link opacity. */
-      container.classList.toggle('logic-mode', mode === 'logic');
-
-      if (mode === 'logic') {
-        /* Compute column x per node — 4 columns in RTL reading order:
-           right → left: מנבא · תפוקה · תוצאה · אימפקט. Only indicator
-           columns matter; outcomes are hidden via CSS in logic mode. */
-        const cols = { predictor: 0.85, output: 0.62, outcome: 0.35, impact: 0.10 };
-        MAP_DATA.nodes.forEach(function (n) {
-          const role = nodeLogicRole(n);
-          n.fx = width * (cols[role] !== undefined ? cols[role] : 0.5);
-          /* Push indicators DOWN below the column headers (which take
-             ~140px at the top). Force a minimum y region. */
-          n.fy = null;
-        });
-        simulation.force('center', null);
-        simulation.force('charge', d3.forceManyBody().strength(-140));
-        /* Nudge nodes downward so they clear the column headers */
-        simulation.force('y', d3.forceY(height * 0.6).strength(0.15));
-        simulation.alpha(0.9).restart();
-      } else {
-        /* Return to cluster layout — release fx/fy, restore forces */
-        MAP_DATA.nodes.forEach(function (n) { n.fx = null; n.fy = null; });
-        simulation.force('center', d3.forceCenter(width / 2, height / 2));
-        simulation.force('charge', d3.forceManyBody().strength(-360));
-        simulation.force('y', null);
-        simulation.alpha(0.9).restart();
-      }
-    }
-
-    /* Wire up layout toggle */
-    document.querySelectorAll('.map-layout-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        applyLayout(btn.getAttribute('data-layout'));
-      });
-    });
+    /* Logic-mode / causal-chain (שרשרת סיבתית) view removed per product
+       decision. The map is cluster-only now. The role-on-edge data model +
+       all cluster-mode rendering below still stands — Logic view was purely
+       a presentation layer on top of the same data. Only the toggle UI +
+       column layout + overlays were pulled. */
 
     /* ── Interactions ── */
 
