@@ -534,20 +534,47 @@
     }
     .filter-reset-btn:hover { color: var(--primary); }
 
+    /* Filter groups use <details>/<summary> — collapsed by default, click
+       the summary to expand. Native disclosure = free a11y. */
     .filter-group {
       padding: 12px 16px;
       border-block-end: 1px solid var(--border);
     }
     .filter-group:last-child { border-block-end: none; }
-    .filter-group-title {
+    summary.filter-group-title {
       font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: .06em;
       color: var(--text-muted);
-      margin-block-end: 8px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      list-style: none;
+      outline: none;
     }
-    .filter-items { display: flex; flex-direction: column; gap: 6px; }
+    summary.filter-group-title::-webkit-details-marker { display: none; }
+    summary.filter-group-title:hover,
+    summary.filter-group-title:focus-visible { color: var(--text-primary); }
+    /* Chevron: physical borders so RTL and LTR look identical */
+    summary.filter-group-title::after {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-right: 1.5px solid currentColor;
+      border-bottom: 1.5px solid currentColor;
+      transform: rotate(45deg);
+      transition: transform .2s ease;
+      margin-inline-start: auto;
+      margin-block-end: 2px;
+    }
+    details.filter-group[open] > summary.filter-group-title::after {
+      transform: rotate(-135deg);
+    }
+    /* Margin lives on items — only visible when the group is expanded */
+    .filter-items { display: flex; flex-direction: column; gap: 6px; margin-block-start: 8px; }
     .filter-item {
       display: flex;
       align-items: center;
@@ -1573,8 +1600,8 @@ function buildTagCheckboxGroup(title, tagList) {
       el('span', { class: 'filter-item-label', text: tag.label })
     ));
   });
-  return el('div', { class: 'filter-group' },
-    el('p', { class: 'filter-group-title', text: title }),
+  return el('details', { class: 'filter-group' },
+    el('summary', { class: 'filter-group-title' }, title),
     items
   );
 }
@@ -1594,8 +1621,8 @@ function buildCheckboxGroup(title, options, dimension) {
       el('span', { class: 'filter-item-label', text: opt.label })
     ));
   });
-  return el('div', { class: 'filter-group' },
-    el('p', { class: 'filter-group-title', text: title }),
+  return el('details', { class: 'filter-group' },
+    el('summary', { class: 'filter-group-title' }, title),
     items
   );
 }
