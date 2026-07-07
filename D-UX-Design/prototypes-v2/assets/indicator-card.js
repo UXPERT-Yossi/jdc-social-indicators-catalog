@@ -417,15 +417,10 @@
     const href = ind.href || 'indicator-card.html';
     const isSelected = ind.id ? compare.has(ind.id) : false;
 
-    /* Top row: badges + compare button */
+    /* Top row: type/domain badges intentionally hidden — the filter panel
+       already surfaces both facets (type · domain) as filters. Keeping the
+       card top row for the compare button placement only. */
     const badges = el('div', { class: 'ic-card-badges' });
-    if (ind.isNew) badges.appendChild(el('span', { class: 'ic-badge ic-badge--new', text: 'חדש בסבב' }));
-    if (ind.typeLabel) badges.appendChild(el('span', { class: 'ic-badge ic-badge--' + (ind.type || 'output'), text: ind.typeLabel }));
-    if (ind.domainLabel) {
-      const dBadge = el('span', { class: 'ic-badge ic-badge--domain', text: ind.domainLabel });
-      if (ind.domainColor) dBadge.style.setProperty('--dc', ind.domainColor);
-      badges.appendChild(dBadge);
-    }
 
     const topChildren = [badges];
     if (showCompare && ind.id) {

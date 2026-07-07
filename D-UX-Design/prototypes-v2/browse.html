@@ -475,14 +475,12 @@
       display: grid;
       grid-template-columns: 280px 1fr;
       grid-template-areas:
-        "filter  tagbar"
         "filter  toolbar"
         "filter  cards";
       column-gap: 28px;
       row-gap: 16px;
       align-items: start;
     }
-    #tag-bar-host    { grid-area: tagbar; }
     .leaf-toolbar    { grid-area: toolbar; margin-block-end: 0; }
     .leaf-cards-col  { grid-area: cards; min-width: 0; }
     .filter-col      { grid-area: filter; }
@@ -760,10 +758,8 @@
            and the (open) filter panel shows checked type/frequency directly. -->
 
       <div class="leaf-layout">
-        <!-- Semantic tag bar — Notion-style category pills + flyout.
-             Inside the grid (grid-area: tagbar) so its right-most pill aligns
-             with the right edge of the cards column below it. -->
-        <div id="tag-bar-host"></div>
+        <!-- Semantic tag bar was here. Removed — semantic tags now render as
+             checkbox groups inside the filter panel (see renderFilterPanel). -->
 
         <!-- Toolbar lives INSIDE the grid (grid-area: toolbar) so the sort
              dropdown aligns with the cards column's inline-end — not stretched
@@ -793,9 +789,10 @@
   </div>
 </main>
 
-<!-- Shared indicator-card component must load BEFORE the inline render script. -->
-<script src="assets/indicator-card.js?v=2"></script>
-<script src="assets/tag-bar.js?v=2"></script>
+<!-- Shared indicator-card component must load BEFORE the inline render script.
+     tag-bar.js is no longer loaded: semantic tags are now rendered inline
+     as checkbox groups inside the filter panel (see renderFilterPanel). -->
+<script src="assets/indicator-card.js?v=3"></script>
 
 <script>
 /* ════════════════════════════════════════════════════════════════
@@ -1389,29 +1386,13 @@ function buildDomCube(dim, dom) {
    The drill-nav above the stage is the single navigation surface — no
    in-leaf source breadcrumb. Crumbs there are clickable to jump back. */
 function renderLeaf() {
-  ensureTagBar();
   renderFilterPanel();
   renderLeafCards();
 }
 
-/* TagBar handle — null until first mount. We mount once (lazy) and reuse;
-   refresh() is cheap and keeps the count badges in sync with activeFilters. */
-let tagBarHandle = null;
-function ensureTagBar() {
-  if (!window.TagBar) return;        /* script not loaded yet — silent skip */
-  const host = document.getElementById('tag-bar-host');
-  if (!host) return;
-  if (tagBarHandle) { tagBarHandle.refresh(); return; }
-  tagBarHandle = window.TagBar.mount(host, {
-    registry: TAGS_REGISTRY,
-    isSelected: (id) => activeFilters.tags.has(id),
-    onToggle: (id, willSelect) => {
-      if (willSelect) activeFilters.tags.add(id);
-      else            activeFilters.tags.delete(id);
-      renderLeafCards();             /* updates cards + active filter pills */
-    }
-  });
-}
+/* TagBar removed — semantic tags now render as checkbox groups inside the
+   filter panel (buildTagCheckboxGroup + TAG_FILTER_ORDER in renderFilterPanel).
+   Kept as a no-op so any residual calls don't throw. */
 
 function getLeafIndicators() {
   /* Collect all indicators in scope (the current dim/dom OR all of them in semantic-only mode) */
@@ -1520,9 +1501,6 @@ function renderLeafCards() {
     list.appendChild(card);
   });
 
-  /* Sync tag-bar count badges when activeFilters.tags changes from
-     elsewhere (clear-all). Safe no-op if not mounted yet. */
-  if (tagBarHandle) tagBarHandle.refresh();
 }
 
 /* ─── Filter panel (left sidebar) ─── */
@@ -1567,10 +1545,43 @@ function renderFilterPanel() {
     { value: 'social-security', label: SOURCE_LABEL['social-security'] }
   ], 'source'));
 
-  /* Semantic tags moved OUT of the filter panel — they live in the
-     TagBar component (assets/tag-bar.js) above the leaf-view toolbar.
-     This separates "objective" filters (type/freq/stage/source) from the
-     cross-cutting semantic taxonomy. */
+  /* Semantic-tag groups — mounted INSIDE the filter panel (formerly a
+     separate horizontal TagBar above the leaf toolbar). Order intentional:
+     ages → populations → cross-cutting themes → status. The `geo` group
+     ("אזור גיאוגרפי") is intentionally excluded — the filter was removed
+     per product decision, though geo tags remain in TAGS_REGISTRY so
+     cards can still resolve labels (e.g., "פריפריה") via TAG_LOOKUP. */
+  const TAG_FILTER_ORDER = ['ages', 'population', 'themes', 'status'];
+  TAG_FILTER_ORDER.forEach(groupKey => {
+    const g = TAGS_REGISTRY[groupKey];
+    if (!g) return;
+    panel.appendChild(buildTagCheckboxGroup(g.label, g.tags));
+  });
+}
+
+/* Semantic-tag checkbox group: every tag toggles inside activeFilters.tags
+   (single flat Set — not a per-group dimension). Same wiring as the old
+   TagBar's onToggle, just rendered as vertical checkboxes inside the
+   filter panel instead of horizontal category pills at the top. */
+function buildTagCheckboxGroup(title, tagList) {
+  const items = el('div', { class: 'filter-items', role: 'group', 'aria-label': 'סינון לפי ' + title });
+  tagList.forEach(tag => {
+    const cb = el('input', { type: 'checkbox', value: tag.id });
+    cb.checked = activeFilters.tags.has(tag.id);
+    cb.addEventListener('change', () => {
+      if (cb.checked) activeFilters.tags.add(tag.id);
+      else            activeFilters.tags.delete(tag.id);
+      renderLeafCards();
+    });
+    items.appendChild(el('label', { class: 'filter-item' },
+      cb,
+      el('span', { class: 'filter-item-label', text: tag.label })
+    ));
+  });
+  return el('div', { class: 'filter-group' },
+    el('p', { class: 'filter-group-title', text: title }),
+    items
+  );
 }
 
 function buildCheckboxGroup(title, options, dimension) {

@@ -81,16 +81,9 @@
 
     /* ─── BREADCRUMB (in-row inside .search-header-inner) ─────────────
        Renders only when arriving from the browse flow (?from=browse).
-       Sits on the INLINE-START of the search-header row (right in RTL),
-       while the view-toggle stays anchored on the INLINE-END via its
-       own margin-inline-start:auto. The toggle defines the row's height,
-       so showing/hiding the breadcrumb causes NO vertical layout shift —
-       the row was the toggle's height before, stays the toggle's height
-       after.
-
-       The <nav> element keeps its `hidden` attribute by default; JS removes
-       it when the URL says from=browse. While hidden, the toggle is alone
-       on the row, naturally inline-end aligned. */
+       The <nav> keeps its `hidden` attribute by default; JS removes it
+       when the URL says from=browse. Otherwise the whole .search-header
+       collapses to zero visible content (no CLS since nothing was there). */
     .breadcrumb-bar {
       /* No background / border / padding here — those come from .search-header.
          Just enough to lay out as an inline-flex item next to the toggle. */
@@ -223,12 +216,19 @@
       background: var(--bg-card);
     }
 
-    /* ─── SEARCH HEADER ─── */
+    /* ─── SEARCH HEADER ───
+       Contains ONLY the ?from=browse breadcrumb. When the breadcrumb is
+       hidden (the common case), the whole header collapses to zero height
+       via :has() — no empty white bar. When JS unhides the breadcrumb
+       (on ?from=browse), the padding and border return. */
     .search-header {
       background: var(--bg-card);
       border-block-end: 1px solid var(--border);
       padding-block: 20px;
       padding-inline: 32px;
+    }
+    .search-header:has(> .search-header-inner > .breadcrumb-bar[hidden]) {
+      display: none;
     }
     .search-header-inner {
       max-width: 1280px;
@@ -384,16 +384,14 @@
       padding-block: 18px;
       display: grid;
       grid-template-columns: 264px 1fr;
-      grid-template-rows: auto auto 1fr;
+      grid-template-rows: auto 1fr;
       grid-template-areas:
-        "filter   tagbar"
         "filter   toolbar"
         "filter   cards";
       column-gap: 28px;
       row-gap: 16px;
       align-items: start;
     }
-    .tag-bar-host    { grid-area: tagbar; }
     .results-toolbar { grid-area: toolbar; }
     /* min-height:0 + overflow-y:auto = cards scroll INSIDE the column only. */
     .cards-col       { grid-area: cards; min-width: 0; min-height: 0; height: 100%; overflow-y: auto; padding-inline-end: 4px; }
@@ -424,28 +422,6 @@
       cursor: pointer;
     }
     .sort-select:focus { border-color: var(--primary); }
-
-    .view-toggle {
-      display: flex;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      overflow: hidden;
-      margin-inline-start: auto;
-    }
-    .view-toggle-btn {
-      background: transparent;
-      border: none;
-      padding: 6px 10px;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      transition: all .15s;
-    }
-    .view-toggle-btn.active {
-      background: var(--primary-light);
-      color: var(--primary);
-    }
-    .view-toggle-btn:hover:not(.active) { background: var(--bg-page); }
 
     /* ─── RESULT CARD ─── */
     .result-list {
@@ -915,64 +891,6 @@
     }
     .tray-clear-btn:hover { border-color: rgba(255,255,255,.5); color: #fff; }
 
-    /* ─── VIEW TOGGLE (inline segmented control inside .search-header) ─── */
-    /* `inline-grid` with two `1fr` columns guarantees the buttons are equal
-       width regardless of which one is active — both columns are sized to the
-       max-content of the wider button. `margin-inline-start: auto` anchors the
-       whole toggle to the end of the row (LEFT in RTL). */
-    .view-toggle {
-      display: inline-grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 4px;
-      padding: 4px;
-      background: var(--bg-page, #F8FAFC);
-      border: 1px solid var(--border, #E2E8F0);
-      border-radius: 999px;
-      flex-shrink: 0;
-      margin-inline-start: auto;
-    }
-    /* Hidden when JS sets [hidden] (e.g., for browse flow). Explicit override
-       is needed because CSS `display: inline-grid` above takes precedence over
-       the user-agent default for [hidden]. */
-    .view-toggle[hidden] { display: none; }
-    .view-toggle-btn {
-      /* Flex inside grid cell — content centers; cell width is dictated by
-         the wider button (max-content) and copied to BOTH columns via 1fr 1fr. */
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 7px 16px;
-      background: transparent;
-      border: none;
-      border-radius: 999px;
-      font-family: inherit;
-      font-size: 13.5px;
-      font-weight: 600;
-      color: var(--text-secondary, #475569);
-      cursor: pointer;
-      transition: background .15s, color .15s;
-      text-decoration: none;
-      white-space: nowrap;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    .view-toggle-btn:hover {
-      background: var(--bg-page, #F8FAFC);
-      color: var(--text-primary, #0F172A);
-    }
-    .view-toggle-btn.active,
-    .view-toggle-btn[aria-current="page"] {
-      background: var(--primary, #334155);
-      color: #fff;
-      cursor: default;
-    }
-    .view-toggle-btn.active:hover {
-      background: var(--primary, #334155);
-      color: #fff;
-    }
-    .view-toggle-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
-
   </style>
 </head>
 
@@ -1000,17 +918,11 @@
 </header>
 
 
-<!-- ══════════════ TOOLBAR ROW (breadcrumb + view toggle) ══════════════
-     One row, two pieces:
-       - breadcrumb (inline-start / right in RTL) — visible only when
-         arriving from the browse flow; otherwise its <nav> stays `hidden`
-       - view-toggle (inline-end / left in RTL) — always present
-     The toggle defines the row's height, so showing/hiding the breadcrumb
-     causes NO vertical layout shift (no CLS).
-
-     Single row was previously two: a thin breadcrumb-bar above a
-     separate search-header. Merging them eliminates the page-shift jump
-     the user saw between browse → search-results. -->
+<!-- ══════════════ BREADCRUMB ROW ══════════════
+     Only visible when arriving from the browse flow (?from=browse). Otherwise
+     the whole row is `hidden` and collapses to zero height — no wasted space.
+     View-toggle removed: cards are the only view for search results now.
+     The semantic map is a separate destination via the direct node-chart.html link. -->
 <div class="search-header">
   <div class="search-header-inner">
 
@@ -1019,26 +931,6 @@
       <ol class="breadcrumb-list" id="breadcrumb-list"></ol>
     </nav>
 
-    <!-- View toggle (cards / map). Cards = active here. `margin-inline-start: auto`
-         on .view-toggle pushes it to the inline-end of this row regardless of
-         whether the breadcrumb is shown or not. -->
-    <div class="view-toggle" role="tablist" aria-label="תצוגה">
-      <button class="view-toggle-btn active" type="button" aria-current="page" aria-label="כרטיסיות — נבחר">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-        </svg>
-        כרטיסיות
-      </button>
-      <a class="view-toggle-btn" id="viewToggleMap" href="node-chart.html" role="tab"
-         aria-label="עבור לתצוגת מפה סמנטית">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="6" cy="18" r="3"/>
-          <line x1="6" y1="9" x2="6" y2="15"/><line x1="9" y1="6" x2="15" y2="18"/>
-        </svg>
-        מפה סמנטית
-      </a>
-    </div>
   </div>
 </div>
 
@@ -1048,12 +940,10 @@
 
 
 <!-- ══════════════ MAIN LAYOUT ══════════════
-     Row 1: tag-bar (full width). Row 2: toolbar (cards column only).
-     Row 3: cards + filter — top edges align exactly. -->
+     Row 1: toolbar (cards column only). Row 2: cards + filter.
+     Tag bar moved INTO the filter panel — semantic tags now live alongside
+     the other filter dimensions (type, frequency, stage, domain, source). -->
 <main class="search-layout" id="main-content">
-
-  <!-- Semantic tag bar — mounted by TagBar.mount, spans both columns. -->
-  <div id="tag-bar-host" class="tag-bar-host"></div>
 
   <!-- Toolbar: count at start (RIGHT in RTL), sort group pushed to end (LEFT)
        via .sort-label's margin-inline-start: auto. Mirrors browse.html toolbar. -->
@@ -1115,9 +1005,10 @@
 </div>
 
 
-<!-- Shared indicator-card component must load BEFORE the inline render script. -->
-<script src="assets/indicator-card.js?v=1"></script>
-<script src="assets/tag-bar.js?v=2"></script>
+<!-- Shared indicator-card component must load BEFORE the inline render script.
+     tag-bar.js is no longer loaded: semantic tags are now rendered inline
+     as checkbox groups inside the filter panel (see renderFilterPanel). -->
+<script src="assets/indicator-card.js?v=3"></script>
 
 <script>
   // ─── SEARCH INDICATORS (data extracted from the previously hardcoded cards).
@@ -1423,7 +1314,6 @@
     Object.keys(activeFilters).forEach(k => activeFilters[k].clear());
     renderFilterPanel();
     updateResults();
-    if (tagBarHandle) tagBarHandle.refresh();
   }
 
   function typeLabel(v) { return { outcome:'תוצאה', output:'תפוקה', impact:'אימפקט', input:'תשומה' }[v] || v; }
@@ -1457,6 +1347,31 @@
       items.appendChild(el('label', { class: 'filter-item' },
         cb,
         el('span', { class: 'filter-item-label', text: opt.label })
+      ));
+    });
+    return el('div', { class: 'filter-group' },
+      el('p', { class: 'filter-group-title', text: title }),
+      items
+    );
+  }
+
+  /* Semantic-tag checkbox group: every tag toggles inside activeFilters.tags
+     (single flat Set — not a per-group dimension). Same wiring as the old
+     TagBar's onToggle, just rendered as vertical checkboxes inside the
+     filter panel instead of horizontal category pills at the top. */
+  function buildTagCheckboxGroup(title, tagList) {
+    const items = el('div', { class: 'filter-items', role: 'group', 'aria-label': 'סינון לפי ' + title });
+    tagList.forEach(tag => {
+      const cb = el('input', { type: 'checkbox', value: tag.id });
+      cb.checked = activeFilters.tags.has(tag.id);
+      cb.addEventListener('change', () => {
+        if (cb.checked) activeFilters.tags.add(tag.id);
+        else            activeFilters.tags.delete(tag.id);
+        updateResults();
+      });
+      items.appendChild(el('label', { class: 'filter-item' },
+        cb,
+        el('span', { class: 'filter-item-label', text: tag.label })
       ));
     });
     return el('div', { class: 'filter-group' },
@@ -1509,8 +1424,18 @@
       { value: 'social-security', label: SOURCE_LABEL['social-security'] }
     ], 'source'));
 
-    /* Semantic tags moved OUT of the filter panel — they live in TagBar
-       (assets/tag-bar.js) mounted above the results column. */
+    /* Semantic-tag groups — mounted INSIDE the filter panel (formerly a
+       separate horizontal TagBar above results). Order intentional:
+       ages → populations → cross-cutting themes → status. The `geo` group
+       ("אזור גיאוגרפי") is intentionally excluded — the filter was removed
+       per product decision, though geo tags remain in TAGS_REGISTRY so
+       cards can still resolve labels (e.g., "פריפריה") via TAG_LOOKUP. */
+    const TAG_FILTER_ORDER = ['ages', 'population', 'themes', 'status'];
+    TAG_FILTER_ORDER.forEach(groupKey => {
+      const g = TAGS_REGISTRY[groupKey];
+      if (!g) return;
+      panel.appendChild(buildTagCheckboxGroup(g.label, g.tags));
+    });
   }
 
   /* doSearch() removed along with the big in-page search field.
@@ -1530,44 +1455,9 @@
     console.log('Sort by:', val);
   }
 
-  // ─── Tag bar — Notion-style category pills + flyout.
-  // Same shared component as browse.html. Host page owns the activeFilters.tags
-  // set; the bar just signals toggles via onToggle and re-renders cards.
-  let tagBarHandle = null;
-  function ensureTagBar() {
-    if (!window.TagBar) return;
-    const host = document.getElementById('tag-bar-host');
-    if (!host || tagBarHandle) return;
-    tagBarHandle = window.TagBar.mount(host, {
-      registry: TAGS_REGISTRY,
-      isSelected: (id) => activeFilters.tags.has(id),
-      onToggle: (id, willSelect) => {
-        if (willSelect) activeFilters.tags.add(id);
-        else            activeFilters.tags.delete(id);
-        updateResults();
-      }
-    });
-  }
-
-  // View-toggle "מפה סמנטית" link — forward EVERY param the map might care
-  // about. Most importantly: if cards was opened from the map (and the URL
-  // carries ?node=<id>), forward that node id so the map round-trips back to
-  // the exact same view. Otherwise just forward ?q for fresh-search behavior.
-  //
-  // The toggle is ALWAYS visible on this page — regardless of how the user
-  // arrived (search, browse-tag, or map round-trip). The map is always
-  // available as another view of the same result set. We also forward `from`
-  // and `dim` so the map view shows the same breadcrumb (round-trip preserved).
-  (function wireViewToggleMapLink() {
-    const params = new URLSearchParams(window.location.search);
-    const mapLink = document.getElementById('viewToggleMap');
-    if (!mapLink) return;
-    /* Pass-through whitelist — every param the map page might care about. */
-    const FORWARDED = ['q', 'node', 'from', 'dim'];
-    const out = new URLSearchParams();
-    FORWARDED.forEach(k => { const v = params.get(k); if (v) out.set(k, v); });
-    if (out.toString()) mapLink.href = 'node-chart.html?' + out.toString();
-  })();
+  // Tag bar removed: semantic tags now render as checkbox groups inside the
+  // filter panel (see buildTagCheckboxGroup + TAG_FILTER_ORDER above).
+  // View-toggle removed: cards are the sole view for search results.
 
   /* ─── BREADCRUMB renderer ────────────────────────────────────────────
      Reads ?from=browse + ?dim=<id> + ?q=<sub-domain-name> from the URL and
@@ -1641,7 +1531,6 @@
   renderFilterPanel();
   renderCards();
   renderTray();
-  ensureTagBar();
 
   // Sync UI when the shared compare store changes (e.g., card clicked elsewhere).
   if (window.ICCard) {

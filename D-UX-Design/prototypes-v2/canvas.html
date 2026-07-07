@@ -1173,6 +1173,41 @@
     .map-tooltip-type { font-size: 11px; color: rgba(255,255,255,.65); margin-block-start: 2px; }
     .map-tooltip-desc { font-size: 12px; color: rgba(255,255,255,.85); margin-block-start: 6px; padding-block-start: 6px; border-block-start: 1px solid rgba(255,255,255,.15); }
     .map-tooltip-hint { font-size: 10.5px; color: rgba(255,255,255,.7); margin-block-start: 6px; font-weight: 600; }
+    /* Interactive link inside the tooltip. In sticky mode the WHOLE tooltip
+       receives pointer events (see .map-tooltip.sticky below) — this button
+       still keeps its own pointer-events: auto as a belt-and-suspenders
+       guarantee in case the tooltip's class gets stripped mid-hover. */
+    .map-tooltip-external-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-block-start: 8px;
+      padding: 5px 10px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.20);
+      border-radius: var(--radius-full);
+      color: #fff;
+      font-size: 11.5px;
+      font-weight: 600;
+      text-decoration: none;
+      pointer-events: auto;
+      transition: background .12s, border-color .12s;
+    }
+    .map-tooltip-external-btn:hover {
+      background: rgba(255,255,255,.18);
+      border-color: rgba(255,255,255,.35);
+    }
+    .map-tooltip-external-btn svg { width: 12px; height: 12px; }
+    /* When tooltip contains interactive content (outcome nodes with the
+       "open in new tab" button), the ENTIRE tooltip must catch pointer
+       events — otherwise mouseenter on the tooltip element never fires and
+       the hide-timer isn't cancelled. Combined with a shrunken cursor→
+       tooltip gap (see positionTooltip), this lets the pointer travel from
+       node to button without ever losing hover state. */
+    .map-tooltip.sticky {
+      pointer-events: auto;
+      transition: opacity .15s ease-out, transform .15s ease-out;
+    }
 
     /* Node visual styles — applied inline via D3 mostly */
     .map-node { cursor: pointer; transition: opacity .15s; }
@@ -1253,6 +1288,248 @@
     /* Filter-faded state — softer than hover-fade, persistent while filter active */
     .map-node.filter-faded { opacity: .28; }
     .map-link.filter-faded { opacity: .12; }
+
+    /* Layout toggle — top-inline-end of the map (LEFT in RTL).
+       "By proximity" (cluster, force-directed) vs "By causal chain" (logic-model). */
+    .map-layout-toggle {
+      position: absolute;
+      inset-inline-end: 16px;
+      inset-block-start: 16px;
+      background: rgba(255,255,255,.95);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      padding: 4px 4px 4px 10px;
+      z-index: 4;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .map-layout-toggle-label {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      font-weight: 600;
+      padding-inline-end: 2px;
+    }
+    .map-layout-btn {
+      font-family: inherit;
+      font-size: 12px; font-weight: 600;
+      padding: 5px 12px;
+      border-radius: var(--radius-full);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background .15s, color .15s;
+      border: none;
+      background: transparent;
+      white-space: nowrap;
+    }
+    .map-layout-btn:hover:not(.active) {
+      background: var(--bg-page);
+      color: var(--text-primary);
+    }
+    .map-layout-btn.active {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    /* Legend — bottom-inline-end of the map (bottom-LEFT in RTL). When the
+       detail panel opens on the same side, the legend slides inward to stay
+       visible past the panel's width (320px + 16px + gap). */
+    .map-legend {
+      position: absolute;
+      inset-inline-end: 16px;
+      inset-block-end: 16px;
+      transition: inset-inline-end .25s cubic-bezier(.4,0,.2,1);
+      background: rgba(255,255,255,.95);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      z-index: 4;
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      min-width: 140px;
+    }
+    .map-legend-title {
+      font-size: 10.5px; font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .08em;
+      margin-block-end: 6px;
+    }
+    .map-legend-section {
+      font-size: 10.5px; font-weight: 600;
+      color: var(--text-muted);
+      margin-block-end: 3px;
+    }
+    .map-legend-row {
+      display: flex; align-items: center; gap: 8px;
+      padding-block: 2px;
+      font-size: 11.5px;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    .map-legend-line {
+      display: inline-block;
+      width: 22px; height: 2.5px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    /* Dashed swatch — repeating-linear-gradient renders a clear dash pattern
+       at small sizes (2px dashes / 3px gaps). border-top: dashed at 22×2.5 is
+       too dense to read as "dashed" — you'd just see a fuzzy line. */
+    .map-legend-line.dashed {
+      background: repeating-linear-gradient(
+        to right,
+        #94A3B8 0, #94A3B8 4px,
+        transparent 4px, transparent 8px
+      );
+      border-radius: 0;
+    }
+    /* Push legend past the detail panel when it's open — panel is 320px wide
+       with 16px inset. 320 + 16 (inset) + 16 (gap) = 352 baseline offset. */
+    .results-workspace.blade-open .map-legend {
+      inset-inline-end: 352px;
+    }
+
+    /* ═══════════════ LOGIC-MODE OVERLAYS ═══════════════
+       Header banner + column headers + related-outcome chips.
+       Hidden by default (opacity 0, pointer-events none). Visible when
+       .map-view has .logic-mode class (toggled by applyLayout('logic')). */
+    .logic-header,
+    .logic-columns,
+    .logic-related {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s ease;
+      z-index: 3;                     /* below panels (z-index 4-5), above SVG */
+    }
+    .map-view.logic-mode .logic-header,
+    .map-view.logic-mode .logic-columns,
+    .map-view.logic-mode .logic-related {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Central outcome banner — top-center, above column headers */
+    .logic-header {
+      inset-block-start: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      background: rgba(255,255,255,.95);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 10px 24px;
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      max-width: 560px;
+    }
+    .logic-header-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-block-end: 3px;
+    }
+    .logic-header-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+      line-height: 1.3;
+    }
+
+    /* Column headers — a horizontal row of 4 labeled columns at fixed x
+       positions matching the D3 layout in applyLayout('logic'). */
+    .logic-columns {
+      inset-block-start: 130px;
+      inset-inline-start: 0;
+      inset-inline-end: 0;
+      display: grid;
+      /* Column widths mirror the x-anchors in applyLayout (fractions .15/.35/.60/.85).
+         Using a 4-col grid with center-x per column. */
+      grid-template-columns: repeat(4, 1fr);
+      pointer-events: none;
+    }
+    .logic-column {
+      text-align: center;
+      padding-inline: 12px;
+    }
+    /* IN RTL, DOM order maps right→left visually. So DOM order predictor,
+       output, outcome, impact renders RIGHT→LEFT as we want. */
+    .logic-column-title {
+      display: inline-block;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text-primary);
+      background: var(--bg-card);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-full);
+      padding: 4px 14px;
+      margin-block-end: 6px;
+    }
+    .logic-column-desc {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Related-outcome chips — bottom center, below the map controls */
+    .logic-related {
+      inset-block-end: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,.95);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      padding: 6px 12px;
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      flex-wrap: wrap;
+      max-width: calc(100% - 40px);
+      justify-content: center;
+    }
+    .logic-related-label {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .logic-related-chip {
+      display: inline-flex; align-items: center;
+      font-size: 12px; font-weight: 600;
+      padding: 4px 10px;
+      background: var(--bg-page);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: border-color .12s, background .12s, color .12s;
+      white-space: nowrap;
+    }
+    .logic-related-chip:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    /* In Logic mode: fade OUTCOMES + ALL edges. Only indicator nodes
+       remain visible — the columns THEMSELVES communicate role/position,
+       so lines connecting indicators to (now-hidden) outcomes would just
+       be visual noise pointing to nothing. */
+    .map-view.logic-mode .map-node.outcome-node { opacity: 0; pointer-events: none; }
+    .map-view.logic-mode .map-link { opacity: 0 !important; pointer-events: none; }
 
     /* ─── INSIGHTS BLOCK — wireframe SaaS: no icon-in-colored-square,
        no full-color callouts, no rounded pills of decoration. Just
@@ -1731,20 +2008,41 @@
                on first switch to map view. Hosts an <svg> that D3 injects,
                plus a legend overlay, filter chips, and hover tooltip. -->
           <div class="map-view" id="map-view-canvas" aria-label="מפה סמנטית אינטראקטיבית של התוצאה והקשריה">
-            <!-- Filter chips — hide indicators NOT of the chosen type
-                 (outcomes stay full-opacity — they're the map's structure).
-                 The chips ARE the legend now — dot + label per type. -->
-            <div class="map-filter" role="radiogroup" aria-label="סינון מדדים לפי סוג">
+            <!-- Filter chips — hide EDGES that don't match the chosen role.
+                 Roles live on edges now (see MAP_DATA.links[].role). -->
+            <div class="map-filter" role="radiogroup" aria-label="סינון קשרים לפי סוג">
               <button type="button" class="map-filter-btn active" data-map-filter="all" role="radio" aria-checked="true">הכל</button>
-              <button type="button" class="map-filter-btn" data-map-filter="ind-outcome" role="radio" aria-checked="false">
+              <button type="button" class="map-filter-btn" data-map-filter="outcome" role="radio" aria-checked="false">
                 <span class="dot" style="background:#059669"></span>תוצאה
               </button>
-              <button type="button" class="map-filter-btn" data-map-filter="ind-output" role="radio" aria-checked="false">
+              <button type="button" class="map-filter-btn" data-map-filter="output" role="radio" aria-checked="false">
                 <span class="dot" style="background:#0369A1"></span>תפוקה
               </button>
-              <button type="button" class="map-filter-btn" data-map-filter="ind-predictor" role="radio" aria-checked="false">
-                <span class="dot" style="background:#7C3AED"></span>ניבוי
+              <button type="button" class="map-filter-btn" data-map-filter="predictor" role="radio" aria-checked="false">
+                <span class="dot" style="background:#7C3AED"></span>מנבא
               </button>
+            </div>
+
+            <!-- Layout mode toggle — "By proximity" (default, force-directed
+                 cluster) vs "By causal chain" (fixed columns: predictor →
+                 output → outcome → impact). Sits at top-inline-end (LEFT in RTL). -->
+            <div class="map-layout-toggle" role="radiogroup" aria-label="סדר צמתים לפי">
+              <span class="map-layout-toggle-label">סדר לפי:</span>
+              <button type="button" class="map-layout-btn active" data-layout="cluster" role="radio" aria-checked="true">קרבה</button>
+              <button type="button" class="map-layout-btn" data-layout="logic" role="radio" aria-checked="false">שרשרת סיבתית</button>
+            </div>
+
+            <!-- Legend — explains what edge COLORS and STYLES mean.
+                 Since role now lives on edges (same node can play different
+                 roles in different outcomes), the legend must exist. -->
+            <div class="map-legend" aria-label="מקרא">
+              <div class="map-legend-title">מקרא</div>
+              <div class="map-legend-section">קשר לתוצאה:</div>
+              <div class="map-legend-row"><span class="map-legend-line" style="background:#059669"></span>מדד תוצאה</div>
+              <div class="map-legend-row"><span class="map-legend-line" style="background:#0369A1"></span>מדד תפוקה</div>
+              <div class="map-legend-row"><span class="map-legend-line" style="background:#7C3AED"></span>מדד מנבא</div>
+              <div class="map-legend-section" style="margin-block-start: 8px">בין תוצאות:</div>
+              <div class="map-legend-row"><span class="map-legend-line dashed"></span>תוצאה קרובה</div>
             </div>
             <!-- Tooltip — populated + positioned by JS on hover -->
             <div class="map-tooltip" id="map-tooltip" role="tooltip"></div>
@@ -1788,6 +2086,48 @@
                 <strong>תפעול:</strong> גררו לזיזה · גלגלת לזום · לחצו על צומת לפרטים
               </div>
             </div>
+            <!-- ══════════════ LOGIC-MODE OVERLAYS ══════════════
+                 Hidden by default; shown when .map-view has .logic-mode.
+                 Nothing here is D3 — pure HTML overlays positioned
+                 absolutely inside .map-view. -->
+
+            <!-- Central outcome banner — replaces the outcome node in the
+                 chain. The chain is FOR this goal. -->
+            <div class="logic-header" aria-hidden="true">
+              <div class="logic-header-label">התוצאה שאנחנו מודדים</div>
+              <h3 class="logic-header-title">שיפור זכאות לתעודת בגרות</h3>
+            </div>
+
+            <!-- Column headers with semantic explanations. Positioned to
+                 match the D3 column x-coordinates set in applyLayout(). -->
+            <div class="logic-columns" aria-hidden="true">
+              <div class="logic-column" data-col="predictor">
+                <div class="logic-column-title">מנבא</div>
+                <div class="logic-column-desc">מה יגרום לשינוי?</div>
+              </div>
+              <div class="logic-column" data-col="output">
+                <div class="logic-column-title">תפוקה</div>
+                <div class="logic-column-desc">מה קורה בפועל?</div>
+              </div>
+              <div class="logic-column" data-col="outcome">
+                <div class="logic-column-title">תוצאה</div>
+                <div class="logic-column-desc">האם השינוי קרה?</div>
+              </div>
+              <div class="logic-column" data-col="impact">
+                <div class="logic-column-title">אימפקט</div>
+                <div class="logic-column-desc">השלכות ארוכות טווח</div>
+              </div>
+            </div>
+
+            <!-- Related outcomes as chips at the bottom. Clicking one
+                 re-runs canvas for that outcome. -->
+            <div class="logic-related" aria-hidden="true">
+              <span class="logic-related-label">קשור גם:</span>
+              <a class="logic-related-chip" href="canvas.html?q=%D7%9E%D7%95%D7%9B%D7%A0%D7%95%D7%AA+%D7%9C%D7%91%D7%92%D7%A8%D7%95%D7%AA&stage=refine">מוכנות לבגרות בכיתה י'</a>
+              <a class="logic-related-chip" href="canvas.html?q=%D7%9E%D7%A1%D7%95%D7%92%D7%9C%D7%95%D7%AA+%D7%9C%D7%99%D7%9E%D7%95%D7%93%D7%99%D7%AA&stage=refine">מסוגלות עצמית לימודית</a>
+              <a class="logic-related-chip" href="canvas.html?q=%D7%AA%D7%9E%D7%99%D7%9B%D7%94+%D7%A4%D7%A1%D7%99%D7%9B%D7%95-%D7%97%D7%91%D7%A8%D7%AA%D7%99%D7%AA&stage=refine">תמיכה פסיכו-חברתית</a>
+            </div>
+
             <!-- SVG goes here — injected by D3 -->
           </div>
           </div><!-- /.map-pane -->
@@ -2780,35 +3120,53 @@
       { id: 'i.tenthgrade',   label: 'הישגי י\'',    type: 'ind-outcome',   r: 10,
         desc: 'ממוצע ציונים בכיתה י\' — מנבא זכאות בגרות בכיתה יב\'' }
     ],
+    /* Links carry a `role` — indicator's role IN RELATION TO the outcome it's
+       linked from. Same indicator can have different roles for different
+       outcomes: e.g. i.tutoring is 'output' for eligibility (tutoring HAPPENS)
+       but 'predictor' for selfefficacy (hours of tutoring predicts perceived
+       ability). The color of the LINE reflects the role — the node itself is
+       neutral. See map-legend UI. */
     links: [
-      /* Central outcome to its 5 indicators */
-      { source: 'o.eligibility', target: 'i.eligibility-rate', type: 'measures' },
-      { source: 'o.eligibility', target: 'i.dropout',          type: 'measures' },
-      { source: 'o.eligibility', target: 'i.bagrut-scores',    type: 'measures' },
-      { source: 'o.eligibility', target: 'i.tutoring',         type: 'measures' },
-      { source: 'o.eligibility', target: 'i.attendance',       type: 'measures' },
+      /* Central outcome to its 5 indicators — role reflects how each measures
+         the "improved bagrut eligibility" outcome */
+      { source: 'o.eligibility', target: 'i.eligibility-rate', type: 'measures', role: 'outcome'   },
+      { source: 'o.eligibility', target: 'i.dropout',          type: 'measures', role: 'outcome'   },
+      { source: 'o.eligibility', target: 'i.bagrut-scores',    type: 'measures', role: 'outcome'   },
+      { source: 'o.eligibility', target: 'i.tutoring',         type: 'measures', role: 'output'    },
+      { source: 'o.eligibility', target: 'i.attendance',       type: 'measures', role: 'predictor' },
 
       /* Central to related outcomes — "you should also consider" */
       { source: 'o.eligibility', target: 'o.readiness',     type: 'related' },
       { source: 'o.eligibility', target: 'o.selfefficacy',  type: 'related' },
       { source: 'o.eligibility', target: 'o.psychosocial',  type: 'related' },
 
-      /* Related outcomes to their indicators (some SHARED = bridges) */
-      { source: 'o.readiness',    target: 'i.tenthgrade',  type: 'measures' },
-      { source: 'o.readiness',    target: 'i.attendance',  type: 'measures' }, /* BRIDGE */
-      { source: 'o.selfefficacy', target: 'i.motivation',  type: 'measures' },
-      { source: 'o.selfefficacy', target: 'i.tutoring',    type: 'measures' }, /* BRIDGE */
-      { source: 'o.psychosocial', target: 'i.cohort',      type: 'measures' },
-      { source: 'o.psychosocial', target: 'i.dropout',     type: 'measures' }  /* BRIDGE */
+      /* Related outcomes to their indicators — some are SHARED (bridges) with
+         a DIFFERENT role than they had on the central outcome */
+      { source: 'o.readiness',    target: 'i.tenthgrade',  type: 'measures', role: 'outcome'   },
+      { source: 'o.readiness',    target: 'i.attendance',  type: 'measures', role: 'predictor' }, /* BRIDGE — same role */
+      { source: 'o.selfefficacy', target: 'i.motivation',  type: 'measures', role: 'predictor' },
+      { source: 'o.selfefficacy', target: 'i.tutoring',    type: 'measures', role: 'predictor' }, /* BRIDGE — output→predictor role change */
+      { source: 'o.psychosocial', target: 'i.cohort',      type: 'measures', role: 'predictor' },
+      { source: 'o.psychosocial', target: 'i.dropout',     type: 'measures', role: 'outcome'   }  /* BRIDGE — same role */
     ]
   };
 
   const NODE_FILL = {
     'outcome-main':    '#334155',
     'outcome-related': '#64748B',
-    'ind-outcome':     '#059669',
-    'ind-output':      '#0369A1',
-    'ind-predictor':   '#7C3AED'
+    /* Indicators are NEUTRAL — role lives on the edge now, not the node.
+       Same indicator can play different roles for different outcomes; a
+       fixed node color would misrepresent that. */
+    'ind-outcome':     '#F1F5F9',
+    'ind-output':      '#F1F5F9',
+    'ind-predictor':   '#F1F5F9'
+  };
+  /* Edge role → color mapping. Applied to `measures` links; `related` links
+     stay dashed grey (they connect outcomes, not indicators). */
+  const ROLE_COLOR = {
+    'outcome':   '#059669',
+    'output':    '#0369A1',
+    'predictor': '#7C3AED'
   };
   const TYPE_LABEL_MAP = {
     'outcome-main':    'תוצאה מרכזית',
@@ -2990,20 +3348,31 @@
       const link = linkLayer.selectAll('.map-link').data(MAP_DATA.links, linkKey);
       link.exit().remove();
       link.enter().append('line')
-        .attr('class', 'map-link')
-        .attr('stroke', function (d) { return d.type === 'related' ? '#94A3B8' : '#CBD5E1'; })
-        .attr('stroke-width', function (d) { return d.type === 'related' ? 1.5 : 1.3; })
+        .attr('class', function (d) {
+          return 'map-link' + (d.type === 'related' ? ' related-link' : '');
+        })
+        /* Role-based color for measures links (outcome/output/predictor).
+           `related` links stay dashed grey — they connect outcomes, not
+           indicators. */
+        .attr('stroke', function (d) {
+          if (d.type === 'related') return '#94A3B8';
+          return ROLE_COLOR[d.role] || '#CBD5E1';
+        })
+        .attr('stroke-width', function (d) { return d.type === 'related' ? 1.5 : 1.8; })
         .attr('stroke-dasharray', function (d) { return d.type === 'related' ? '4 4' : ''; })
         .attr('opacity', 0)
         .transition().duration(400)
-        .attr('opacity', 0.6);
+        .attr('opacity', function (d) { return d.type === 'related' ? 0.5 : 0.75; });
 
       /* ── NODES — keyed by id ── */
       const node = nodeLayer.selectAll('.map-node').data(MAP_DATA.nodes, function (d) { return d.id; });
       node.exit().remove();
 
       const nodeEnter = node.enter().append('g')
-        .attr('class', 'map-node new-in')
+        /* Add outcome-node class for CSS targeting in logic-mode */
+        .attr('class', function (d) {
+          return 'map-node new-in' + (d.type && d.type.indexOf('outcome') === 0 ? ' outcome-node' : '');
+        })
         .call(dragBehaviour)
         .on('mouseenter', onNodeEnter)
         .on('mouseleave', onNodeLeave)
@@ -3020,13 +3389,18 @@
         .attr('stroke-opacity', 0.15)
         .attr('stroke-width', 2);
 
-      /* Core circle */
+      /* Core circle — indicators get a visible neutral fill + stroke since
+         role coloring now lives on their edges, not the node. */
       nodeEnter.append('circle')
         .attr('class', 'core')
         .attr('r', function (d) { return d.r; })
         .attr('fill', function (d) { return NODE_FILL[d.type] || '#94A3B8'; })
-        .attr('stroke', function (d) { return d.type === 'outcome-main' ? 'rgba(255,255,255,.6)' : 'transparent'; })
-        .attr('stroke-width', 2);
+        .attr('stroke', function (d) {
+          if (d.type === 'outcome-main')    return 'rgba(255,255,255,.6)';
+          if (d.type && d.type.indexOf('ind-') === 0) return '#94A3B8';
+          return 'transparent';
+        })
+        .attr('stroke-width', 1.5);
 
       /* Label */
       nodeEnter.append('text')
@@ -3088,7 +3462,9 @@
       applyFilter(currentFilter);
     }
 
-    /* ── FILTER — dim indicators that don't match the selected type ── */
+    /* ── FILTER — dim EDGES whose role doesn't match. Nodes fade only if
+       ALL their connecting edges are faded (else the node is still
+       relevant via at least one visible relationship). ── */
     function applyFilter(filterType) {
       currentFilter = filterType;
 
@@ -3099,20 +3475,27 @@
         btn.setAttribute('aria-checked', active ? 'true' : 'false');
       });
 
-      /* Node: fade indicators that don't match. Outcomes stay full opacity. */
-      nodeLayer.selectAll('.map-node').classed('filter-faded', function (d) {
-        if (filterType === 'all') return false;
-        if (d.type.indexOf('ind-') !== 0) return false;    /* not an indicator → don't fade */
-        return d.type !== filterType;
-      });
-
-      /* Link: fade if either endpoint is a filter-faded indicator */
+      /* Link: fade if role doesn't match. `related` links (outcome-to-outcome)
+         stay visible on any filter — they're structural, not role-typed. */
       linkLayer.selectAll('.map-link').classed('filter-faded', function (l) {
         if (filterType === 'all') return false;
-        const s = l.source, t = l.target;
-        const sFaded = (typeof s === 'object' && s.type.indexOf('ind-') === 0 && s.type !== filterType);
-        const tFaded = (typeof t === 'object' && t.type.indexOf('ind-') === 0 && t.type !== filterType);
-        return sFaded || tFaded;
+        if (l.type === 'related') return false;
+        return l.role !== filterType;
+      });
+
+      /* Node: fade indicator nodes whose ALL edges are faded. Outcomes stay. */
+      nodeLayer.selectAll('.map-node').classed('filter-faded', function (d) {
+        if (filterType === 'all') return false;
+        if (d.type && d.type.indexOf('outcome') === 0) return false;
+        /* Any measures edge involving this node with matching role? */
+        const anyMatch = MAP_DATA.links.some(function (l) {
+          if (l.type !== 'measures') return false;
+          if (l.role !== filterType) return false;
+          const s = l.source.id || l.source;
+          const t = l.target.id || l.target;
+          return s === d.id || t === d.id;
+        });
+        return !anyMatch;
       });
     }
 
@@ -3123,9 +3506,115 @@
       });
     });
 
+    /* ── LAYOUT MODE — cluster (force-directed) OR logic (fixed columns) ── */
+    let currentLayout = 'cluster';
+    const CENTRAL_OUTCOME_ID = 'o.eligibility';
+
+    /* Derive an indicator's role for the LOGIC column. Priority:
+       1. role on the edge from the central outcome, if such an edge exists
+       2. role on any measures-edge involving the node (first match)
+       Falls back to 'outcome' for outcomes and 'output' otherwise. */
+    function nodeLogicRole(node) {
+      if (node.type && node.type.indexOf('outcome') === 0) return 'outcome';
+      /* Prefer role vs central outcome */
+      const central = MAP_DATA.links.find(function (l) {
+        if (l.type !== 'measures') return false;
+        const s = l.source.id || l.source;
+        const t = l.target.id || l.target;
+        return s === CENTRAL_OUTCOME_ID && t === node.id;
+      });
+      if (central) return central.role;
+      /* Fall back to any measures-edge */
+      const any = MAP_DATA.links.find(function (l) {
+        if (l.type !== 'measures') return false;
+        const t = l.target.id || l.target;
+        return t === node.id;
+      });
+      return (any && any.role) || 'output';
+    }
+
+    function applyLayout(mode) {
+      currentLayout = mode;
+
+      /* Update toggle visuals */
+      document.querySelectorAll('.map-layout-btn').forEach(function (btn) {
+        const active = btn.getAttribute('data-layout') === mode;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-checked', active ? 'true' : 'false');
+      });
+
+      /* Toggle the .logic-mode class on .map-view — CSS handles the
+         overlay reveals + hides outcome-node + related-link opacity. */
+      container.classList.toggle('logic-mode', mode === 'logic');
+
+      if (mode === 'logic') {
+        /* Compute column x per node — 4 columns in RTL reading order:
+           right → left: מנבא · תפוקה · תוצאה · אימפקט. Only indicator
+           columns matter; outcomes are hidden via CSS in logic mode. */
+        const cols = { predictor: 0.85, output: 0.62, outcome: 0.35, impact: 0.10 };
+        MAP_DATA.nodes.forEach(function (n) {
+          const role = nodeLogicRole(n);
+          n.fx = width * (cols[role] !== undefined ? cols[role] : 0.5);
+          /* Push indicators DOWN below the column headers (which take
+             ~140px at the top). Force a minimum y region. */
+          n.fy = null;
+        });
+        simulation.force('center', null);
+        simulation.force('charge', d3.forceManyBody().strength(-140));
+        /* Nudge nodes downward so they clear the column headers */
+        simulation.force('y', d3.forceY(height * 0.6).strength(0.15));
+        simulation.alpha(0.9).restart();
+      } else {
+        /* Return to cluster layout — release fx/fy, restore forces */
+        MAP_DATA.nodes.forEach(function (n) { n.fx = null; n.fy = null; });
+        simulation.force('center', d3.forceCenter(width / 2, height / 2));
+        simulation.force('charge', d3.forceManyBody().strength(-360));
+        simulation.force('y', null);
+        simulation.alpha(0.9).restart();
+      }
+    }
+
+    /* Wire up layout toggle */
+    document.querySelectorAll('.map-layout-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        applyLayout(btn.getAttribute('data-layout'));
+      });
+    });
+
     /* ── Interactions ── */
 
+    /* Hover-delay so the cursor can move from the node to the tooltip's
+       "open in new tab" button without losing the hover state. */
+    let tooltipHideTimer = null;
+    let tooltipSticky = false;
+
+    function hideTooltipNow() {
+      nodeLayer.selectAll('.map-node').classed('faded', false).classed('hovered', false);
+      linkLayer.selectAll('.map-link').classed('faded', false).classed('hovered', false);
+      tooltipEl.classList.remove('visible');
+      tooltipEl.classList.remove('sticky');
+      tooltipSticky = false;
+    }
+
+    /* Tooltip mouse handlers — cancel the hide on enter, kill immediately on leave */
+    if (!tooltipEl._hoverBound) {
+      tooltipEl.addEventListener('mouseenter', function () {
+        if (tooltipHideTimer) { clearTimeout(tooltipHideTimer); tooltipHideTimer = null; }
+      });
+      tooltipEl.addEventListener('mouseleave', function () {
+        hideTooltipNow();
+      });
+      tooltipEl._hoverBound = true;
+    }
+
     function onNodeEnter(event, d) {
+      /* Cancel any pending hide from a previous node */
+      if (tooltipHideTimer) { clearTimeout(tooltipHideTimer); tooltipHideTimer = null; }
+      /* Clear previous position so positionTooltip's sticky-guard doesn't
+         hold the tooltip at the OLD node's position. */
+      tooltipEl.style.insetInlineStart = '';
+      tooltipEl.style.insetBlockStart = '';
+
       /* Highlight self + neighbours, fade the rest */
       const nb = neighbours[d.id] || new Set([d.id]);
       nodeLayer.selectAll('.map-node').classed('faded', function (n) { return !nb.has(n.id); });
@@ -3159,20 +3648,68 @@
         hint.textContent = '↓ לחץ להרחיב את התוצאה במפה';
         tooltipEl.appendChild(hint);
       }
+      /* Outcome nodes get an "open in new tab" affordance — clicking navigates
+         directly to canvas.html?stage=results (skips the refine questionnaire). */
+      const isOutcome = d.type && d.type.indexOf('outcome') === 0;
+      tooltipSticky = isOutcome;
+      if (isOutcome) {
+        const btn = document.createElement('a');
+        btn.className = 'map-tooltip-external-btn';
+        btn.href = 'canvas.html?stage=results&q=' + encodeURIComponent(d.label);
+        btn.target = '_blank';
+        btn.rel = 'noopener';
+        /* External-link icon SVG (Lucide) */
+        const NS = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(NS, 'svg');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('fill', 'none');
+        svg.setAttribute('stroke', 'currentColor');
+        svg.setAttribute('stroke-width', '2');
+        svg.setAttribute('stroke-linecap', 'round');
+        svg.setAttribute('stroke-linejoin', 'round');
+        [
+          'M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6',
+          'M15 3h6v6',
+          'M10 14L21 3'
+        ].forEach(function (dstr) {
+          const p = document.createElementNS(NS, 'path');
+          p.setAttribute('d', dstr);
+          svg.appendChild(p);
+        });
+        btn.appendChild(svg);
+        btn.appendChild(document.createTextNode('פתח במפה סמנטית'));
+        tooltipEl.appendChild(btn);
+        tooltipEl.classList.add('sticky');
+      } else {
+        tooltipEl.classList.remove('sticky');
+      }
       tooltipEl.classList.add('visible');
       positionTooltip(event);
     }
 
     function onNodeLeave() {
-      nodeLayer.selectAll('.map-node').classed('faded', false).classed('hovered', false);
-      linkLayer.selectAll('.map-link').classed('faded', false).classed('hovered', false);
-      tooltipEl.classList.remove('visible');
+      /* Delay-hide so the cursor can travel from node → tooltip button.
+         Sticky tooltips (outcome nodes with the "open" button) get a longer
+         window because there's an actual interactive target to reach.
+         Once the cursor enters the tooltip (now pointer-events: auto in
+         sticky mode), tooltipEl.mouseenter cancels the timer. */
+      if (tooltipHideTimer) clearTimeout(tooltipHideTimer);
+      tooltipHideTimer = setTimeout(hideTooltipNow, tooltipSticky ? 400 : 60);
     }
 
     function positionTooltip(event) {
+      /* When tooltip has interactive content (sticky), pin its position —
+         don't chase the cursor. Otherwise it moves out from under the user's
+         hand when they try to click the "open" button.
+         Gap between cursor and tooltip is intentionally SMALL for sticky
+         mode (4px vs 14px) — a bigger gap creates a dead zone where the
+         cursor is on neither the node nor the tooltip, and hover state
+         is lost mid-transit. */
+      if (tooltipSticky && tooltipEl.style.insetInlineStart) return;
       const rect = container.getBoundingClientRect();
-      const x = event.clientX - rect.left + 14;
-      const y = event.clientY - rect.top + 14;
+      const gap = tooltipSticky ? 4 : 14;
+      const x = event.clientX - rect.left + gap;
+      const y = event.clientY - rect.top + gap;
       const maxX = rect.width  - 250;
       const maxY = rect.height - 100;
       tooltipEl.style.insetInlineStart = Math.min(x, maxX) + 'px';

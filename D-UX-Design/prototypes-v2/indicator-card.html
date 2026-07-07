@@ -404,30 +404,130 @@
       line-height: 1.5;
     }
 
-    /* ─── USAGE (text paragraphs, not cards) ─── */
-    .usage-list { display: flex; flex-direction: column; gap: 22px; margin-block-start: 4px; }
-    .usage-entry { padding-inline-start: 16px; border-inline-start: 3px solid var(--border-strong); }
-    .usage-entry h3 {
+    /* ─── USAGE — 2 sub-sections: related outcomes + programs ─── */
+    .usage-subsection {
+      margin-block-start: 24px;
+      padding-block-start: 20px;
+      border-block-start: 1px solid var(--border);
+    }
+    .usage-subsection:first-of-type {
+      margin-block-start: 8px;
+      padding-block-start: 0;
+      border-block-start: none;
+    }
+    .usage-subsection-title {
       font-size: 15px;
       font-weight: 700;
       color: var(--text-primary);
       margin-block-end: 6px;
     }
-    .usage-entry p {
-      font-size: 14px;
-      line-height: 1.75;
-      color: var(--text-secondary);
-      margin-block-end: 8px;
+    .usage-subsection-lede {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      margin-block-end: 14px;
+      line-height: 1.55;
     }
-    .usage-entry p:last-child { margin-block-end: 0; }
-    .usage-link {
+
+    /* Related-outcomes list — clickable rows: outcome name + role badge */
+    .usage-outcomes-list {
+      display: flex; flex-direction: column;
+      gap: 6px;
+    }
+    .usage-outcome-row {
+      display: flex; align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: var(--bg-page);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md, 8px);
+      text-decoration: none;
+      color: inherit;
+      transition: border-color .12s, background .12s;
+    }
+    .usage-outcome-row:hover {
+      border-color: var(--primary);
+      background: var(--bg-card);
+    }
+    .usage-outcome-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      flex: 1;
+    }
+    /* External-link icon — reveals on row hover, hints "opens in new tab" */
+    .usage-outcome-external {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      font-size: 13px;
-      font-weight: 600;
+      justify-content: center;
+      width: 22px; height: 22px;
+      color: var(--text-muted);
+      opacity: 0;
+      transition: opacity .12s, color .12s;
+      flex-shrink: 0;
+    }
+    .usage-outcome-external svg { width: 14px; height: 14px; }
+    .usage-outcome-row:hover .usage-outcome-external,
+    .usage-outcome-row:focus-visible .usage-outcome-external {
+      opacity: 1;
       color: var(--primary);
     }
+    .usage-role-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: var(--radius-full, 9999px);
+      font-size: 11.5px;
+      font-weight: 700;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .usage-role-badge.role-outcome   { background: #DCFCE7; color: #059669; }
+    .usage-role-badge.role-output    { background: #DBEAFE; color: #0369A1; }
+    .usage-role-badge.role-predictor { background: #F3E8FF; color: #7C3AED; }
+
+    /* Programs list — cards with head (name + org) and description */
+    .usage-programs-list {
+      display: flex; flex-direction: column;
+      gap: 10px;
+    }
+    .usage-program {
+      padding: 14px 16px;
+      background: var(--bg-page);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md, 8px);
+    }
+    .usage-program-head {
+      display: flex; align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-block-end: 6px;
+    }
+    .usage-program-name {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    .usage-program-org {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .usage-program-desc {
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    /* Legacy usage-list/entry/link styles — retained for any HTML that still
+       uses them (none currently on this page). Safe to prune later. */
+    .usage-list { display: flex; flex-direction: column; gap: 22px; margin-block-start: 4px; }
+    .usage-entry { padding-inline-start: 16px; border-inline-start: 3px solid var(--border-strong); }
+    .usage-entry h3 { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-block-end: 6px; }
+    .usage-entry p { font-size: 14px; line-height: 1.75; color: var(--text-secondary); margin-block-end: 8px; }
+    .usage-entry p:last-child { margin-block-end: 0; }
+    .usage-link { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; color: var(--primary); }
     .usage-link:hover { text-decoration: underline; }
     .usage-link svg { width: 14px; height: 14px; }
 
@@ -768,37 +868,13 @@
       </p>
     </section>
 
-    <!-- RATIONALE — KEY BLOCK -->
-    <section class="rationale-card" id="indicator-rationale-section" aria-labelledby="rationale-title">
-      <h2 class="section-title" id="rationale-title" style="color: var(--primary); margin-block-end: 10px;">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-        </svg>
-        למה המדד הזה?
-      </h2>
-      <p class="rationale-lead">
-        מדד זה מתאים כאשר התכנית שלך עוסקת בשיפור איכות חיים רגשית של ילדים ונוער — ורוצה למדוד את הפרספקטיבה שלהם, לא רק של המטפלים.
-      </p>
-      <div class="rationale-grid" role="list">
-        <div class="rationale-item" role="listitem">
-          <div class="rationale-label">מתי מתאים</div>
-          <div class="rationale-value">כשמטרת התכנית היא שיפור רווחה רגשית, תחושת שייכות, או חוסן נפשי</div>
-        </div>
-        <div class="rationale-item" role="listitem">
-          <div class="rationale-label">שלב בתכנית</div>
-          <div class="rationale-value">הערכת תוצאות — לאחר לפחות 6 חודשים. נדרשות לפחות שתי מדידות</div>
-        </div>
-        <div class="rationale-item" role="listitem">
-          <div class="rationale-label">עוזר להחליט</div>
-          <div class="rationale-value">האם התכנית שיפרה את תחושת האושר? כמה? לעומת איזו נקודת בסיס?</div>
-        </div>
-      </div>
-      <p class="rationale-warning">
-        ⚠️ <strong>פחות מתאים כאשר:</strong> מדידים מיומנויות קונקרטיות, השתתפות בפעילות, או תפוקות מנהליות — שם מדד תפוקה יהיה מדויק יותר.
-      </p>
-    </section>
+    <!-- Rationale section ("למה המדד הזה?") removed per design decision.
+         The rationale content (when-to-use, when-not-to-use) was overlap
+         with the "מדדים קשורים" section below. CSS retained as dead rules. -->
 
-    <!-- PROGRAMS -->
+    <!-- USAGE — two sub-sections:
+         (a) Related outcomes with the ROLE this indicator plays for each
+         (b) Programs currently using this indicator -->
     <section class="card" id="indicator-usage-section" aria-labelledby="usage-title">
       <h2 class="section-title" id="usage-title">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -809,107 +885,120 @@
         </svg>
         היכן המדד נמצא בשימוש
       </h2>
-      <p class="body-text" style="margin-block-end: 20px;">
-        המדד אינו ייעודי לארגון מסוים — הוא פתוח לשימוש של כל גוף שמודד רווחה רגשית של ילדים ונוער. להלן הקשרים מייצגים שבהם הוא נמצא בשימוש, ומה ניתן ללמוד מכל אחד מהם.
-      </p>
 
-      <div class="usage-list">
-        <div class="usage-entry">
-          <h3>תוכניות התערבות בשדה</h3>
-          <p>
-            תוכניות לקידום רווחה רגשית של ילדים ונוער בסיכון משתמשות במדד כמדד תוצאה מרכזי — לרוב במדידה שנתית או חצי-שנתית, עם השוואה בין תחילת ההתערבות לסיומה. השימוש החוזר מאפשר למידה מצטברת מהשטח ובניית benchmark פנימי בין מחזורי נתונים.
-          </p>
-          <a class="usage-link" href="#">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            דוגמה לתוכנית קידום בריאות
+      <!-- Sub-section 1: Related outcomes with role badges -->
+      <div class="usage-subsection">
+        <h3 class="usage-subsection-title">תוצאות הקשורות למדד</h3>
+        <p class="usage-subsection-lede">
+          התוצאות שהמדד הזה משמש אותן, ואיזה תפקיד הוא ממלא ביחס לכל אחת מהן.
+        </p>
+        <div class="usage-outcomes-list" role="list">
+          <a class="usage-outcome-row" role="listitem" target="_blank" rel="noopener" href="canvas.html?q=%D7%A9%D7%99%D7%A4%D7%95%D7%A8+%D7%A8%D7%95%D7%95%D7%97%D7%94+%D7%A0%D7%A4%D7%A9%D7%99%D7%AA&stage=refine">
+            <span class="usage-outcome-name">שיפור רווחה נפשית של ילדים ונוער</span>
+            <span class="usage-role-badge role-outcome">תוצאה</span>
+            <span class="usage-outcome-external" aria-label="נפתח בטאב חדש" title="פתיחה בטאב חדש">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+            </span>
+          </a>
+          <a class="usage-outcome-row" role="listitem" target="_blank" rel="noopener" href="canvas.html?q=%D7%A6%D7%9E%D7%A6%D7%95%D7%9D+%D7%94%D7%AA%D7%A0%D7%94%D7%92%D7%95%D7%99%D7%95%D7%AA+%D7%A1%D7%99%D7%9B%D7%95%D7%9F&stage=refine">
+            <span class="usage-outcome-name">צמצום התנהגויות סיכון בקרב נוער</span>
+            <span class="usage-role-badge role-predictor">מנבא</span>
+            <span class="usage-outcome-external" aria-label="נפתח בטאב חדש" title="פתיחה בטאב חדש">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+            </span>
+          </a>
+          <a class="usage-outcome-row" role="listitem" target="_blank" rel="noopener" href="canvas.html?q=%D7%94%D7%AA%D7%9E%D7%93%D7%94+%D7%91%D7%9E%D7%A1%D7%92%D7%A8%D7%AA+%D7%97%D7%99%D7%A0%D7%95%D7%9B%D7%99%D7%AA&stage=refine">
+            <span class="usage-outcome-name">התמדה במסגרת חינוכית</span>
+            <span class="usage-role-badge role-predictor">מנבא</span>
+            <span class="usage-outcome-external" aria-label="נפתח בטאב חדש" title="פתיחה בטאב חדש">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+            </span>
+          </a>
+          <a class="usage-outcome-row" role="listitem" target="_blank" rel="noopener" href="canvas.html?q=%D7%A9%D7%99%D7%9C%D7%95%D7%91+%D7%97%D7%91%D7%A8%D7%AA%D7%99+%D7%A9%D7%9C+%D7%99%D7%9C%D7%93%D7%99%D7%9D+%D7%91%D7%A1%D7%99%D7%9B%D7%95%D7%9F&stage=refine">
+            <span class="usage-outcome-name">שילוב חברתי של ילדים בסיכון</span>
+            <span class="usage-role-badge role-outcome">תוצאה</span>
+            <span class="usage-outcome-external" aria-label="נפתח בטאב חדש" title="פתיחה בטאב חדש">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+            </span>
           </a>
         </div>
+      </div>
 
-        <div class="usage-entry">
-          <h3>מדידה רשותית ומדיניות מקומית</h3>
-          <p>
-            רשויות מקומיות ויחידות מדיניות עושות שימוש במדד כדי לאמוד רווחה רגשית ברמת קבוצת אוכלוסייה — לא כדי להעריך תוכנית בודדת, אלא כדי לזהות פערים בין שכונות או קבוצות גיל ולתעדף משאבים. בהקשר זה המדד משמש מדד מנבא, לא מדד תוצאת התערבות.
-          </p>
-        </div>
-
-        <div class="usage-entry">
-          <h3>מחקר אקדמי וסקירות הערכה</h3>
-          <p>
-            חוקרים ומעריכים משתמשים במדד במחקרי הערכה ובסקירות בנצ'מרק, בין היתר משום שמדרג קנטריל מאפשר השוואה בין-לאומית למאגרי נתונים גדולים. הדבר מחזק את התוקף החיצוני של ממצאים ומאפשר להציב תוצאות מקומיות מול אמות מידה בינלאומיות.
-          </p>
-          <a class="usage-link" href="#">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            עיון במתודולוגיית מדרג קנטריל
-          </a>
+      <!-- Sub-section 2: Programs currently using the indicator -->
+      <div class="usage-subsection">
+        <h3 class="usage-subsection-title">תכניות בשימוש</h3>
+        <p class="usage-subsection-lede">
+          תכניות שנמצא בהן מדד זה כחלק ממערך המדידה הפעיל.
+        </p>
+        <div class="usage-programs-list" role="list">
+          <article class="usage-program" role="listitem">
+            <div class="usage-program-head">
+              <h4 class="usage-program-name">בריאות מעלה — נוער דרום</h4>
+              <span class="usage-program-org">מטעם: משרד הבריאות + הג'וינט</span>
+            </div>
+            <p class="usage-program-desc">
+              תכנית קידום בריאות רגשית ופיזית לנוער בפריפריה. משתמשת במדד כמדד תוצאה מרכזי במדידה חצי-שנתית.
+            </p>
+          </article>
+          <article class="usage-program" role="listitem">
+            <div class="usage-program-head">
+              <h4 class="usage-program-name">אושר לילדים</h4>
+              <span class="usage-program-org">מטעם: הג'וינט — ילדים ונוער</span>
+            </div>
+            <p class="usage-program-desc">
+              תכנית התערבות בבתי-ספר יסודיים במגזר הערבי. מדידה שנתית עם השוואה לקבוצת ביקורת.
+            </p>
+          </article>
+          <article class="usage-program" role="listitem">
+            <div class="usage-program-head">
+              <h4 class="usage-program-name">יסוד — נוער בסיכון</h4>
+              <span class="usage-program-org">מטעם: משרד הרווחה + עיריית ירושלים</span>
+            </div>
+            <p class="usage-program-desc">
+              תכנית לזיהוי ותמיכה בנוער בסיכון גבוה. מדד רווחה סובייקטיבי משמש כאינדיקציה מקדימה למצוקה.
+            </p>
+          </article>
+          <article class="usage-program" role="listitem">
+            <div class="usage-program-head">
+              <h4 class="usage-program-name">צעדים לרווחה — קהילה חרדית</h4>
+              <span class="usage-program-org">מטעם: הג'וינט + עיריית בני-ברק</span>
+            </div>
+            <p class="usage-program-desc">
+              פיילוט מדידת רווחה רגשית במגזר החרדי, כולל התאמות של השאלון לרגישות תרבותית.
+            </p>
+          </article>
+          <article class="usage-program" role="listitem">
+            <div class="usage-program-head">
+              <h4 class="usage-program-name">מגשימים — יוצאי אתיופיה</h4>
+              <span class="usage-program-org">מטעם: הג'וינט + משרד החינוך</span>
+            </div>
+            <p class="usage-program-desc">
+              תכנית ליווי חברתי-לימודי לתלמידים יוצאי אתיופיה. מדד רווחה נמדד כחלק ממערך רחב של מדדים.
+            </p>
+          </article>
         </div>
       </div>
     </section>
 
-    <!-- RELATED -->
-    <section class="card" id="indicator-relationships-section" aria-labelledby="related-title">
-      <h2 class="section-title" id="related-title">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="12" cy="5" r="3"/>
-          <circle cx="19" cy="19" r="3"/>
-          <circle cx="5" cy="19" r="3"/>
-          <line x1="12" y1="8" x2="12" y2="12"/>
-          <line x1="12" y1="12" x2="19" y2="17"/>
-          <line x1="12" y1="12" x2="5" y2="17"/>
-        </svg>
-        מדדים קשורים וחלופיים
-      </h2>
-
-      <div class="related-tabs" role="tablist" aria-label="סוגי קשרים">
-        <button class="related-tab active" role="tab" aria-selected="true" aria-controls="panel-alt" id="tab-alt" onclick="switchTab('alt')">חלופיים (2)</button>
-        <button class="related-tab" role="tab" aria-selected="false" aria-controls="panel-comp" id="tab-comp" onclick="switchTab('comp')">משלימים (3)</button>
-      </div>
-
-      <div id="panel-alt" class="related-panel active" role="tabpanel" aria-labelledby="tab-alt">
-        <article class="related-card" tabindex="0" role="button" aria-label="מדד חוסן נפשי — ילדים">
-          <div class="related-card-bar" aria-hidden="true"></div>
-          <div>
-            <div class="related-card-name">מדד חוסן נפשי — ילדים</div>
-            <div class="related-card-diff">מודד יכולת ההתאוששות מקשיים — לא האושר עצמו. מתאים יותר לתכניות שמטרתן לחזק עמידות, לא תחושת רווחה כללית.</div>
-          </div>
-          <span class="related-card-tag">חלופי</span>
-        </article>
-        <article class="related-card" tabindex="0" role="button" aria-label="מדד שייכות לקהילה">
-          <div class="related-card-bar" aria-hidden="true"></div>
-          <div>
-            <div class="related-card-name">מדד שייכות לקהילה</div>
-            <div class="related-card-diff">מוקד צר יותר — מודד רק תחושת שייכות, לא רווחה כוללת. מתאים כשהתכנית ממוקדת ספציפית בשילוב חברתי.</div>
-          </div>
-          <span class="related-card-tag">חלופי</span>
-        </article>
-      </div>
-
-      <div id="panel-comp" class="related-panel" role="tabpanel" aria-labelledby="tab-comp">
-        <article class="related-card" tabindex="0" role="button" aria-label="מדד תמיכה חברתית נתפסת">
-          <div class="related-card-bar" aria-hidden="true"></div>
-          <div>
-            <div class="related-card-name">מדד תמיכה חברתית נתפסת</div>
-            <div class="related-card-diff">מודד תחושת האוחזות ברשת תמיכה — גורם מנבא חשוב לאושר. שימוש יחד עם מדד האושר מאפשר הבנת הסיבה לשינוי.</div>
-          </div>
-          <span class="related-card-tag" style="color: var(--success); background: var(--success-light);">משלים</span>
-        </article>
-        <article class="related-card" tabindex="0" role="button" aria-label="מדד מסוגלות עצמית">
-          <div class="related-card-bar" style="background: var(--success);" aria-hidden="true"></div>
-          <div>
-            <div class="related-card-name">מדד מסוגלות עצמית</div>
-            <div class="related-card-diff">האמונה של הנוער ביכולת שלו לפעול ולשנות. לרוב עולה בד בבד עם עלייה באושר הסובייקטיבי.</div>
-          </div>
-          <span class="related-card-tag" style="color: var(--success); background: var(--success-light);">משלים</span>
-        </article>
-        <article class="related-card" tabindex="0" role="button" aria-label="מדד מעורבות בפעילות">
-          <div class="related-card-bar" style="background: var(--success);" aria-hidden="true"></div>
-          <div>
-            <div class="related-card-name">מדד מעורבות בפעילות</div>
-            <div class="related-card-diff">מדד תפוקה שמודד השתתפות — כשמשתמשים ביחד עם מדד האושר, ניתן לחבר בין פעילות לשינוי.</div>
-          </div>
-          <span class="related-card-tag" style="color: var(--success); background: var(--success-light);">משלים</span>
-        </article>
-      </div>
-    </section>
+    <!-- Related-indicators section ("מדדים קשורים וחלופיים") removed per
+         design decision. CSS rules for .related-tabs/.related-tab/
+         .related-panel/.related-card remain as dead code — safe to prune. -->
 
     <!-- METHODOLOGY -->
     <section class="card" id="indicator-methodology-section" aria-labelledby="methodology-title">
@@ -1095,14 +1184,7 @@
     });
   }
 
-  /* ── Tabs ── */
-  function switchTab(id) {
-    ['alt','comp'].forEach(t => {
-      document.getElementById('tab-'+t).classList.toggle('active', t === id);
-      document.getElementById('tab-'+t).setAttribute('aria-selected', t === id);
-      document.getElementById('panel-'+t).classList.toggle('active', t === id);
-    });
-  }
+  /* switchTab() removed along with the related-indicators tabbed section. */
 
   /* "Ask AI about this indicator" logic removed along with the inline section.
      The global AI FAB (assets/ai-fab.js) carries any AI interaction now. */
