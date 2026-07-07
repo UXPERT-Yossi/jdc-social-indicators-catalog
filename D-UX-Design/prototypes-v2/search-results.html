@@ -1402,11 +1402,8 @@
       { value: 'multi',  label: 'רב-שנתי' }
     ], 'frequency'));
 
-    panel.appendChild(buildCheckboxGroup('שלב בתכנית', [
-      { value: 'planning',       label: STAGE_LABEL.planning },
-      { value: 'implementation', label: STAGE_LABEL.implementation },
-      { value: 'evaluation',     label: STAGE_LABEL.evaluation }
-    ], 'stage'));
+    /* "שלב בתכנית" filter removed per product decision. activeFilters.stage
+       stays as a dead branch (always empty → filter check is a no-op). */
 
     /* Domain filter — present here (search is cross-domain) but NOT in browse
        (user is already inside a domain via cube drill-down). */
