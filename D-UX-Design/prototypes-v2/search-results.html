@@ -1405,15 +1405,9 @@
     /* "שלב בתכנית" filter removed per product decision. activeFilters.stage
        stays as a dead branch (always empty → filter check is a no-op). */
 
-    /* Domain filter — present here (search is cross-domain) but NOT in browse
-       (user is already inside a domain via cube drill-down). */
-    panel.appendChild(buildCheckboxGroup('תחום חיים', [
-      { value: 'welfare',    label: DOMAIN_LABEL.welfare },
-      { value: 'edu',        label: DOMAIN_LABEL.edu },
-      { value: 'social',     label: DOMAIN_LABEL.social },
-      { value: 'resilience', label: DOMAIN_LABEL.resilience },
-      { value: 'employ',     label: DOMAIN_LABEL.employ }
-    ], 'domain'));
+    /* "תחום חיים" filter removed per product decision. activeFilters.domain
+       stays as a dead branch (always empty → filter check is a no-op).
+       Same pattern as the geo + stage removals. */
 
     panel.appendChild(buildCheckboxGroup('כלי מדידה', [
       { value: 'admin',           label: SOURCE_LABEL.admin },
