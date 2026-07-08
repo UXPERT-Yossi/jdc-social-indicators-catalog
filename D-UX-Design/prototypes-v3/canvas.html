@@ -1,0 +1,3521 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>שיחה עם היועץ — מפת המדידה החברתית</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- D3.js — powers the interactive semantic map in the results view.
+       Loaded from CDN to match node-chart.html. Only used on the map toggle. -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    /* ─── RESET ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    ul, ol { list-style: none; }
+    button { cursor: pointer; font-family: inherit; border: none; background: none; color: inherit; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ─── DESIGN TOKENS (shared with the 7 other screens) ─── */
+    :root {
+      --primary:        #334155;
+      --primary-hover:  #1E293B;
+      --primary-light:  #F1F5F9;
+      --primary-mid:    #64748B;
+
+      --bg-page:        #F8FAFC;
+      --bg-card:        #FFFFFF;
+      --bg-tint:        #F1F5F9;
+      --bg-chat:        #F8FAFC;
+
+      --border:         #E2E8F0;
+      --border-strong:  #CBD5E1;
+
+      --text-primary:   #0F172A;
+      --text-secondary: #475569;
+      --text-muted:     #94A3B8;
+
+      /* AI "accent" — collapsed to grayscale for wireframe SaaS feel.
+         Removes the "smells like AI" purple from chat avatar, buttons, and
+         decorative icons. Only FUNCTIONAL color remains: map + type badges. */
+      --ai:             #1E293B;   /* was #7C3AED — near-black slate */
+      --ai-hover:       #0F172A;
+      --ai-light:       #F1F5F9;   /* was #EDE9FE — light slate tint */
+
+      /* Warning accent — gaps section. STAYS functional (attention color). */
+      --warning:        #B45309;
+      --warning-mid:    #D97706;
+      --warning-light:  #FEF3C7;
+      --warning-border: #FDE68A;
+
+      /* Type badges (predictor / output / outcome) — FUNCTIONAL COLOR.
+         Used on the map (node fill) and on indicator-item type pills.
+         The predictor purple here is "cause color", not "AI purple". */
+      --t-predictor: #7C3AED;
+      --t-output:    #0369A1;
+      --t-outcome:   #059669;
+
+      --font: 'Heebo', 'Assistant', sans-serif;
+
+      /* Wireframe SaaS aesthetic — squarer, flatter than a consumer app.
+         Squarer corners read as "internal tool / prototype", rounded reads
+         as "consumer product". */
+      --radius-sm:   3px;
+      --radius-md:   5px;
+      --radius-lg:   6px;
+      --radius-xl:   8px;
+      --radius-2xl:  10px;
+      --radius-full: 9999px;   /* stays — pills should still be pills */
+
+      /* Flat shadows — barely perceptible depth cue, no "hero" glow */
+      --shadow-sm: 0 1px 2px rgba(15,23,42,.05);
+      --shadow-md: 0 2px 4px rgba(15,23,42,.05);
+      --shadow-lg: 0 3px 8px rgba(15,23,42,.06);
+    }
+
+    /* ─── LAYOUT SHELL — app-shell (no page-level scroll) ─── */
+    html, body { height: 100%; margin: 0; }
+    body {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      font-family: var(--font);
+      font-size: 16px;
+      line-height: 1.65;
+      color: var(--text-primary);
+      background: var(--bg-page);
+      -webkit-font-smoothing: antialiased;
+    }
+    .global-nav { flex-shrink: 0; }
+
+    /* ─── GLOBAL NAV (identical to 7 other screens) ─── */
+    .global-nav {
+      position: sticky; inset-block-start: 0; z-index: 100;
+      background: var(--bg-card);
+      border-block-end: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+    .global-nav-inner {
+      max-width: 1440px; margin-inline: auto;
+      padding-inline: 32px; padding-block: 14px;
+      display: flex; align-items: center; gap: 24px;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; color: var(--primary); white-space: nowrap; flex-shrink: 0; }
+    .nav-logo-img { height: 18px; width: auto; display: block; }
+    .nav-logo-text { font-weight: 700; color: var(--primary); }
+    .nav-links { display: flex; gap: 4px; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: var(--text-secondary); padding: 6px 12px; border-radius: var(--radius-md); transition: all .15s; }
+    .nav-links a:hover { background: var(--bg-page); color: var(--text-primary); }
+    .nav-links a[aria-current="page"] { color: var(--primary); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 6px; }
+    .nav-search { position: relative; display: flex; align-items: center; width: 320px; max-width: 360px; min-width: 200px; margin-inline-start: auto; }
+    .nav-search-icon { position: absolute; inset-inline-end: 12px; width: 16px; height: 16px; color: var(--text-muted); pointer-events: none; }
+    .nav-search-input { width: 100%; font-family: inherit; font-size: 14px; padding: 8px 14px; padding-inline-end: 36px; background: var(--bg-page); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-primary); transition: border-color .15s, background .15s; }
+    .nav-search-input::placeholder { color: var(--text-muted); }
+    .nav-search-input:focus { outline: none; border-color: var(--primary); background: var(--bg-card); }
+
+    /* ─── WORKSPACE = chat pane + canvas ─── */
+    .workspace {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      transition: grid-template-columns .25s ease;
+    }
+    /* State A (refine questionnaire) hides the chat pane entirely — the
+       questions ARE the conversation there. */
+    .workspace.no-chat {
+      grid-template-columns: 1fr;
+    }
+    .workspace.no-chat .chat-pane {
+      display: none;
+    }
+    /* Collapsed chat — slim 48px vertical rail with only a reopen button.
+       Preserves the chat DOM (messages, input) so state survives collapse. */
+    .workspace.chat-collapsed {
+      grid-template-columns: 48px 1fr;
+    }
+    .workspace.chat-collapsed .chat-header,
+    .workspace.chat-collapsed .chat-messages,
+    .workspace.chat-collapsed .chat-input-wrap,
+    .workspace.chat-collapsed .chat-collapse-btn {
+      display: none;
+    }
+    .workspace.chat-collapsed .chat-expand-btn {
+      display: inline-flex;
+    }
+    .chat-expand-btn {
+      display: none;   /* only shown when collapsed */
+    }
+    /* Collapse / expand controls (icon-only pill in top-corner of the pane) */
+    .chat-collapse-btn,
+    .chat-expand-btn {
+      align-items: center; justify-content: center;
+      width: 32px; height: 32px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: background .15s, color .15s, border-color .15s;
+      flex-shrink: 0;
+    }
+    .chat-collapse-btn:hover,
+    .chat-expand-btn:hover { background: var(--bg-page); color: var(--primary); border-color: var(--primary); }
+    .chat-collapse-btn svg,
+    .chat-expand-btn svg { width: 15px; height: 15px; }
+    /* Collapsed rail — vertical stack: sparkle icon + expand button */
+    .workspace.chat-collapsed .chat-pane {
+      padding: 12px 8px;
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+    }
+    .chat-rail-icon {
+      display: none;                         /* visible only when collapsed */
+      width: 32px; height: 32px;
+      background: var(--primary); color: #fff;
+      border-radius: 50%;
+      align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .chat-rail-icon svg { width: 16px; height: 16px; }
+    .workspace.chat-collapsed .chat-rail-icon { display: inline-flex; }
+    .chat-rail-hint {
+      display: none;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-size: 11px; font-weight: 600;
+      color: var(--text-muted);
+      margin-block-start: 4px;
+      user-select: none;
+      letter-spacing: .04em;
+    }
+    .workspace.chat-collapsed .chat-rail-hint { display: block; }
+
+    @media (max-width: 900px) {
+      .workspace { grid-template-columns: 1fr; }
+      .chat-pane { display: none; }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       RESULTS WORKSPACE — full-bleed map + on-demand blade overlay
+       Map spans 100% width of the canvas (no card treatment, no padding).
+       Blade is HIDDEN by default; it appears on inline-start (RIGHT in RTL)
+       ONLY when a map node is clicked. Dismissed via close button.
+       ═══════════════════════════════════════════════════════════════════ */
+    .results-workspace {
+      position: relative;
+      /* Break MOST of the .canvas padding (28px 40px 60px), leaving 30px
+         breathing room on every side. Canvas padding = 40px inline / 28top /
+         60bottom → negative margins here trim it down to a uniform 30px
+         gutter so scrolling below reaches the insights section naturally. */
+      margin-inline: -10px;                /* 40 - 10 = 30px inline gutter */
+      margin-block-start: 24px;            /* breathing room below interpretation tags */
+      margin-block-end: 30px;
+    }
+    .results-workspace .map-pane {
+      background: transparent;   /* no card — map sits directly on canvas */
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 0;
+      min-width: 0;
+    }
+    /* Two floating panels flank the full-bleed map:
+        - LIST (inline-end = LEFT in RTL) — always visible, all indicators
+        - DETAIL (inline-start = RIGHT in RTL) — appears on node click */
+    /* Both panels stretch full-height (16px top + 16px bottom insets).
+       Content areas inside each pane scroll independently.
+       LIST on inline-start (RIGHT in RTL, next to the map's natural reading
+       origin). DETAIL on inline-end (LEFT in RTL, opposite edge). */
+    .results-workspace .blade-list {
+      position: absolute;
+      inset-inline-start: 16px;
+      inset-block-start: 16px;
+      inset-block-end: 16px;
+      width: 300px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-2xl);
+      padding: 14px 14px;
+      box-shadow: var(--shadow-md);
+      display: flex; flex-direction: column;
+      z-index: 4;
+      overflow: hidden;
+    }
+    .results-workspace .blade-pane {
+      position: absolute;
+      inset-inline-end: 16px;
+      inset-block-start: 16px;
+      inset-block-end: 16px;
+      width: 320px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-2xl);
+      padding: 16px 16px;
+      box-shadow: var(--shadow-md);
+      display: flex; flex-direction: column;
+      z-index: 5;
+      /* Slide-in on state change */
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease;
+      overflow: hidden;
+    }
+    .results-workspace.blade-open .blade-pane {
+      opacity: 1 !important;   /* override the [data-reveal] cascade quirk */
+      pointer-events: auto;
+    }
+    /* Close button — X in the top-inline-end corner of the blade */
+    .blade-close-btn {
+      position: absolute;
+      inset-inline-end: 10px;
+      inset-block-start: 10px;
+      width: 26px; height: 26px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: 50%;
+      transition: background .12s, color .12s;
+    }
+    .blade-close-btn:hover { background: var(--bg-page); color: var(--text-primary); }
+    .blade-close-btn svg { width: 13px; height: 13px; }
+    .blade-header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px;
+      padding-block-end: 12px;
+      border-block-end: 1px solid var(--border);
+      margin-block-end: 12px;
+    }
+    .blade-title {
+      font-size: 12px; font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .08em;
+    }
+    .blade-back-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: transparent;
+      border: none;
+      color: var(--primary);
+      font-family: inherit; font-size: 12px; font-weight: 600;
+      cursor: pointer;
+      padding: 2px 4px;
+    }
+    .blade-back-btn:hover { text-decoration: underline; }
+    .blade-back-btn svg { width: 12px; height: 12px; transform: scaleX(-1); }   /* arrow inline-end in RTL */
+    /* Body scrolls when list exceeds pane height */
+    .blade-body {
+      flex: 1; min-height: 0;
+      overflow-y: auto;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    /* Card in the list — colour-strip by type, name, meta, click to select */
+    .blade-card {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px;
+      background: var(--bg-page);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      text-align: start;
+      font-family: inherit;
+      transition: border-color .12s, background .12s;
+      width: 100%;
+    }
+    .blade-card:hover { border-color: var(--primary); background: var(--bg-card); }
+    .blade-card.selected { border-color: var(--primary); background: var(--primary-light); }
+    .blade-card-strip {
+      width: 3px; align-self: stretch;
+      border-radius: 2px;
+      background: var(--type-color, var(--primary));
+      flex-shrink: 0;
+    }
+    .blade-card.outcome    { --type-color: var(--t-outcome);   }
+    .blade-card.output     { --type-color: var(--t-output);    }
+    .blade-card.predictor  { --type-color: var(--t-predictor); }
+    .blade-card-body { flex: 1; min-width: 0; }
+    .blade-card-name {
+      font-size: 13.5px; font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.3;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+    .blade-card-meta {
+      font-size: 11.5px; color: var(--text-muted);
+      margin-block-start: 2px;
+    }
+    .blade-card-meta > span:not(:first-child)::before { content: '·'; margin-inline: 5px; }
+    /* Group heading in the list — small label above a run of same-type cards */
+    .blade-group-heading {
+      font-size: 10.5px; font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .08em;
+      padding-inline-start: 4px;
+      padding-block: 6px 2px;
+      margin-block-start: 6px;
+    }
+    .blade-group-heading:first-child { margin-block-start: 0; }
+
+    /* Detail state — big card with name / badges / desc / CTA */
+    .blade-detail {
+      display: flex; flex-direction: column; gap: 12px;
+      flex: 1;              /* fill blade-body height so CTA can pin to bottom */
+      min-height: 0;
+    }
+    .blade-detail-type-pill {
+      align-self: flex-start;
+      font-size: 11px; font-weight: 700;
+      padding: 3px 10px; border-radius: var(--radius-full);
+      background: color-mix(in srgb, var(--type-color, var(--primary)) 12%, white);
+      color: var(--type-color, var(--primary));
+    }
+    .blade-detail.outcome    { --type-color: var(--t-outcome);   }
+    .blade-detail.output     { --type-color: var(--t-output);    }
+    .blade-detail.predictor  { --type-color: var(--t-predictor); }
+    .blade-detail-name {
+      font-size: 18px; font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.25;
+    }
+    .blade-detail-meta {
+      display: flex; flex-direction: column; gap: 4px;
+      font-size: 12px; color: var(--text-secondary);
+    }
+    .blade-detail-meta-row {
+      display: flex; gap: 6px;
+    }
+    .blade-detail-meta-label {
+      color: var(--text-muted); font-weight: 600; min-width: 60px;
+    }
+    .blade-detail-desc {
+      font-size: 13px; color: var(--text-secondary);
+      line-height: 1.6;
+      padding-block-start: 10px;
+      border-block-start: 1px solid var(--border);
+    }
+    /* CTA stack — primary + secondary sit together at the bottom of the pane.
+       Wrapping in .blade-detail-actions so margin-block-start:auto pins
+       the whole cluster (not just the first item). */
+    .blade-detail-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-block-start: auto;
+    }
+    .blade-detail-cta {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 6px;
+      padding: 9px 16px;
+      background: var(--primary); color: #fff;
+      border: 1px solid var(--primary);
+      border-radius: var(--radius-md);
+      font-family: inherit;
+      font-size: 13.5px; font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+    .blade-detail-cta:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+    .blade-detail-cta svg { width: 13px; height: 13px; transform: scaleX(-1); }   /* arrow inline-end */
+    /* Secondary CTA — outline treatment, plus-sign icon */
+    .blade-detail-cta-secondary {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      font-family: inherit;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s;
+    }
+    .blade-detail-cta-secondary:hover {
+      background: var(--bg-page);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .blade-detail-cta-secondary:disabled {
+      background: var(--primary-light);
+      color: var(--primary);
+      border-color: var(--primary-light);
+      cursor: default;
+    }
+    .blade-detail-cta-secondary svg { width: 13px; height: 13px; }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       COMPARISON TRAY — sticky bottom bar, full-width, dark background.
+       Structure mirrors search-results.html so the pattern is consistent
+       across pages. Persistence: sessionStorage only (dies with tab close),
+       and cleared on canvas.html fresh loads (see JS init below). */
+    .compare-tray {
+      position: fixed;
+      inset-block-end: 0;
+      inset-inline-start: 0;
+      inset-inline-end: 0;
+      z-index: 300;
+      background: #0F172A;
+      border-block-start: 3px solid var(--primary);
+      box-shadow: 0 -4px 24px rgba(0,0,0,.25);
+      transform: translateY(100%);
+      transition: transform .3s cubic-bezier(.4,0,.2,1);
+    }
+    .compare-tray.open { transform: translateY(0); }
+    .compare-tray-inner {
+      max-width: 1280px;
+      margin-inline: auto;
+      padding-inline: 32px;
+      padding-block: 14px;
+      display: flex; align-items: center;
+      gap: 16px;
+    }
+    .compare-tray-label {
+      font-size: 13px; font-weight: 600;
+      color: rgba(255,255,255,.7);
+      white-space: nowrap;
+    }
+    .compare-tray-slots {
+      display: flex; gap: 10px;
+      flex: 1;
+    }
+    .compare-chip {
+      display: flex; align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: var(--radius-md);
+      padding: 6px 10px;
+      min-width: 180px;
+      flex: 1;
+      max-width: 260px;
+    }
+    .compare-chip-name {
+      font-size: 13px; font-weight: 500;
+      color: #fff;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .compare-chip-remove {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,.5);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .compare-chip-remove:hover { color: #fff; }
+    .compare-slot-empty {
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,.04);
+      border: 1px dashed rgba(255,255,255,.2);
+      border-radius: var(--radius-md);
+      padding: 6px 24px;
+      min-width: 160px;
+      flex: 1;
+      max-width: 260px;
+      font-size: 12px;
+      color: rgba(255,255,255,.35);
+    }
+    .compare-tray-actions {
+      display: flex; align-items: center;
+      gap: 10px;
+    }
+    .compare-tray-cta {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 8px 20px;
+      font-size: 14px; font-weight: 600;
+      font-family: var(--font, inherit);
+      cursor: pointer;
+      transition: background .15s;
+      white-space: nowrap;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .compare-tray-cta:hover { background: var(--primary-hover); }
+    .compare-tray-cta[aria-disabled="true"] { opacity: .5; pointer-events: none; }
+    .compare-tray-clear {
+      background: none;
+      border: 1px solid rgba(255,255,255,.2);
+      color: rgba(255,255,255,.6);
+      border-radius: var(--radius-md);
+      padding: 8px 14px;
+      font-size: 13px;
+      font-family: var(--font, inherit);
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .compare-tray-clear:hover { border-color: rgba(255,255,255,.5); color: #fff; }
+
+    /* ─── CHAT PANE (inline-start = right in RTL) ─── */
+    .chat-pane {
+      background: var(--bg-chat);
+      border-inline-end: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      min-height: 0;
+    }
+    .chat-header {
+      flex-shrink: 0;
+      padding: 16px 20px;
+      border-block-end: 1px solid var(--border);
+      background: var(--bg-card);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .chat-header-icon {
+      width: 30px; height: 30px;
+      background: var(--ai); color: #fff;
+      border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .chat-header-icon svg { width: 16px; height: 16px; }
+    .chat-header-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+    .chat-header-status { font-size: 11px; color: var(--text-muted); font-weight: 500; margin-block-start: 1px; }
+
+    .chat-messages {
+      flex: 1; overflow-y: auto;
+      padding: 20px;
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .msg { display: flex; gap: 10px; align-items: flex-start; }
+    .msg-avatar {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .msg.user .msg-avatar { background: var(--border-strong); color: var(--text-primary); }
+    .msg.ai .msg-avatar { background: var(--ai); color: #fff; }
+    .msg.ai .msg-avatar svg { width: 14px; height: 14px; }
+    .msg-bubble {
+      flex: 1; min-width: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 12px 14px;
+      font-size: 14px; color: var(--text-primary);
+      line-height: 1.6;
+    }
+    .msg.user .msg-bubble {
+      background: var(--primary-light);
+      border-color: var(--border-strong);
+    }
+    .msg-bubble p { margin-block-end: 6px; }
+    .msg-bubble p:last-child { margin-block-end: 0; }
+    .msg-bubble strong { font-weight: 700; }
+
+    .chat-input-wrap {
+      flex-shrink: 0;
+      padding: 12px 16px 16px;
+      border-block-start: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+    .chat-input-box {
+      background: var(--bg-page);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 10px 14px;
+      display: flex; align-items: flex-end; gap: 8px;
+      transition: border-color .15s;
+    }
+    .chat-input-box:focus-within { border-color: var(--ai); background: var(--bg-card); }
+    .chat-input {
+      flex: 1;
+      background: transparent; border: none;
+      font-family: inherit; font-size: 14px; color: var(--text-primary);
+      resize: none; outline: none;
+      min-height: 36px; max-height: 120px; line-height: 1.5;
+    }
+    .chat-input::placeholder { color: var(--text-muted); }
+    .chat-send-btn {
+      flex-shrink: 0;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--ai); color: #fff;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: background .15s, transform .1s;
+    }
+    .chat-send-btn:hover { background: var(--ai-hover); }
+    .chat-send-btn:active { transform: translateY(1px); }
+    .chat-send-btn svg { width: 15px; height: 15px; }
+
+    /* ─── CANVAS (inline-end = left in RTL) ─── */
+    .canvas {
+      overflow-y: auto;
+      padding: 28px 40px 60px;
+    }
+    /* The canvas-inner used to hard-cap width at 900px. Now: default width
+       is edge-to-edge; individual sections opt back in to the 900-cap via
+       .canvas-narrow. This lets the results-workspace (map + blade) span
+       the full canvas while narrative sections stay reading-width. */
+    .canvas-inner {
+      display: flex; flex-direction: column; gap: 20px;
+    }
+    .canvas-narrow {
+      max-width: 900px;
+      margin-inline: auto;
+      width: 100%;
+    }
+
+    /* ─── PAGE-TITLE INTERPRETATION (state B header) ────────────────────
+       Previously a bordered "banner" with icon + summary. Now the sentence
+       itself IS the page title — flat, hero-like, no card treatment. The
+       questionnaire answers surface twice: (a) bold inline in the sentence,
+       (b) as explicit tag chips below the title so the mapping "you asked
+       X → we understood X" is unmistakable. */
+    .interpretation {
+      padding: 4px 0 4px;   /* no bg, no border — sits directly on canvas */
+    }
+    .interpretation-label {
+      font-size: 11.5px; font-weight: 700; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .08em;
+      margin-block-end: 8px;
+    }
+    .interpretation-text {
+      font-size: 26px; font-weight: 800; line-height: 1.3;
+      color: var(--text-primary);
+      letter-spacing: -.01em;
+    }
+    .interpretation-text strong { color: var(--primary); font-weight: 800; }
+    /* Fact-tag rail — mirrors the answers to the refine questionnaire.
+       Each chip echoes a piece the user provided; when combined they form
+       the sentence above. Redundancy is intentional here — the sentence
+       reads naturally, the chips make the "AI understood these facts"
+       structure visible. */
+    .interpretation-tags {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+      margin-block-start: 14px;
+    }
+    .interpretation-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12.5px; font-weight: 600;
+      padding: 5px 11px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      color: var(--text-primary);
+    }
+    .interpretation-tag-label {
+      color: var(--text-muted); font-weight: 500;
+    }
+    .interpretation-tag svg {
+      width: 12px; height: 12px;
+      color: var(--text-muted);
+    }
+    /* Edit button — text-only affordance at the far end of the fact-tags row
+       (LEFT in RTL). No border, no background — reads as a subtle link. */
+    .interpretation-edit-btn {
+      margin-inline-start: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 6px;
+      background: transparent;
+      border: none;
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-decoration: none;
+      transition: color .12s;
+    }
+    .interpretation-edit-btn:hover { color: var(--text-primary); }
+    .interpretation-edit-btn svg { width: 13px; height: 13px; }
+
+    /* ─── STATE A: REFINE (clarifying questions) ─── */
+    .refine-block {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-2xl);
+      padding: 26px 28px;
+    }
+    .refine-block h2 {
+      font-size: 17px; font-weight: 700; color: var(--text-primary);
+      margin-block-end: 6px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .sec-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--primary); color: #fff;
+      font-size: 12px; font-weight: 700;
+    }
+    .refine-lede {
+      font-size: 14px; color: var(--text-secondary);
+      margin-block-end: 22px;
+    }
+    .question {
+      padding-block: 18px;
+      border-block-start: 1px solid var(--border);
+    }
+    .question:first-of-type { border-block-start: none; padding-block-start: 0; }
+    .question:last-of-type { padding-block-end: 0; }
+    .question-title { font-size: 14.5px; font-weight: 700; color: var(--text-primary); margin-block-end: 4px; }
+    .question-help { font-size: 12.5px; color: var(--text-muted); margin-block-end: 12px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      font-family: inherit; font-size: 13px;
+      padding: 8px 14px;
+      background: var(--bg-card);
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--radius-full);
+      color: var(--text-primary);
+      transition: all .15s;
+      cursor: pointer;
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .chip:hover:not(.selected) { border-color: var(--primary); background: var(--primary-light); }
+    .chip.selected {
+      background: var(--primary); color: #fff;
+      border-color: var(--primary);
+    }
+    .chip.decide-for-me { color: var(--text-muted); border-style: dashed; font-style: italic; }
+    .chip.decide-for-me:hover { color: var(--primary); border-style: solid; }
+
+    /* "Other..." — a chip-shaped text input inline with the chips row.
+       Dashed border when empty (invitational), solid when the user has typed.
+       Same visual family as chips so it doesn't feel like a foreign element. */
+    .chip-input {
+      font-family: inherit;
+      font-size: 13px;
+      padding: 8px 14px;
+      background: var(--bg-card);
+      border: 1.5px dashed var(--border-strong);
+      border-radius: var(--radius-full);
+      color: var(--text-primary);
+      outline: none;
+      min-width: 130px;
+      max-width: 260px;
+      transition: border-color .15s, border-style .15s, background .15s;
+    }
+    .chip-input:focus {
+      border-style: solid;
+      border-color: var(--primary);
+      background: var(--bg-card);
+    }
+    .chip-input:not(:placeholder-shown) {
+      border-style: solid;
+      border-color: var(--primary);
+    }
+    .chip-input::placeholder {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* Open-ended answer fields — full-width, more prominent than chips.
+       Used for "describe your program", "which indicator you already know", etc. */
+    .question-textarea,
+    .question-input {
+      width: 100%;
+      font-family: inherit;
+      font-size: 14px;
+      padding: 10px 14px;
+      background: var(--bg-page);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color .15s, background .15s;
+    }
+    .question-textarea {
+      min-height: 68px;
+      resize: vertical;
+      line-height: 1.55;
+    }
+    .question-input { min-height: 40px; }
+    .question-textarea:focus,
+    .question-input:focus {
+      border-color: var(--primary);
+      background: var(--bg-card);
+    }
+    .question-textarea::placeholder,
+    .question-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .refine-actions {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px;
+      margin-block-start: 24px;
+      padding-block-start: 22px;
+      border-block-start: 1px solid var(--border);
+    }
+    .refine-hint { font-size: 12.5px; color: var(--text-muted); }
+    .continue-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 11px 22px;
+      background: var(--primary); color: #fff;
+      border-radius: var(--radius-full);
+      font-size: 14.5px; font-weight: 700;
+      transition: background .15s, transform .1s;
+    }
+    .continue-btn:hover { background: var(--primary-hover); }
+    .continue-btn:active { transform: translateY(1px); }
+    .continue-btn svg { width: 15px; height: 15px; transform: scaleX(-1); }
+
+    /* ─── STATE B: RESULTS ─── */
+    .view-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .results-count { font-size: 13.5px; color: var(--text-secondary); }
+    .results-count strong { color: var(--text-primary); font-weight: 700; }
+    .view-toggle {
+      display: inline-grid; grid-template-columns: 1fr 1fr;
+      gap: 4px; padding: 4px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      flex-shrink: 0;
+    }
+    .view-toggle-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 6px; padding: 7px 16px;
+      background: transparent;
+      border-radius: var(--radius-full);
+      font-family: inherit; font-size: 13.5px; font-weight: 600;
+      color: var(--text-secondary); cursor: pointer;
+      white-space: nowrap; width: 100%;
+      transition: background .15s, color .15s;
+    }
+    .view-toggle-btn:hover { background: var(--bg-page); color: var(--text-primary); }
+    .view-toggle-btn.active { background: var(--primary); color: #fff; cursor: default; }
+    .view-toggle-btn svg { width: 14px; height: 14px; }
+
+    /* ─── MAIN OUTCOME CARD ─── */
+    .outcome-card {
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-2xl);
+      padding: 26px 28px;
+      box-shadow: var(--shadow-sm);
+    }
+    .outcome-card-header { display: flex; align-items: center; gap: 12px; margin-block-end: 12px; }
+    .outcome-card-icon {
+      width: 36px; height: 36px;
+      background: var(--primary-light); color: var(--primary);
+      border-radius: var(--radius-md);
+      display: inline-flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .outcome-card-icon svg { width: 20px; height: 20px; }
+    .outcome-card-eyebrow { font-size: 11.5px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: .08em; }
+    .outcome-card-title { font-size: 22px; font-weight: 800; color: var(--text-primary); line-height: 1.25; margin-block-start: 2px; }
+    .outcome-card-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-block-end: 14px; }
+    .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 11px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; }
+    .badge-domain { background: var(--primary-light); color: var(--primary); border: 1px solid var(--border-strong); }
+    .badge-population { background: var(--bg-page); color: var(--text-secondary); border: 1px solid var(--border); }
+    .outcome-card-desc {
+      font-size: 14.5px; color: var(--text-secondary); line-height: 1.65;
+      margin-block-end: 18px; padding-block-end: 18px;
+      border-block-end: 1px solid var(--border);
+    }
+    .outcome-card-desc strong { color: var(--text-primary); }
+    .indicators-label { font-size: 12.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .07em; margin-block-end: 12px; }
+    .indicators { display: flex; flex-direction: column; gap: 8px; }
+    .indicator-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px;
+      background: var(--bg-page);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      transition: border-color .15s, background .15s, transform .1s;
+      text-decoration: none; color: inherit;
+    }
+    .indicator-item:hover { border-color: var(--primary); background: var(--bg-card); transform: translateY(-1px); }
+    .indicator-item-icon {
+      width: 28px; height: 28px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: color-mix(in srgb, var(--type-color, var(--primary)) 10%, white);
+      color: var(--type-color, var(--primary));
+      border-radius: var(--radius-md);
+      flex-shrink: 0;
+    }
+    .indicator-item-icon svg { width: 14px; height: 14px; }
+    .indicator-item.predictor { --type-color: var(--t-predictor); }
+    .indicator-item.output    { --type-color: var(--t-output);    }
+    .indicator-item.outcome   { --type-color: var(--t-outcome);   }
+    .indicator-item-body { flex: 1; min-width: 0; }
+    .indicator-item-name { font-size: 14.5px; font-weight: 700; color: var(--text-primary); }
+    .indicator-item-meta { font-size: 12.5px; color: var(--text-muted); margin-block-start: 2px; }
+    .indicator-item-meta > span:not(:first-child)::before { content: '·'; margin-inline: 6px; }
+    .indicator-item-type {
+      font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: var(--radius-full);
+      background: color-mix(in srgb, var(--type-color, var(--primary)) 12%, white);
+      color: var(--type-color, var(--primary));
+      flex-shrink: 0;
+    }
+
+    /* ─── INDICATORS TABLE (list view) ────────────────────────────────────
+       Replaces the flex-column of indicator-item cards with a proper table
+       that has explicit columns, group-by, and CSV export. Card visuals live
+       on for the map-legend fallback but the primary list view is tabular. */
+    .indicators-toolbar {
+      display: flex; align-items: center; justify-content: flex-end;
+      margin-block-end: 10px;
+    }
+    .csv-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: inherit; font-size: 13px; font-weight: 600;
+      padding: 7px 12px;
+      background: var(--bg-page);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+    .csv-btn:hover { background: var(--bg-card); border-color: var(--primary); color: var(--primary); }
+    .csv-btn svg { width: 14px; height: 14px; }
+
+    .indicators-table-wrap {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      background: var(--bg-page);
+    }
+    .indicators-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+    .indicators-table thead th {
+      text-align: start;
+      font-size: 11.5px; font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .06em;
+      padding: 10px 14px;
+      background: var(--bg-card);
+      border-block-end: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .indicators-table tbody td {
+      padding: 12px 14px;
+      border-block-end: 1px solid var(--border);
+      vertical-align: middle;
+      color: var(--text-secondary);
+    }
+    .indicators-table tbody tr:last-child td { border-block-end: none; }
+    .indicators-table tbody tr.data-row { transition: background .12s; }
+    .indicators-table tbody tr.data-row:hover { background: var(--bg-card); }
+    .indicators-table .col-name {
+      font-weight: 700; color: var(--text-primary);
+    }
+    .indicators-table .col-name a {
+      color: inherit; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .indicators-table .col-name a:hover { color: var(--primary); text-decoration: underline; }
+    .indicators-table .col-programs { white-space: nowrap; }
+    .indicators-table .col-action {
+      text-align: end; width: 40px;
+    }
+    .indicators-table .col-action a {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px;
+      color: var(--text-muted);
+      border-radius: var(--radius-md);
+      transition: background .12s, color .12s;
+    }
+    .indicators-table .col-action a:hover { background: var(--primary-light); color: var(--primary); }
+    .indicators-table .col-action svg { width: 14px; height: 14px; transform: scaleX(-1); }  /* arrow points inline-end in RTL */
+    /* Type pill inside the table (mirrors .indicator-item-type but scoped) */
+    .type-pill {
+      display: inline-flex; align-items: center;
+      font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: var(--radius-full);
+      background: color-mix(in srgb, var(--type-color, var(--primary)) 12%, white);
+      color: var(--type-color, var(--primary));
+      white-space: nowrap;
+    }
+    .type-pill.predictor { --type-color: var(--t-predictor); }
+    .type-pill.output    { --type-color: var(--t-output);    }
+    .type-pill.outcome   { --type-color: var(--t-outcome);   }
+    /* Group header row */
+    .indicators-table tr.group-header td {
+      background: var(--bg-card);
+      font-size: 12px; font-weight: 700;
+      color: var(--text-primary);
+      text-transform: uppercase; letter-spacing: .06em;
+      padding: 8px 14px;
+      border-block-end: 1px solid var(--border);
+    }
+    .indicators-table tr.group-header .group-count {
+      color: var(--text-muted); font-weight: 500;
+      margin-inline-start: 6px;
+    }
+
+    /* ─── SEMANTIC MAP VIEW — interactive D3 force graph ─── */
+    .map-view {
+      background: var(--bg-tint);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      /* Fit the map inside the viewport with 30px above the browser fold.
+         Above-map budget ≈ 283px (nav + interpretation + gap). Subtract that
+         + 30px bottom gutter → viewport-hugging with breathing room, and
+         insights section still scrolls in naturally below. */
+      height: max(400px, calc(100vh - 320px));
+      margin: 0;
+      overflow: hidden;
+      position: relative;
+      cursor: grab;
+    }
+    .map-view:active { cursor: grabbing; }
+    .map-view svg { width: 100%; height: 100%; display: block; }
+    .map-view svg text { pointer-events: none; user-select: none; }
+    /* Map controls — centered horizontally at bottom (same reason as filter:
+       avoids overlap with side panels). Circular icon buttons: help + center. */
+    .map-controls {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      inset-block-end: 16px;
+      z-index: 4;
+      display: inline-flex;
+      gap: 8px;
+    }
+    .map-ctrl-btn {
+      width: 34px; height: 34px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,.95);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: background .15s, color .15s, border-color .15s;
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .map-ctrl-btn:hover { background: #fff; color: var(--primary); border-color: var(--primary); }
+    .map-ctrl-btn:active { transform: translateY(1px); }
+    .map-ctrl-btn svg { width: 15px; height: 15px; }
+    .map-ctrl-btn[aria-expanded="true"] { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    /* Help popover — sits above the buttons (RTL-aware).
+       Uses [hidden] to toggle; JS also updates aria-expanded on the trigger. */
+    .map-help-popover {
+      position: absolute;
+      /* Anchored above the centered controls */
+      left: 50%;
+      transform: translateX(-50%);
+      inset-block-end: 62px;
+      width: 300px;
+      padding: 14px 16px;
+      background: rgba(255,255,255,.98);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-md);
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+      z-index: 5;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .map-help-popover[hidden] { display: none; }
+    .map-help-title {
+      font-size: 13px; font-weight: 700; color: var(--text-primary);
+      margin-block-end: 8px;
+    }
+    .map-help-popover ul {
+      margin: 0; padding: 0; list-style: none;
+    }
+    .map-help-popover li {
+      padding-block: 3px;
+      position: relative;
+      padding-inline-start: 12px;
+    }
+    .map-help-popover li::before {
+      content: '';
+      position: absolute;
+      inset-inline-start: 0;
+      inset-block-start: 12px;
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+    .map-help-popover strong { color: var(--text-primary); font-weight: 700; }
+    .map-help-tips {
+      margin-block-start: 10px;
+      padding-block-start: 10px;
+      border-block-start: 1px solid var(--border);
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    /* Hover tooltip — dark bubble that follows cursor */
+    .map-tooltip {
+      position: absolute;
+      background: #0F172A;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: var(--radius-md);
+      font-size: 12.5px;
+      line-height: 1.5;
+      pointer-events: none;
+      z-index: 10;
+      max-width: 240px;
+      opacity: 0;
+      transition: opacity .15s ease-out;
+      box-shadow: 0 6px 16px rgba(0,0,0,.2);
+      font-family: var(--font);
+    }
+    .map-tooltip.visible { opacity: 1; }
+    .map-tooltip-title { font-weight: 700; color: #fff; }
+    .map-tooltip-type { font-size: 11px; color: rgba(255,255,255,.65); margin-block-start: 2px; }
+    .map-tooltip-desc { font-size: 12px; color: rgba(255,255,255,.85); margin-block-start: 6px; padding-block-start: 6px; border-block-start: 1px solid rgba(255,255,255,.15); }
+    .map-tooltip-hint { font-size: 10.5px; color: rgba(255,255,255,.7); margin-block-start: 6px; font-weight: 600; }
+    /* Interactive link inside the tooltip. In sticky mode the WHOLE tooltip
+       receives pointer events (see .map-tooltip.sticky below) — this button
+       still keeps its own pointer-events: auto as a belt-and-suspenders
+       guarantee in case the tooltip's class gets stripped mid-hover. */
+    .map-tooltip-external-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-block-start: 8px;
+      padding: 5px 10px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.20);
+      border-radius: var(--radius-full);
+      color: #fff;
+      font-size: 11.5px;
+      font-weight: 600;
+      text-decoration: none;
+      pointer-events: auto;
+      transition: background .12s, border-color .12s;
+    }
+    .map-tooltip-external-btn:hover {
+      background: rgba(255,255,255,.18);
+      border-color: rgba(255,255,255,.35);
+    }
+    .map-tooltip-external-btn svg { width: 12px; height: 12px; }
+    /* When tooltip contains interactive content (outcome nodes with the
+       "open in new tab" button), the ENTIRE tooltip must catch pointer
+       events — otherwise mouseenter on the tooltip element never fires and
+       the hide-timer isn't cancelled. Combined with a shrunken cursor→
+       tooltip gap (see positionTooltip), this lets the pointer travel from
+       node to button without ever losing hover state. */
+    .map-tooltip.sticky {
+      pointer-events: auto;
+      transition: opacity .15s ease-out, transform .15s ease-out;
+    }
+
+    /* Node visual styles — applied inline via D3 mostly */
+    .map-node { cursor: pointer; transition: opacity .15s; }
+    .map-node.faded { opacity: .25; }
+    .map-node circle.core { transition: r .15s, stroke-width .15s; }
+    .map-node.hovered circle.core { stroke: #0F172A; stroke-width: 2px; }
+    .map-link { transition: opacity .15s, stroke-width .15s; }
+    .map-link.faded { opacity: .1; }
+    .map-link.hovered { stroke-width: 2.5px !important; opacity: 1 !important; }
+
+    /* Expand indicator — small "+" badge on nodes that can reveal more.
+       Mirrors the pattern used in node-chart.html for consistency. */
+    .expand-indicator {
+      pointer-events: none;
+      transition: opacity .2s;
+    }
+    .map-node.hovered .expand-indicator { transform: scale(1.15); transform-origin: center; }
+    /* Newly-added nodes fade in smoothly */
+    .map-node.new-in { animation: node-fade-in .5s ease-out; }
+    @keyframes node-fade-in {
+      from { opacity: 0; transform: scale(.6); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    /* Filter chips overlay — top-inline-end of the map (LEFT in RTL, opposite
+       the legend). Radio-behaviour: only one active at a time. */
+    .map-filter {
+      position: absolute;
+      /* Centered horizontally at top — avoids overlap with the flanking
+         list (LEFT) and detail (RIGHT) panels. */
+      left: 50%;
+      transform: translateX(-50%);
+      inset-block-start: 16px;
+      background: rgba(255,255,255,.95);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      padding: 4px;
+      z-index: 4;
+      display: inline-flex;
+      gap: 2px;
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .map-filter-btn {
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: var(--radius-full);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background .15s, color .15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      border: none;
+      background: transparent;
+    }
+    .map-filter-btn:hover:not(.active) {
+      background: var(--bg-page);
+      color: var(--text-primary);
+    }
+    .map-filter-btn.active {
+      background: var(--primary);
+      color: #fff;
+    }
+    .map-filter-btn .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .map-filter-btn.active .dot {
+      box-shadow: 0 0 0 1.5px rgba(255,255,255,.6);
+    }
+
+    /* Filter-faded state — softer than hover-fade, persistent while filter active */
+    .map-node.filter-faded { opacity: .28; }
+    .map-link.filter-faded { opacity: .12; }
+
+    /* Layout toggle CSS (.map-layout-toggle, .map-layout-btn, etc.)
+       removed alongside the causal-chain view. */
+
+    /* Legend — bottom-inline-end of the map (bottom-LEFT in RTL). When the
+       detail panel opens on the same side, the legend slides inward to stay
+       visible past the panel's width (320px + 16px + gap). */
+    .map-legend {
+      position: absolute;
+      inset-inline-end: 16px;
+      inset-block-end: 16px;
+      transition: inset-inline-end .25s cubic-bezier(.4,0,.2,1);
+      background: rgba(255,255,255,.95);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      z-index: 4;
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      min-width: 140px;
+    }
+    .map-legend-title {
+      font-size: 10.5px; font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .08em;
+      margin-block-end: 6px;
+    }
+    .map-legend-section {
+      font-size: 10.5px; font-weight: 600;
+      color: var(--text-muted);
+      margin-block-end: 3px;
+    }
+    .map-legend-row {
+      display: flex; align-items: center; gap: 8px;
+      padding-block: 2px;
+      font-size: 11.5px;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    .map-legend-line {
+      display: inline-block;
+      width: 22px; height: 2.5px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    /* Dashed swatch — repeating-linear-gradient renders a clear dash pattern
+       at small sizes (2px dashes / 3px gaps). border-top: dashed at 22×2.5 is
+       too dense to read as "dashed" — you'd just see a fuzzy line. */
+    .map-legend-line.dashed {
+      background: repeating-linear-gradient(
+        to right,
+        #94A3B8 0, #94A3B8 4px,
+        transparent 4px, transparent 8px
+      );
+      border-radius: 0;
+    }
+    /* Push legend past the detail panel when it's open — panel is 320px wide
+       with 16px inset. 320 + 16 (inset) + 16 (gap) = 352 baseline offset. */
+    .results-workspace.blade-open .map-legend {
+      inset-inline-end: 352px;
+    }
+
+    /* ─── INSIGHTS BLOCK — wireframe SaaS: no icon-in-colored-square,
+       no full-color callouts, no rounded pills of decoration. Just
+       typographic hierarchy + small tag chips for semantic distinction.
+       Attention-color (amber) survives only as a thin border-inline-start
+       stripe on gap items — functional cue without the noise. */
+    .insights {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 20px 22px;
+    }
+    .insights-header {
+      padding-block-end: 12px;
+      border-block-end: 1px solid var(--border);
+      margin-block-end: 6px;
+    }
+    .insights-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    .insights-lede {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-block-end: 8px;
+    }
+
+    .insight-block {
+      padding-block: 16px;
+      border-block-start: 1px solid var(--border);
+    }
+    .insight-block:first-of-type { border-block-start: none; padding-block-start: 6px; }
+    .insight-block:last-of-type { padding-block-end: 0; }
+    .insight-block-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      margin-block-end: 10px;
+    }
+
+    /* All 3 sub-block item styles share a flat base — differences come
+       from a small tag chip inside the item, not from bg color. */
+    .related-item, .gap-item, .expert-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 12px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      margin-block-end: 6px;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color .15s, background .15s;
+    }
+    .related-item:last-child, .gap-item:last-child, .expert-item:last-child { margin-block-end: 0; }
+    .related-item:hover, .expert-item:hover { border-color: var(--primary); }
+
+    /* Related items — pure grayscale, no tag needed */
+    .related-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;   /* margins on items handle spacing */
+    }
+    .related-item {
+      flex-direction: column;
+      gap: 4px;
+    }
+    .related-item-name { font-size: 13.5px; font-weight: 700; color: var(--text-primary); }
+    .related-item-desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; }
+    .related-item-desc strong { color: var(--text-primary); font-weight: 700; }
+
+    /* Gaps — the ONE place amber survives: as a thin left-border stripe
+       (functional attention cue, not full bg noise). */
+    .gap-item {
+      border-inline-start: 3px solid var(--warning-mid);
+    }
+    .gap-item-tag {
+      font-size: 10.5px; font-weight: 700;
+      padding: 2px 7px; border-radius: var(--radius-sm);
+      background: var(--warning-light);
+      color: var(--warning);
+      border: 1px solid var(--warning-border);
+      flex-shrink: 0; white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      line-height: 1.4;
+    }
+    .gap-item-body { flex: 1; min-width: 0; font-size: 13px; color: var(--text-primary); line-height: 1.5; }
+    .gap-item-body strong { color: var(--text-primary); font-weight: 700; }
+
+    /* Expert recommendations — flat, uniform with related-item.
+       Small [מומחה] tag added by HTML for semantic distinction. */
+    .expert-item-tag {
+      font-size: 10.5px; font-weight: 700;
+      padding: 2px 7px; border-radius: var(--radius-sm);
+      background: var(--primary-light);
+      color: var(--text-primary);
+      border: 1px solid var(--border-strong);
+      flex-shrink: 0; white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      line-height: 1.4;
+    }
+    .expert-item-body { flex: 1; min-width: 0; }
+    .expert-item-name { font-size: 13.5px; font-weight: 700; color: var(--text-primary); margin-block-end: 2px; }
+    .expert-item-desc { font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; }
+
+    /* Live-refinement flash */
+    @keyframes flash-highlight {
+      0%   { background: var(--ai-light); box-shadow: 0 0 0 2px var(--ai); }
+      100% { background: transparent;      box-shadow: 0 0 0 0 transparent; }
+    }
+    .flash-in { animation: flash-highlight 1.8s ease-out; }
+
+    /* ─── THINKING LOADER + STAGGER REVEAL ─── */
+    /* Used both in State A initial (AI "reads" the question) and in the
+       State A→B transition (AI "scans catalog"). Matches Claude Design's
+       "Sautéing..." pattern — loader with cycling status messages. */
+    .thinking-overlay {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 100px 24px 80px;
+      text-align: center;
+      min-height: 320px;
+      transition: opacity .3s ease-out;
+    }
+    .thinking-icon {
+      width: 52px; height: 52px;
+      background: var(--ai-light);
+      color: var(--ai);
+      border-radius: var(--radius-full);
+      display: inline-flex; align-items: center; justify-content: center;
+      animation: pulse-ai 1.8s ease-in-out infinite;
+    }
+    .thinking-icon svg { width: 26px; height: 26px; }
+    @keyframes pulse-ai {
+      0%, 100% { transform: scale(1);    box-shadow: 0 0 0 0    color-mix(in srgb, var(--ai) 30%, transparent); }
+      50%      { transform: scale(1.05); box-shadow: 0 0 0 14px color-mix(in srgb, var(--ai) 0%,  transparent); }
+    }
+    .thinking-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: inline-flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+    /* Animated dots — 3 pulsing circles, each with a delayed animation */
+    .thinking-dots { display: inline-flex; gap: 4px; margin-inline-start: 6px; }
+    .thinking-dots span {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: .25;
+      animation: dot-pulse 1.4s ease-in-out infinite;
+    }
+    .thinking-dots span:nth-child(1) { animation-delay: 0s; }
+    .thinking-dots span:nth-child(2) { animation-delay: .2s; }
+    .thinking-dots span:nth-child(3) { animation-delay: .4s; }
+    @keyframes dot-pulse {
+      0%, 100% { opacity: .25; transform: translateY(0);   }
+      50%      { opacity: 1;   transform: translateY(-2px); }
+    }
+    .thinking-status {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      min-height: 22px;                /* reserve space — no shift when text swaps */
+      transition: opacity .3s ease-out;
+      max-width: 460px;
+    }
+
+    /* Reveal-on-cue — used for staggered fade-in of interpretation +
+       questions in State A. Elements start hidden (opacity 0, slight
+       drop) and animate to visible when JS adds `.shown`. */
+    [data-reveal] {
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity .55s ease-out, transform .55s ease-out;
+    }
+    [data-reveal].shown {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* Respect reduced-motion preferences — skip animation, just show */
+    @media (prefers-reduced-motion: reduce) {
+      [data-reveal] { opacity: 1; transform: none; transition: none; }
+      .thinking-icon { animation: none; }
+      .thinking-dots span { animation: none; opacity: 1; }
+    }
+
+    [hidden] { display: none !important; }
+  </style>
+</head>
+
+<body>
+
+<!-- ══════════════ GLOBAL NAV ══════════════ -->
+<header class="global-nav" role="banner">
+  <nav class="global-nav-inner" aria-label="ניווט ראשי">
+    <a href="home.html" class="nav-logo">
+      <svg class="nav-logo-img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 117 28" fill="none" role="img" aria-label="הג'וינט"><path d="M8.683 27.7342H2.46565L0 3.96457H5.82267L7.71625 22.7453H8.67857C12.7496 22.7453 14.2529 21.0424 14.2529 15.2552V8.95354H9.60984V3.96013H20.0756V15.2507C20.0756 24.7985 15.9691 27.7298 8.67857 27.7298L8.683 27.7342ZM20.5501 27.7342V22.7408H22.7275C24.5856 22.7408 25.0867 21.9071 25.0867 19.6898V8.95354H22.049V3.96013H30.9094V20.4792C30.9094 26.0269 29.5524 27.7298 24.9803 27.7298H20.5501V27.7342ZM33.6987 18.0667V3.96013H39.5569V18.0667H33.6987ZM42.5281 27.7342V3.96013H48.3862V27.7298H42.5281V27.7342ZM56.5681 0V4.11978L54.3198 11.2906H50.5681L51.7832 0H56.5681ZM57.5038 27.7342H56.3242V22.7408H57.5038C62.1114 22.7408 63.362 19.9293 62.7544 15.2507L61.9695 8.9491H57.8985V3.9557H66.7234L70.2977 27.7254H64.7234L63.974 22.457H63.7966C63.0471 25.6677 61.2955 27.7254 57.5083 27.7254L57.5038 27.7342ZM89.584 27.7342H83.7613V8.95354H71.0428V3.96013H89.584V27.7298V27.7342ZM76.9763 14.1421V27.7298H71.1182V14.1421H76.9763Z" fill="#3ABDDC"/><path d="M116.214 4.01074H94.1118V27.7095H116.214V4.01074Z" fill="#00C1DE"/><path d="M106.658 21.2671H103.256V21.9678H106.658V21.2671Z" fill="#fff"/><path d="M107.509 22.519H102.409V23.2197H107.509V22.519Z" fill="#fff"/><path d="M108.777 23.6973H101.127V24.3979H108.777V23.6973Z" fill="#fff"/><mask id="mask0_joint_canvas" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="92" y="4" width="25" height="24"><path d="M116.209 4.01318H92.5146V27.7119H116.209V4.01318Z" fill="#fff"/></mask><g mask="url(#mask0_joint_canvas)"><path d="M104.952 19.9261C101.945 19.9261 99.4575 17.7398 98.9786 14.8706H98.1626C98.646 18.1833 101.497 20.7288 104.952 20.7288C108.407 20.7288 111.254 18.1833 111.737 14.8706H110.921C110.442 17.7398 107.954 19.9261 104.948 19.9261" fill="#fff"/><path d="M105.504 9.27839C105.504 10.0988 105.264 10.4846 104.967 10.4846C104.67 10.4846 104.431 10.1121 104.431 9.27839C104.431 8.20077 104.967 7.32715 104.967 7.32715C104.967 7.32715 105.504 8.20077 105.504 9.27839Z" fill="#fff"/><path d="M99.1757 12.9356C99.1757 13.756 98.9363 14.1418 98.6391 14.1418C98.342 14.1418 98.1025 13.7649 98.1025 12.9356C98.1025 11.858 98.6391 10.9844 98.6391 10.9844C98.6391 10.9844 99.1757 11.858 99.1757 12.9356Z" fill="#fff"/><path d="M111.824 12.9185C111.824 13.7389 111.585 14.1247 111.288 14.1247C110.99 14.1247 110.751 13.7478 110.751 12.9185C110.751 11.8409 111.288 10.9673 111.288 10.9673C111.288 10.9673 111.824 11.8409 111.824 12.9185Z" fill="#fff"/><path d="M104.461 16.6443H104.847C105.441 16.6443 105.552 16.3339 105.552 15.3405V13.3538C105.552 12.4979 105.464 12.2097 104.781 12.2097H104.461V16.6443ZM103.663 11.54H104.954C106.248 11.54 106.355 11.9702 106.355 13.6554V15.376C106.355 16.8572 106.093 17.3228 104.825 17.3228H103.663V11.5445V11.54Z" fill="#fff"/><path d="M106.99 13.0099C106.99 12.2027 107.252 11.4888 108.343 11.4888C109.137 11.4888 109.505 11.8879 109.505 12.5398V13.1163H108.751V12.7172C108.751 12.3491 108.622 12.1185 108.285 12.1185C107.868 12.1185 107.788 12.4156 107.788 13.1118V15.9456C107.788 16.6241 108.006 16.7483 108.259 16.7483C108.556 16.7483 108.746 16.5398 108.746 16.0609V15.6618H109.5V16.3004C109.5 16.9079 109.252 17.3735 108.325 17.3735C107.318 17.3735 106.99 16.8369 106.99 15.9411V13.0187V13.0099Z" fill="#fff"/><path d="M102.891 11.54H102.089V15.9436C102.089 16.6221 101.871 16.7463 101.614 16.7463C101.317 16.7463 101.126 16.5379 101.126 16.0589V15.6598H100.373V16.2984C100.373 16.906 100.621 17.3716 101.548 17.3716C102.554 17.3716 102.887 16.835 102.887 15.9392V11.5445L102.891 11.54Z" fill="#fff"/><path d="M94.1125 23.7603H92.5205V27.7115H94.1125V23.7603Z" fill="#F8AE51"/><path d="M94.1125 19.814H92.5205V23.7652H94.1125V19.814Z" fill="#BD6095"/><path d="M94.1125 15.8613H92.5205V19.8126H94.1125V15.8613Z" fill="#E9485E"/><path d="M94.1125 7.96436H92.5205V11.9156H94.1125V7.96436Z" fill="#C5D984"/><path d="M94.1125 4.01074H92.5205V7.96201H94.1125V4.01074Z" fill="#00ABA3"/><path d="M94.1125 11.9106H92.5205V15.8619H94.1125V11.9106Z" fill="#0091CE"/></g></svg>
+      <span class="nav-logo-text">קטלוג מדדים לאומיים</span>
+    </a>
+    <form class="nav-search" role="search" action="search-results.html" method="get">
+      <svg class="nav-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="nav-search-input" type="search" name="q" placeholder="חיפוש מדד, תחום או מילת מפתח..." aria-label="חיפוש מדד">
+    </form>
+  </nav>
+</header>
+
+<!-- ══════════════ WORKSPACE ══════════════ -->
+<div class="workspace">
+
+  <!-- ─── CHAT PANE ─── -->
+  <aside class="chat-pane" aria-label="שיחה עם היועץ">
+    <!-- Collapsed rail — sparkle icon + vertical hint text.
+         Visible ONLY when .workspace.chat-collapsed is set. -->
+    <span class="chat-rail-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3z"/>
+        <path d="M19 3v4"/><path d="M17 5h4"/>
+        <path d="M5 17v4"/><path d="M3 19h4"/>
+      </svg>
+    </span>
+    <button type="button" class="chat-expand-btn" id="chat-expand-btn"
+      onclick="setChatCollapsed(false)"
+      aria-label="פתח את היועץ (השיחה שמורה)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+    </button>
+    <span class="chat-rail-hint">היועץ החכם</span>
+
+    <div class="chat-header">
+      <span class="chat-header-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3z"/>
+          <path d="M19 3v4"/><path d="M17 5h4"/>
+          <path d="M5 17v4"/><path d="M3 19h4"/>
+        </svg>
+      </span>
+      <div style="flex:1; min-width:0">
+        <div class="chat-header-title">היועץ החכם</div>
+        <div class="chat-header-status">מחובר · מודעות הקטלוג</div>
+      </div>
+      <button type="button" class="chat-collapse-btn" onclick="setChatCollapsed(true)"
+        aria-label="קפל את היועץ" style="display: inline-flex">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="chat-messages" id="chat-messages" aria-live="polite">
+      <!-- populated by JS on load, DOM-API only -->
+    </div>
+
+    <div class="chat-input-wrap">
+      <div class="chat-input-box">
+        <textarea
+          class="chat-input"
+          id="chat-input"
+          rows="1"
+          placeholder="הודעה ליועץ..."
+          aria-label="כתוב הודעה"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage();}"></textarea>
+        <button class="chat-send-btn" onclick="sendChatMessage()" aria-label="שלח" id="chat-send-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4Z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ─── CANVAS ─── -->
+  <main class="canvas" id="canvas">
+    <div class="canvas-inner">
+
+      <!-- ═══ THINKING OVERLAY ═══
+           Shared "AI is thinking" state. Used in TWO moments:
+           (1) State A initial load — while AI "reads" the user's question
+           (2) State A→B transition — while AI "scans the catalog"
+           Reveals gradually and hides itself when content is ready. -->
+      <div class="thinking-overlay" id="thinking-overlay" hidden>
+        <span class="thinking-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3z"/>
+            <path d="M19 3v4"/><path d="M17 5h4"/>
+            <path d="M5 17v4"/><path d="M3 19h4"/>
+          </svg>
+        </span>
+        <div class="thinking-title">
+          <span id="thinking-title-text">חושב</span>
+          <span class="thinking-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+        </div>
+        <div class="thinking-status" id="thinking-status" aria-live="polite">
+          מנתח את השאלה...
+        </div>
+      </div>
+
+      <!-- ═══ STATE A: REFINE ═══
+           Interpretation banner removed — the AI's understanding is
+           already stated in the chat pane on the side (AI greeting msg).
+           No need to duplicate it inside the canvas. Section number badge
+           also removed — with only one section on this screen there's no
+           numbered sequence to convey. -->
+      <section id="state-refine" class="canvas-narrow" aria-labelledby="refine-heading">
+
+        <div class="refine-block" data-reveal>
+          <h2 id="refine-heading">שאלות הבהרה</h2>
+          <p class="refine-lede">
+            כמה שאלות קצרות. סמן מה שרלוונטי, כתוב באחר, או השאר ריק — ואצא מתוך הנחות סבירות.
+          </p>
+
+          <div class="question" data-q="stage" data-mode="single" data-reveal>
+            <div class="question-title">1. איזה שלב חינוכי בעיקר?</div>
+            <div class="question-help">בחר אחד — זה יעזור לצמצם את המדדים הרלוונטיים.</div>
+            <div class="chips">
+              <button type="button" class="chip" onclick="toggleChip(this)">חטיבת ביניים</button>
+              <button type="button" class="chip selected" onclick="toggleChip(this)">תיכון</button>
+              <button type="button" class="chip" onclick="toggleChip(this)">שניהם</button>
+              <button type="button" class="chip decide-for-me" onclick="toggleChip(this)">החליטי במקומי</button>
+              <input type="text" class="chip-input" placeholder="אחר..." aria-label="שלב חינוכי אחר">
+            </div>
+          </div>
+
+          <div class="question" data-q="focus" data-mode="multi" data-reveal>
+            <div class="question-title">2. באיזה היבט של בגרות לשים דגש?</div>
+            <div class="question-help">אפשר לסמן כמה. Select all that apply.</div>
+            <div class="chips">
+              <button type="button" class="chip selected" onclick="toggleChip(this)">אחוזי זכאות לתעודה</button>
+              <button type="button" class="chip" onclick="toggleChip(this)">הישגים במבחני בגרות</button>
+              <button type="button" class="chip selected" onclick="toggleChip(this)">נשירה מהתיכון</button>
+              <button type="button" class="chip" onclick="toggleChip(this)">מוכנות לבגרות (כיתה י)</button>
+              <button type="button" class="chip" onclick="toggleChip(this)">התמדה בבחירת מקצועות מוגברים</button>
+              <input type="text" class="chip-input" placeholder="אחר..." aria-label="היבט אחר">
+            </div>
+          </div>
+
+          <div class="question" data-q="geo" data-mode="single" data-reveal>
+            <div class="question-title">3. איזה יעד גיאוגרפי מדויק?</div>
+            <div class="question-help">אזור, קהילה או רשות ספציפית — אם ידוע לך.</div>
+            <div class="chips">
+              <button type="button" class="chip selected" onclick="toggleChip(this)">דרום כללי</button>
+              <button type="button" class="chip" onclick="toggleChip(this)">ערי פיתוח</button>
+              <button type="button" class="chip" onclick="toggleChip(this)">בדואים בנגב</button>
+              <button type="button" class="chip decide-for-me" onclick="toggleChip(this)">החליטי במקומי</button>
+              <input type="text" class="chip-input" placeholder="אחר..." aria-label="יעד גיאוגרפי אחר">
+            </div>
+          </div>
+
+          <div class="question" data-q="timeframe" data-mode="single" data-reveal>
+            <div class="question-title">4. מה טווח הזמן של התכנית?</div>
+            <div class="question-help">משפיע על סוגי המדדים — קצר יותר = תפוקות · ארוך יותר = תוצאות.</div>
+            <div class="chips">
+              <button type="button" class="chip" onclick="toggleChip(this)">שנה</button>
+              <button type="button" class="chip selected" onclick="toggleChip(this)">3 שנים</button>
+              <button type="button" class="chip" onclick="toggleChip(this)">5+ שנים</button>
+              <input type="text" class="chip-input" placeholder="אחר..." aria-label="טווח זמן אחר">
+            </div>
+          </div>
+
+          <!-- ── Q5: multi-select with more nuanced options + Other ── -->
+          <div class="question" data-q="influencers" data-mode="multi" data-reveal>
+            <div class="question-title">5. מי המשפיעים המרכזיים על הצלחת התכנית?</div>
+            <div class="question-help">אפשר לסמן כמה. אלה יסייעו בזיהוי מדדי-תפוקה שקשורים למעורבותם.</div>
+            <div class="chips">
+              <button type="button" class="chip selected" onclick="toggleChip(this)">מורים ורכזי מקצוע</button>
+              <button type="button" class="chip" onclick="toggleChip(this)">הורים ומשפחות</button>
+              <button type="button" class="chip" onclick="toggleChip(this)">מנהלי בתי ספר</button>
+              <button type="button" class="chip" onclick="toggleChip(this)">קובעי מדיניות מקומיים</button>
+              <button type="button" class="chip" onclick="toggleChip(this)">ארגוני חברה אזרחית</button>
+              <input type="text" class="chip-input" placeholder="אחר..." aria-label="משפיע אחר">
+            </div>
+          </div>
+
+          <!-- ── Q6: fully open textarea — describe the program ── -->
+          <div class="question open" data-q="description" data-reveal>
+            <div class="question-title">6. תארו את הרעיון של התכנית שלכם במשפט או שניים</div>
+            <div class="question-help">חונכות? תגבור? תוכנית עמיתים? המידע יעזור לזהות מדדי תפוקה מתאימים.</div>
+            <textarea class="question-textarea" rows="2" placeholder="לדוגמה: מפגשי חונכות אחד-על-אחד עם סטודנטים מהאוניברסיטה, פעם בשבוע במשך שנה..." aria-label="תיאור התכנית"></textarea>
+          </div>
+
+          <!-- ── Q7: short open input — indicators the user already picked ── -->
+          <div class="question open" data-q="known-indicator" data-reveal>
+            <div class="question-title">7. יש מדד ספציפי שכבר החלטתם שרוצים למדוד?</div>
+            <div class="question-help">לא חובה. אם יש — נשלב אותו בתובנות ונחפש מדדים משלימים.</div>
+            <input type="text" class="question-input" placeholder="לדוגמה: אחוז נשירה בכיתה י&quot;א" aria-label="מדד שכבר בחרתם">
+          </div>
+
+          <div class="refine-actions" data-reveal>
+            <span class="refine-hint">תמיד אפשר לחזור לחדד — גם אחרי שנציג את התוצאות.</span>
+            <button type="button" class="continue-btn" onclick="goToResults()">
+              <span>הצג לי את המדדים</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ STATE B: RESULTS ═══
+           Each top-level section has data-reveal so they cascade in sequentially
+           when the report loads — floor by floor, not all at once. -->
+      <section id="state-results" aria-labelledby="results-heading" hidden>
+
+        <header class="interpretation canvas-narrow" data-reveal>
+          <p class="interpretation-label">הבנתי שאתה מנסה למדוד</p>
+          <h1 class="interpretation-text" id="results-heading">
+            שיפור ב<strong>שיעור הזכאות לתעודת בגרות</strong> ובהפחתת ה<strong>נשירה מהתיכון</strong>,
+            בקרב תלמידי <strong>תיכון בדרום הארץ</strong>, על פני <strong>3 שנים</strong>.
+          </h1>
+          <!-- Fact-tag rail — each chip is a piece of the user's answers -->
+          <div class="interpretation-tags" aria-label="הפרטים שנתת בשאלון">
+            <span class="interpretation-tag">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+              </svg>
+              <span class="interpretation-tag-label">מטרה:</span>
+              <span>העלאת זכאות + הפחתת נשירה</span>
+            </span>
+            <span class="interpretation-tag">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+              </svg>
+              <span class="interpretation-tag-label">אוכלוסייה:</span>
+              <span>תלמידי תיכון</span>
+            </span>
+            <span class="interpretation-tag">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+              </svg>
+              <span class="interpretation-tag-label">אזור:</span>
+              <span>דרום הארץ</span>
+            </span>
+            <span class="interpretation-tag">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span class="interpretation-tag-label">אופק:</span>
+              <span>3 שנים</span>
+            </span>
+
+            <!-- Edit button — returns user to the refine questionnaire so they
+                 can adjust any answer. Preserves the ?q= query text; forces
+                 stage=refine so the form loads instead of results. -->
+            <a class="interpretation-edit-btn" href="#" onclick="editInterpretation(event)"
+               aria-label="ערוך את תשובות השאלון">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              עריכה
+            </a>
+          </div>
+        </header>
+
+        <!-- FULL-BLEED map with on-demand blade overlay.
+             Map is 100% canvas width (no card, no padding). Blade is a
+             floating panel on inline-start (right in RTL) that appears when
+             a map node is clicked. -->
+        <div class="results-workspace" id="results-workspace" data-reveal>
+          <div class="map-pane" id="view-map">
+          <!-- Interactive D3 force graph container — populated by initMapGraph()
+               on first switch to map view. Hosts an <svg> that D3 injects,
+               plus a legend overlay, filter chips, and hover tooltip. -->
+          <div class="map-view" id="map-view-canvas" aria-label="מפה סמנטית אינטראקטיבית של התוצאה והקשריה">
+            <!-- Filter chips — hide EDGES that don't match the chosen role.
+                 Roles live on edges now (see MAP_DATA.links[].role). -->
+            <div class="map-filter" role="radiogroup" aria-label="סינון קשרים לפי סוג">
+              <button type="button" class="map-filter-btn active" data-map-filter="all" role="radio" aria-checked="true">הכל</button>
+              <button type="button" class="map-filter-btn" data-map-filter="outcome" role="radio" aria-checked="false">
+                <span class="dot" style="background:#059669"></span>תוצאה
+              </button>
+              <button type="button" class="map-filter-btn" data-map-filter="output" role="radio" aria-checked="false">
+                <span class="dot" style="background:#0369A1"></span>תפוקה
+              </button>
+              <button type="button" class="map-filter-btn" data-map-filter="predictor" role="radio" aria-checked="false">
+                <span class="dot" style="background:#7C3AED"></span>מנבא
+              </button>
+            </div>
+
+            <!-- Layout mode toggle (cluster ↔ causal chain) removed —
+                 the map is cluster-only. Filter chips above stay. -->
+
+            <!-- Legend — explains what edge COLORS and STYLES mean.
+                 Since role now lives on edges (same node can play different
+                 roles in different outcomes), the legend must exist. -->
+            <div class="map-legend" aria-label="מקרא">
+              <div class="map-legend-title">מקרא</div>
+              <div class="map-legend-section">קשר לתוצאה:</div>
+              <div class="map-legend-row"><span class="map-legend-line" style="background:#059669"></span>מדד תוצאה</div>
+              <div class="map-legend-row"><span class="map-legend-line" style="background:#0369A1"></span>מדד תפוקה</div>
+              <div class="map-legend-row"><span class="map-legend-line" style="background:#7C3AED"></span>מדד מנבא</div>
+              <div class="map-legend-section" style="margin-block-start: 8px">בין תוצאות:</div>
+              <div class="map-legend-row"><span class="map-legend-line dashed"></span>תוצאה קרובה</div>
+            </div>
+            <!-- Tooltip — populated + positioned by JS on hover -->
+            <div class="map-tooltip" id="map-tooltip" role="tooltip"></div>
+
+            <!-- Bottom-inline-end controls: center + help ────────────────
+                 Center resets zoom/pan to identity.
+                 Help toggles the popover with map usage tips. -->
+            <div class="map-controls">
+              <button type="button" class="map-ctrl-btn" id="map-help-btn"
+                aria-label="עזרה — איך להשתמש במפה"
+                aria-expanded="false" aria-controls="map-help-popover">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+              </button>
+              <button type="button" class="map-ctrl-btn" id="map-center-btn"
+                aria-label="מרכז את המפה" onclick="if(window.mapCenter) window.mapCenter()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="8"/>
+                  <line x1="12" y1="2" x2="12" y2="5"/>
+                  <line x1="12" y1="19" x2="12" y2="22"/>
+                  <line x1="2" y1="12" x2="5" y2="12"/>
+                  <line x1="19" y1="12" x2="22" y2="12"/>
+                  <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+                </svg>
+              </button>
+            </div>
+            <!-- Help popover — hidden by default; toggled by help-btn -->
+            <div class="map-help-popover" id="map-help-popover" role="dialog" aria-label="מידע על המפה" hidden>
+              <div class="map-help-title">איך לקרוא את המפה?</div>
+              <ul>
+                <li><strong>הצומת המרכזי</strong> — התוצאה שביקשת</li>
+                <li><strong>צמתים סביבו</strong> — תוצאות קרובות והמדדים שלהן</li>
+                <li><strong>צבע</strong> — סוג המדד (תוצאה / תפוקה / ניבוי)</li>
+                <li><strong>גודל</strong> — כמות התכניות שמשתמשות בו</li>
+                <li><strong>קשרי-גשר</strong> — מדדים שמופיעים בכמה תוצאות</li>
+              </ul>
+              <div class="map-help-tips">
+                <strong>תפעול:</strong> גררו לזיזה · גלגלת לזום · לחצו על צומת לפרטים
+              </div>
+            </div>
+            <!-- Logic-mode overlays (central banner + 4-column headers +
+                 related-outcome chips) removed together with the layout
+                 toggle. Cluster is the only view now. -->
+
+            <!-- SVG goes here — injected by D3 -->
+          </div>
+          </div><!-- /.map-pane -->
+
+          <!-- LIST — persistent panel on LEFT (inline-end).
+               Shows all indicators as cards, grouped by type. Click a card
+               to select AND open the detail panel on the right. -->
+          <aside class="blade-list" id="blade-list-pane" aria-label="רשימת מדדים">
+            <div class="blade-header">
+              <span class="blade-title">רשימת מדדים</span>
+            </div>
+            <div class="blade-body" id="blade-list-body"><!-- populated by renderBladeList() --></div>
+          </aside>
+
+          <!-- BLADE — floating info panel (RIGHT in RTL / inline-start).
+               Hidden by default; openBladeDetail(id) reveals it. -->
+          <aside class="blade-pane" id="blade-pane" aria-label="פרטי מדד" aria-hidden="true">
+            <button type="button" class="blade-close-btn" id="blade-close-btn"
+              aria-label="סגור" onclick="closeBlade()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+            <div class="blade-body" id="blade-body"><!-- populated by openBladeDetail() --></div>
+          </aside>
+        </div><!-- /.results-workspace -->
+
+        <!-- Insights section ("מה שלא ידעת לשאול") removed per design decision.
+             CSS rules for .insights/.insight-block/.related-item/.gap-item/
+             .expert-item remain as dead code — safe to prune later. -->
+
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<script>
+/* ─────────────────────────────────────────────────────────────────────────
+   canvas.html — Chat + Canvas workflow.
+
+   State (D1 = single file with ?stage= query param):
+     - ?stage=refine  (default) → clarifying questions in the canvas
+     - ?stage=results          → interpretation + toggle + outcome + insights
+
+   All dynamic DOM changes go through document.createElement / textContent —
+   never innerHTML. This is the project convention (see CLAUDE.md).
+   ───────────────────────────────────────────────────────────────────────── */
+(function () {
+  'use strict';
+
+  /* ── URL / stage handling ── */
+  const params = new URLSearchParams(window.location.search);
+  const stage = params.get('stage') === 'results' ? 'results' : 'refine';
+  const initialQuery = params.get('q') || '';
+
+  const refineSection   = document.getElementById('state-refine');
+  const resultsSection  = document.getElementById('state-results');
+  const thinkingOverlay = document.getElementById('thinking-overlay');
+  const thinkingTitle   = document.getElementById('thinking-title-text');
+  const thinkingStatus  = document.getElementById('thinking-status');
+
+  if (stage === 'results') {
+    refineSection.hidden = true;
+    resultsSection.hidden = false;
+    /* Chat pane starts COLLAPSED on results — the blade is the primary
+       info surface now. User can expand chat anytime to continue the
+       conversation with full context (messages persist across collapse). */
+    document.querySelector('.workspace')?.classList.add('chat-collapsed');
+    /* Cascade the results section-by-section — "floor by floor" —
+       instead of showing everything at once. Small initial delay so the
+       first section doesn't jump in immediately on page load. */
+    setTimeout(function () {
+      cascadeReveal(resultsSection.querySelectorAll('[data-reveal]'), 250);
+    }, 200);
+    /* Map is the primary visual — trigger init AFTER the cascade completes
+       so the container has real dimensions before D3 measures it. */
+    setTimeout(function () {
+      if (typeof window.setView === 'function') window.setView('map');
+    }, 900);
+  } else {
+    /* State A: run the "thinking then reveal" choreography.
+       The refine section is temporarily hidden (`hidden` attribute — takes
+       up NO space) so the thinking overlay is the only thing on canvas.
+       When the AI "finishes reading", refine section is unhidden and its
+       [data-reveal] children cascade in one by one.
+
+       Also: hide the chat pane. During the questionnaire the questions
+       themselves ARE the conversation — a sidebar chat is redundant and
+       just steals horizontal room from the questions. */
+    document.querySelector('.workspace')?.classList.add('no-chat');
+    refineSection.hidden = true;
+    startThinkingSequence({
+      title: 'חושב על השאלה שלך',
+      statuses: [
+        'מנתח את הנושא ומזהה מדדים רלוונטיים...',
+        'מוצא נקודות שדורשות חידוד...',
+        'בונה שאלות הבהרה...'
+      ],
+      duration: 1900,
+      onDone: function () {
+        refineSection.hidden = false;
+        /* 130ms stagger (was 180) — with 9 data-reveal items now, faster
+           per-item keeps the total cascade around ~1.2s. */
+        cascadeReveal(refineSection.querySelectorAll('[data-reveal]'), 130);
+      }
+    });
+  }
+
+  /* ─── Thinking sequence — cycles status messages, then calls onDone.
+     Used both in the initial refine reveal (above) and in the state
+     transition (goToResults below). ─── */
+  function startThinkingSequence(cfg) {
+    thinkingOverlay.hidden = false;
+    thinkingOverlay.style.opacity = '1';
+    thinkingTitle.textContent = cfg.title || 'חושב';
+    thinkingStatus.textContent = cfg.statuses[0] || '';
+
+    /* Cycle through the status messages evenly across the duration. */
+    const perStep = Math.floor(cfg.duration / cfg.statuses.length);
+    let idx = 0;
+    const interval = setInterval(function () {
+      idx++;
+      if (idx >= cfg.statuses.length) {
+        clearInterval(interval);
+        return;
+      }
+      /* Fade out → swap text → fade in — smoother than instant swap */
+      thinkingStatus.style.opacity = '0';
+      setTimeout(function () {
+        thinkingStatus.textContent = cfg.statuses[idx];
+        thinkingStatus.style.opacity = '1';
+      }, 200);
+    }, perStep);
+
+    /* After the full duration, fade the overlay out and call onDone */
+    setTimeout(function () {
+      clearInterval(interval);
+      thinkingOverlay.style.opacity = '0';
+      setTimeout(function () {
+        thinkingOverlay.hidden = true;
+        if (typeof cfg.onDone === 'function') cfg.onDone();
+      }, 320);
+    }, cfg.duration);
+  }
+
+  /* Cascade-reveal — apply `.shown` to each element in sequence.
+     Each element's own CSS transition handles the animation. */
+  function cascadeReveal(nodeList, stepMs) {
+    Array.prototype.forEach.call(nodeList, function (el, i) {
+      setTimeout(function () { el.classList.add('shown'); }, i * (stepMs || 180));
+    });
+  }
+
+  /* ─── Chat pane — DOM API helpers (XSS-safe) ─── */
+  const chatMessages = document.getElementById('chat-messages');
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+
+  /* Build the AI sparkle avatar SVG via createElementNS (no innerHTML). */
+  function buildAIAvatarSVG() {
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    /* Sparkles glyph — big diamond at center + two mini plus-marks (Lucide-style). */
+    const mainSparkle = document.createElementNS(SVG_NS, 'path');
+    mainSparkle.setAttribute('d', 'M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3z');
+    const miniV1 = document.createElementNS(SVG_NS, 'path'); miniV1.setAttribute('d', 'M19 3v4');
+    const miniH1 = document.createElementNS(SVG_NS, 'path'); miniH1.setAttribute('d', 'M17 5h4');
+    const miniV2 = document.createElementNS(SVG_NS, 'path'); miniV2.setAttribute('d', 'M5 17v4');
+    const miniH2 = document.createElementNS(SVG_NS, 'path'); miniH2.setAttribute('d', 'M3 19h4');
+    svg.appendChild(mainSparkle);
+    svg.appendChild(miniV1); svg.appendChild(miniH1);
+    svg.appendChild(miniV2); svg.appendChild(miniH2);
+    return svg;
+  }
+
+  /* Build a bar-chart icon SVG for the indicator-item (used in live refinement). */
+  function buildBarChartSVG() {
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2');
+    const path = document.createElementNS(SVG_NS, 'path');
+    path.setAttribute('d', 'M18 20V10M12 20V4M6 20v-6');
+    svg.appendChild(path);
+    return svg;
+  }
+
+  /* Create a message bubble. `parts` is an array of:
+      - string → text node
+      - { bold: '...' } → <strong>text</strong>
+      - { break: true } → new <p>
+     Everything user-provided goes through textContent (safe). */
+  function appendMessage(role, parts) {
+    const msg = document.createElement('div');
+    msg.className = 'msg ' + role;
+
+    const avatar = document.createElement('div');
+    avatar.className = 'msg-avatar';
+    if (role === 'ai') {
+      avatar.appendChild(buildAIAvatarSVG());
+    } else {
+      avatar.textContent = 'א';
+    }
+
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+
+    /* Build paragraphs from `parts`. Each 'break' starts a new <p>. */
+    let p = document.createElement('p');
+    bubble.appendChild(p);
+    parts.forEach(function (part) {
+      if (typeof part === 'string') {
+        p.appendChild(document.createTextNode(part));
+      } else if (part && typeof part === 'object') {
+        if (part.break) {
+          p = document.createElement('p');
+          bubble.appendChild(p);
+        } else if (part.bold) {
+          const s = document.createElement('strong');
+          s.textContent = part.bold;
+          p.appendChild(s);
+        }
+      }
+    });
+
+    msg.appendChild(avatar);
+    msg.appendChild(bubble);
+    chatMessages.appendChild(msg);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    return msg;
+  }
+
+  /* ── Seed chat based on stage ── */
+  if (initialQuery) {
+    appendMessage('user', [initialQuery]);
+  }
+  if (stage === 'refine') {
+    appendMessage('ai', [
+      'שאלה מצוינת. אני שואל אותך ',
+      { bold: 'כמה שאלות הבהרה' },
+      ' בצד — כדי לתת לך את המדדים המדויקים ביותר לתכנית שלך.',
+      { break: true },
+      'תוכל לסמן, לכתוב באחר, או להשאיר ריק — ואני אצא מהנחות סבירות.'
+    ]);
+  } else {
+    appendMessage('ai', [
+      'שאלה מצוינת. אני שואל אותך כמה שאלות הבהרה בצד — כדי לתת לך את המדדים המדויקים ביותר.'
+    ]);
+    appendMessage('user', [
+      'תיכון · אחוזי זכאות + נשירה · דרום כללי · 3 שנים'
+    ]);
+    appendMessage('ai', [
+      'מודה על ההבהרות. הצגתי לך ',
+      { bold: '5 מדדים' },
+      ' סביב שיפור שיעור הזכאות בקאנבס.',
+      { break: true },
+      'שים לב במיוחד ל-',
+      { bold: '"מה שלא ידעת לשאול"' },
+      ' — מצאתי 2 פערים ו-2 המלצות של מקצוענים בתחום שכדאי לשקול.'
+    ]);
+  }
+
+  /* ─── Chip toggling — single vs multi ─── */
+  window.toggleChip = function toggleChip(chipEl) {
+    const question = chipEl.closest('.question');
+    const mode = question ? question.dataset.mode : 'single';
+    if (mode === 'multi') {
+      chipEl.classList.toggle('selected');
+    } else {
+      question.querySelectorAll('.chip').forEach(function (c) { c.classList.remove('selected'); });
+      chipEl.classList.add('selected');
+    }
+  };
+
+  /* ─── Continue → State B transition ───
+     Fully hides the refine section (empty screen except the loader) while
+     the AI "scans the catalog" — no ghostly faded questions in the
+     background. After 2.4s, navigates to ?stage=results where the new
+     page loads and cascades in section by section. */
+  window.goToResults = function goToResults() {
+    /* Hide refine COMPLETELY (was: opacity 0.3, which left a ghost).
+       Screen now contains only the thinking loader — clean and focused. */
+    refineSection.hidden = true;
+
+    startThinkingSequence({
+      title: 'סורק את הקטלוג',
+      statuses: [
+        'מזהה תוצאה מרכזית התואמת את השאלה...',
+        'מוצא 5 מדדים למדוד את התוצאה...',
+        'בודק תוצאות קרובות ופערים...'
+      ],
+      duration: 2400,
+      onDone: function () {
+        const p = new URLSearchParams(window.location.search);
+        p.set('stage', 'results');
+        if (initialQuery) p.set('q', initialQuery);
+        window.location.href = 'canvas.html?' + p.toString();
+      }
+    });
+  };
+
+  /* ─── Chat message send (simulated) ─── */
+  window.sendChatMessage = function sendChatMessage() {
+    const input = document.getElementById('chat-input');
+    const msg = input.value.trim();
+    if (!msg) { input.focus(); return; }
+
+    appendMessage('user', [msg]);
+    input.value = '';
+    input.style.height = 'auto';
+
+    /* Simulate AI thinking + response */
+    setTimeout(function () {
+      if (stage === 'results') {
+        appendMessage('ai', [
+          'עדכנתי את הקאנבס — הוספתי מדד ',
+          { bold: '"תמיכה פסיכו-חברתית"' },
+          ' לרשימה, ועדכנתי את התובנות בהתאם.'
+        ]);
+        addLiveRefinementIndicator();
+      } else {
+        appendMessage('ai', [
+          'קיבלתי. תסיים לענות על השאלות בצד ואני אעדכן את הבחירה שלך בהמלצות.'
+        ]);
+      }
+    }, 600);
+  };
+
+  /* Live-refinement — add a new indicator card via DOM API (no innerHTML) */
+  function addLiveRefinementIndicator() {
+    const list = document.getElementById('indicators-list');
+    if (!list) return;
+    if (list.querySelector('[data-live-refinement]')) return;
+
+    const item = document.createElement('a');
+    item.className = 'indicator-item predictor flash-in';
+    item.href = 'indicator-card.html?id=psychosocial-support';
+    item.dataset.liveRefinement = '1';
+
+    const iconWrap = document.createElement('span');
+    iconWrap.className = 'indicator-item-icon';
+    iconWrap.setAttribute('aria-hidden', 'true');
+    iconWrap.appendChild(buildBarChartSVG());
+
+    const body = document.createElement('div');
+    body.className = 'indicator-item-body';
+
+    const name = document.createElement('div');
+    name.className = 'indicator-item-name';
+    name.textContent = 'תמיכה פסיכו-חברתית (הוסף לפי בקשה)';
+
+    const meta = document.createElement('div');
+    meta.className = 'indicator-item-meta';
+    ['שאלון מסגרת', 'חצי-שנתי', 'בשימוש ב-4 תכניות'].forEach(function (t) {
+      const s = document.createElement('span');
+      s.textContent = t;
+      meta.appendChild(s);
+    });
+
+    body.appendChild(name);
+    body.appendChild(meta);
+
+    const type = document.createElement('span');
+    type.className = 'indicator-item-type';
+    type.textContent = 'מנבא';
+
+    item.appendChild(iconWrap);
+    item.appendChild(body);
+    item.appendChild(type);
+    list.appendChild(item);
+
+    /* Update the results count — DOM API, no innerHTML */
+    const countEl = document.getElementById('results-count-el');
+    if (countEl) {
+      countEl.textContent = '';
+      const b1 = document.createElement('strong'); b1.textContent = '6 מדדים';
+      const b2 = document.createElement('strong'); b2.textContent = 'תוצאה מרכזית';
+      countEl.appendChild(b1);
+      countEl.appendChild(document.createTextNode(' ב-'));
+      countEl.appendChild(b2);
+      countEl.appendChild(document.createTextNode(' · +3 תוצאות קרובות'));
+    }
+  }
+
+  /* ═════════════════════════════════════════════════════════════════════
+     INDICATORS DATA — the 5 indicators that were previously hard-coded as
+     anchor cards. Now a data array so the table can render, group, and
+     export. `type` is one of: 'outcome' | 'output' | 'predictor'.
+     TYPE_LABEL maps to Hebrew display copy.
+     ═════════════════════════════════════════════════════════════════════ */
+  const TYPE_LABEL = { outcome: 'תוצאה', output: 'תפוקה', predictor: 'מנבא' };
+  /* Explicit order for grouping — determines section order in the grouped
+     view AND the sort order in the ungrouped view. Outcomes first (the
+     "main event"), then outputs, then predictors. */
+  const TYPE_ORDER = ['outcome', 'output', 'predictor'];
+
+  const INDICATORS_DATA = [
+    { id: 'eligibility-rate', name: 'שיעור זכאות לתעודת בגרות',   type: 'outcome',   source: 'נתוני משרד החינוך',   frequency: 'שנתי',          programs: 11 },
+    { id: 'dropout',          name: 'שיעור נשירה מהתיכון',        type: 'outcome',   source: 'נתוני מינהל',         frequency: 'שנתי',          programs: 9 },
+    { id: 'bagrut-scores',    name: 'ציוני בגרות ממוצעים',        type: 'outcome',   source: 'נתוני משרד החינוך',   frequency: 'שנתי',          programs: 8 },
+    { id: 'tutoring',         name: 'שעות תגבור לתלמיד',          type: 'output',    source: 'דיווח תכנית',         frequency: 'חודשי',         programs: 6 },
+    { id: 'attendance',       name: 'שיעור נוכחות בשיעורים',      type: 'predictor', source: 'מערכת ניהול פדגוגי',  frequency: 'יומי → חודשי',  programs: 5 },
+  ];
+
+  /* External-link arrow SVG (used in the last column). transform: scaleX(-1)
+     via CSS to flip inline-end direction in RTL. */
+  const ARROW_SVG_PATHS = ['M5 12h14', 'M12 5l7 7-7 7'];
+
+  function makeSvg(pathDs, extraAttrs) {
+    /* Build an inline SVG via DOM API (no innerHTML — project convention). */
+    const NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    if (extraAttrs) Object.keys(extraAttrs).forEach(k => svg.setAttribute(k, extraAttrs[k]));
+    pathDs.forEach(d => {
+      const p = document.createElementNS(NS, 'path');
+      p.setAttribute('d', d);
+      svg.appendChild(p);
+    });
+    return svg;
+  }
+
+  /* Render (or re-render) the tbody based on the group-by mode.
+     mode: 'none' | 'type' */
+  window.renderIndicatorsTable = function renderIndicatorsTable(mode) {
+    const tbody = document.getElementById('indicators-tbody');
+    if (!tbody) return;
+    tbody.replaceChildren();   /* clear */
+
+    if (mode === 'type') {
+      /* Grouped: one <tr class="group-header"> before each type's rows */
+      TYPE_ORDER.forEach(type => {
+        const items = INDICATORS_DATA.filter(ind => ind.type === type);
+        if (items.length === 0) return;
+        tbody.appendChild(makeGroupHeader(TYPE_LABEL[type], items.length));
+        items.forEach(ind => tbody.appendChild(makeDataRow(ind)));
+      });
+    } else {
+      /* Ungrouped: sort by TYPE_ORDER so it's not visually random */
+      const sorted = INDICATORS_DATA.slice().sort((a, b) =>
+        TYPE_ORDER.indexOf(a.type) - TYPE_ORDER.indexOf(b.type)
+      );
+      sorted.forEach(ind => tbody.appendChild(makeDataRow(ind)));
+    }
+  };
+
+  function makeGroupHeader(label, count) {
+    const tr = document.createElement('tr');
+    tr.className = 'group-header';
+    const td = document.createElement('td');
+    td.setAttribute('colspan', '6');
+    td.textContent = label;
+    const countSpan = document.createElement('span');
+    countSpan.className = 'group-count';
+    countSpan.textContent = '(' + count + ')';
+    td.appendChild(countSpan);
+    tr.appendChild(td);
+    return tr;
+  }
+
+  function makeDataRow(ind) {
+    const tr = document.createElement('tr');
+    tr.className = 'data-row';
+
+    /* Name (linked) */
+    const tdName = document.createElement('td');
+    tdName.className = 'col-name';
+    const link = document.createElement('a');
+    link.href = 'indicator-card.html?id=' + encodeURIComponent(ind.id);
+    link.textContent = ind.name;
+    tdName.appendChild(link);
+    tr.appendChild(tdName);
+
+    /* Type pill */
+    const tdType = document.createElement('td');
+    const pill = document.createElement('span');
+    pill.className = 'type-pill ' + ind.type;
+    pill.textContent = TYPE_LABEL[ind.type];
+    tdType.appendChild(pill);
+    tr.appendChild(tdType);
+
+    /* Source */
+    const tdSource = document.createElement('td');
+    tdSource.textContent = ind.source;
+    tr.appendChild(tdSource);
+
+    /* Frequency */
+    const tdFreq = document.createElement('td');
+    tdFreq.textContent = ind.frequency;
+    tr.appendChild(tdFreq);
+
+    /* Programs count */
+    const tdPrograms = document.createElement('td');
+    tdPrograms.className = 'col-programs';
+    tdPrograms.textContent = ind.programs + ' תכניות';
+    tr.appendChild(tdPrograms);
+
+    /* Action: open indicator card */
+    const tdAction = document.createElement('td');
+    tdAction.className = 'col-action';
+    const actionLink = document.createElement('a');
+    actionLink.href = 'indicator-card.html?id=' + encodeURIComponent(ind.id);
+    actionLink.setAttribute('aria-label', 'פתח כרטיס מדד: ' + ind.name);
+    actionLink.appendChild(makeSvg(ARROW_SVG_PATHS));
+    tdAction.appendChild(actionLink);
+    tr.appendChild(tdAction);
+
+    return tr;
+  }
+
+  /* CSV export.
+     - UTF-8 BOM (﻿) so Excel opens Hebrew correctly on Windows.
+     - RFC-4180-ish quoting: any cell with quote/comma/newline gets wrapped
+       in double-quotes and internal quotes get doubled.
+     - Column order matches the visible table (name, type-hebrew, source,
+       frequency, programs). */
+  window.exportIndicatorsCSV = function exportIndicatorsCSV() {
+    const headers = ['שם המדד', 'סוג', 'מקור', 'תדירות', 'בשימוש (מספר תכניות)'];
+    const rows = INDICATORS_DATA.slice()
+      .sort((a, b) => TYPE_ORDER.indexOf(a.type) - TYPE_ORDER.indexOf(b.type))
+      .map(ind => [ind.name, TYPE_LABEL[ind.type], ind.source, ind.frequency, ind.programs]);
+
+    const csvEscape = v => {
+      const s = String(v);
+      return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    const BOM = String.fromCharCode(0xFEFF);   /* Explicit — literal U+FEFF in source can be stripped by editors/servers */
+    const csv = BOM + [headers, ...rows]
+      .map(row => row.map(csvEscape).join(','))
+      .join('\r\n');
+
+    /* Blob download — avoids URL-length limits of data: URIs. */
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'מדדים.csv';   /* Hebrew filename OK — browsers URL-encode when saving */
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    /* Free the object URL after the download starts */
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  /* Initial render — always grouped by type (the group-by chooser has
+     been removed; type-grouping is now the only mode). Guarded because
+     refine stage doesn't include the table. */
+  if (document.getElementById('indicators-tbody')) {
+    renderIndicatorsTable('type');
+  }
+
+  /* ─── Map/blade workspace init ────────────────────────────────────
+     Old list-vs-map toggle is gone; both are now shown side-by-side.
+     window.setView is retained as a no-op shim so any legacy caller
+     (there's a leftover in the results-init below) doesn't crash. */
+  let mapGraphInitialized = false;
+  window.setView = function setView(_mode) {
+    /* No-op — layout is single-shot side-by-side now. Kept for compat. */
+    if (!mapGraphInitialized && typeof initMapGraph === 'function') {
+      setTimeout(function () {
+        initMapGraph();
+        mapGraphInitialized = true;
+      }, 0);
+    }
+  };
+
+  /* ─── Chat collapse/expand ─────────────────────────────────────────
+     Toggles a class on .workspace; CSS handles the visual (48px rail
+     when collapsed, 380px when expanded). DOM state (messages, input
+     value) is preserved because the elements just get `display: none`. */
+  /* Edit answers — takes the user back to the refine questionnaire with the
+     original query text preserved. From there they can adjust any answer and
+     re-run the interpretation. */
+  window.editInterpretation = function (event) {
+    if (event) event.preventDefault();
+    const params = new URLSearchParams(window.location.search);
+    params.set('stage', 'refine');
+    /* Drop any cache-buster we might have added while testing */
+    params.delete('_');
+    window.location.href = 'canvas.html?' + params.toString();
+  };
+
+  window.setChatCollapsed = function (collapsed) {
+    const ws = document.querySelector('.workspace');
+    if (!ws) return;
+    ws.classList.toggle('chat-collapsed', collapsed);
+  };
+
+  /* ─── LIST panel (persistent on LEFT / inline-end) ───────────────────
+     Renders all indicators grouped by type. Click a card to open the
+     detail panel on the RIGHT. Also highlights the corresponding card
+     when a map node is clicked. */
+  function renderBladeList() {
+    const body = document.getElementById('blade-list-body');
+    if (!body) return;
+    body.replaceChildren();
+    TYPE_ORDER.forEach(function (type) {
+      const items = INDICATORS_DATA.filter(function (ind) { return ind.type === type; });
+      if (items.length === 0) return;
+      const heading = document.createElement('div');
+      heading.className = 'blade-group-heading';
+      heading.textContent = TYPE_LABEL[type] + ' · ' + items.length;
+      body.appendChild(heading);
+      items.forEach(function (ind) { body.appendChild(makeBladeCard(ind)); });
+    });
+  }
+
+  function makeBladeCard(ind) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'blade-card ' + ind.type;
+    btn.setAttribute('data-indicator-id', ind.id);
+    btn.addEventListener('click', function () { openBladeDetail(ind.id); });
+
+    const strip = document.createElement('span');
+    strip.className = 'blade-card-strip';
+    btn.appendChild(strip);
+
+    const bodyEl = document.createElement('div');
+    bodyEl.className = 'blade-card-body';
+
+    const name = document.createElement('div');
+    name.className = 'blade-card-name';
+    name.textContent = ind.name;
+    bodyEl.appendChild(name);
+
+    const meta = document.createElement('div');
+    meta.className = 'blade-card-meta';
+    const src = document.createElement('span'); src.textContent = ind.source;
+    const freq = document.createElement('span'); freq.textContent = ind.frequency;
+    const prog = document.createElement('span'); prog.textContent = ind.programs + ' תכניות';
+    meta.appendChild(src); meta.appendChild(freq); meta.appendChild(prog);
+    bodyEl.appendChild(meta);
+
+    btn.appendChild(bodyEl);
+    return btn;
+  }
+
+  /* Initial list render */
+  if (document.getElementById('blade-list-body')) {
+    renderBladeList();
+  }
+
+  /* ─── DETAIL panel (floating on inline-start = RIGHT in RTL) ─────────
+     Hidden by default; openBladeDetail(id) reveals it with the selected
+     indicator's info + CTA. closeBlade() dismisses. */
+  window.openBladeDetail = function (id) {
+    const ind = INDICATORS_DATA.find(function (x) { return x.id === id; });
+    if (!ind) return;
+    const workspace = document.getElementById('results-workspace');
+    const body = document.getElementById('blade-body');
+    const pane = document.getElementById('blade-pane');
+    if (!body || !workspace) return;
+    body.replaceChildren();
+
+    const wrap = document.createElement('div');
+    wrap.className = 'blade-detail ' + ind.type;
+
+    const pill = document.createElement('span');
+    pill.className = 'blade-detail-type-pill';
+    pill.textContent = TYPE_LABEL[ind.type];
+    wrap.appendChild(pill);
+
+    const name = document.createElement('h3');
+    name.className = 'blade-detail-name';
+    name.textContent = ind.name;
+    wrap.appendChild(name);
+
+    const metaBlock = document.createElement('div');
+    metaBlock.className = 'blade-detail-meta';
+    [
+      { label: 'מקור:',    value: ind.source    },
+      { label: 'תדירות:',  value: ind.frequency },
+      { label: 'בשימוש:',  value: ind.programs + ' תכניות' }
+    ].forEach(function (row) {
+      const line = document.createElement('div');
+      line.className = 'blade-detail-meta-row';
+      const l = document.createElement('span'); l.className = 'blade-detail-meta-label'; l.textContent = row.label;
+      const v = document.createElement('span'); v.textContent = row.value;
+      line.appendChild(l); line.appendChild(v);
+      metaBlock.appendChild(line);
+    });
+    wrap.appendChild(metaBlock);
+
+    /* Description — canned per-indicator; in real product would come from
+       the indicator record. Placeholder text conveys the shape. */
+    const desc = document.createElement('p');
+    desc.className = 'blade-detail-desc';
+    desc.textContent = 'מדד ' + TYPE_LABEL[ind.type] + ' — ' + ind.name + '. משמש בתכניות ' +
+      'העצמה לימודית לצורך מעקב אחר ' + (ind.type === 'outcome' ? 'הצלחת התלמידים' :
+      ind.type === 'output' ? 'היקף הפעילות' : 'הסימנים המקדימים') + '.';
+    wrap.appendChild(desc);
+
+    /* Actions cluster: primary CTA + secondary "Add to comparison". Bundled
+       in one wrapper so both stick to the bottom together. */
+    const actions = document.createElement('div');
+    actions.className = 'blade-detail-actions';
+
+    const cta = document.createElement('a');
+    cta.className = 'blade-detail-cta';
+    cta.href = 'indicator-card.html?id=' + encodeURIComponent(ind.id);
+    cta.textContent = 'פתח את כרטיס המדד ';
+    cta.appendChild(makeSvg(ARROW_SVG_PATHS));
+    /* Stash the return context so the indicator page can render a "back to
+       report" chip. Not a breadcrumb — the breadcrumb represents catalog
+       location; this represents session journey. */
+    cta.addEventListener('click', function () {
+      const title = document.querySelector('.interpretation-text');
+      const shortLabel = title ? title.textContent.replace(/\s+/g, ' ').trim().slice(0, 60) : '';
+      sessionStorage.setItem('indicator-return-url', location.href);
+      sessionStorage.setItem('indicator-return-label', shortLabel);
+      sessionStorage.setItem('indicator-return-source', 'report');
+    });
+    actions.appendChild(cta);
+
+    const compareBtn = document.createElement('button');
+    compareBtn.type = 'button';
+    compareBtn.className = 'blade-detail-cta-secondary';
+    /* Plus icon + label — canonical Lucide "plus" shape */
+    compareBtn.appendChild(makeSvg(['M12 5v14', 'M5 12h14']));
+    const compareLabel = document.createElement('span');
+    compareLabel.textContent = 'הוסף להשוואה';
+    compareBtn.appendChild(compareLabel);
+    /* Reflect current comparison state (was this indicator already added?) */
+    if (getComparisonIds().indexOf(ind.id) !== -1) {
+      compareBtn.setAttribute('disabled', 'true');
+      compareLabel.textContent = 'נוסף להשוואה ✓';
+    }
+    compareBtn.addEventListener('click', function () {
+      addToComparison(ind);
+      compareBtn.setAttribute('disabled', 'true');
+      compareLabel.textContent = 'נוסף להשוואה ✓';
+    });
+    actions.appendChild(compareBtn);
+
+    wrap.appendChild(actions);
+
+    body.appendChild(wrap);
+    workspace.classList.add('blade-open');
+    if (pane) pane.setAttribute('aria-hidden', 'false');
+
+    /* Highlight the matching card in the LEFT list — visual sync between
+       the two panels (also works when the click originated on a map node). */
+    document.querySelectorAll('.blade-card').forEach(function (c) {
+      c.classList.toggle('selected', c.getAttribute('data-indicator-id') === id);
+    });
+  };
+
+  window.closeBlade = function () {
+    const workspace = document.getElementById('results-workspace');
+    const pane = document.getElementById('blade-pane');
+    if (!workspace) return;
+    workspace.classList.remove('blade-open');
+    if (pane) pane.setAttribute('aria-hidden', 'true');
+    /* Clear list highlight */
+    document.querySelectorAll('.blade-card.selected').forEach(function (c) {
+      c.classList.remove('selected');
+    });
+  };
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     COMPARISON TRAY — persistent bottom bar with the running list of
+     indicators the user has queued for comparison. State lives in
+     sessionStorage.comparison as an array of indicator IDs (matching
+     comparison.html's expected format).
+     ═══════════════════════════════════════════════════════════════════════ */
+  const MAX_COMPARE = 3;
+
+  /* sessionStorage.comparison stores objects: [{id, name}, ...] — matching
+     the format used by indicator-card.js and expected by comparison.html.
+     We convert between object-array (storage) and id-array (in-memory checks). */
+  function getComparisonItems() {
+    try {
+      const raw = JSON.parse(sessionStorage.getItem('comparison') || '[]');
+      /* Normalize: legacy string entries → objects */
+      return raw.map(function (x) {
+        if (typeof x === 'string') return { id: x, name: x };
+        return x;
+      });
+    } catch (e) { return []; }
+  }
+  function getComparisonIds() {
+    return getComparisonItems().map(function (item) { return item.id; });
+  }
+  function saveComparisonItems(items) {
+    sessionStorage.setItem('comparison', JSON.stringify(items));
+  }
+
+  function addToComparison(ind) {
+    const items = getComparisonItems();
+    if (items.some(function (x) { return x.id === ind.id; })) return;   /* already there */
+    if (items.length >= MAX_COMPARE) return;                             /* cap */
+    items.push({ id: ind.id, name: ind.name });
+    saveComparisonItems(items);
+    renderCompareTray();
+  }
+  function removeFromComparison(id) {
+    const items = getComparisonItems().filter(function (x) { return x.id !== id; });
+    saveComparisonItems(items);
+    renderCompareTray();
+    /* Also un-check the blade-detail secondary button if currently open on
+       that indicator — user removed the item, so the button should re-arm. */
+    const detail = document.querySelector('.blade-detail');
+    if (detail) {
+      const activeCta = document.querySelector('.blade-detail-cta');
+      if (activeCta && activeCta.href.indexOf('id=' + encodeURIComponent(id)) !== -1) {
+        const secondary = detail.querySelector('.blade-detail-cta-secondary');
+        if (secondary) {
+          secondary.removeAttribute('disabled');
+          const label = secondary.querySelector('span');
+          if (label) label.textContent = 'הוסף להשוואה';
+        }
+      }
+    }
+  }
+
+  function renderCompareTray() {
+    const tray = document.getElementById('compare-tray');
+    const slotsEl = document.getElementById('compare-tray-slots');
+    const cta = document.getElementById('compare-tray-cta');
+    if (!tray || !slotsEl) return;
+    const items = getComparisonItems();
+
+    slotsEl.replaceChildren();
+
+    /* Filled slots — one chip per stored item */
+    items.forEach(function (item) {
+      const ind = INDICATORS_DATA.find(function (x) { return x.id === item.id; });
+      const label = ind ? ind.name : (item.name || item.id);
+
+      const chip = document.createElement('div');
+      chip.className = 'compare-chip';
+
+      const nameEl = document.createElement('span');
+      nameEl.className = 'compare-chip-name';
+      nameEl.textContent = label;
+      chip.appendChild(nameEl);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'compare-chip-remove';
+      removeBtn.setAttribute('aria-label', 'הסר ' + label + ' מההשוואה');
+      removeBtn.textContent = '×';
+      removeBtn.addEventListener('click', function () { removeFromComparison(item.id); });
+      chip.appendChild(removeBtn);
+
+      slotsEl.appendChild(chip);
+    });
+
+    /* Empty placeholder slots — matches MAX_COMPARE total width so bar
+       doesn't reflow as items are added. */
+    const emptyCount = Math.max(0, MAX_COMPARE - items.length);
+    for (let i = 0; i < emptyCount; i++) {
+      const slot = document.createElement('div');
+      slot.className = 'compare-slot-empty';
+      slot.textContent = 'הוסף מדד';
+      slotsEl.appendChild(slot);
+    }
+
+    /* Visibility + CTA state — tray stays open as long as any item exists;
+       CTA needs 2+ items to be actionable. */
+    tray.classList.toggle('open', items.length > 0);
+    if (cta) cta.setAttribute('aria-disabled', items.length < 2 ? 'true' : 'false');
+  }
+
+  window.clearComparison = function () {
+    sessionStorage.removeItem('comparison');
+    renderCompareTray();
+    /* Re-arm any open blade's "add" button */
+    document.querySelectorAll('.blade-detail-cta-secondary').forEach(function (btn) {
+      btn.removeAttribute('disabled');
+      const label = btn.querySelector('span');
+      if (label) label.textContent = 'הוסף להשוואה';
+    });
+  };
+
+  /* NOTE: the "return-URL" side effect on tray-CTA click is wired via an
+     inline onclick on the <a> in HTML — that's necessary because this IIFE
+     runs BEFORE the tray element is parsed (script tag precedes tray in the
+     DOM), so addEventListener would target null. */
+
+  /* Fresh-load reset: unless the user is returning from comparison.html
+     (in which case their selections should persist), wipe the comparison
+     sessionStorage. This kills orphan "נוסף להשוואה ✓" state on the blade
+     when the user reloads / opens a fresh canvas URL. */
+  (function () {
+    const cameFromComparison = document.referrer && /\/comparison\.html/.test(document.referrer);
+    if (!cameFromComparison) {
+      sessionStorage.removeItem('comparison');
+    }
+  })();
+
+  /* Render the tray on load — deferred to next tick so the tray element
+     (which appears LATER in the document than this script) exists by then. */
+  setTimeout(function () { renderCompareTray(); }, 0);
+
+  /* ─── Map help popover — toggle on button click, close on outside click.
+     Kept outside initMapGraph() because it doesn't need any D3 refs. */
+  (function () {
+    const helpBtn = document.getElementById('map-help-btn');
+    const helpPopover = document.getElementById('map-help-popover');
+    if (!helpBtn || !helpPopover) return;
+
+    helpBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      const isOpen = !helpPopover.hidden;
+      helpPopover.hidden = isOpen;
+      helpBtn.setAttribute('aria-expanded', String(!isOpen));
+    });
+
+    /* Click outside the popover / button → close */
+    document.addEventListener('click', function (e) {
+      if (helpPopover.hidden) return;
+      if (helpPopover.contains(e.target) || helpBtn.contains(e.target)) return;
+      helpPopover.hidden = true;
+      helpBtn.setAttribute('aria-expanded', 'false');
+    });
+
+    /* Escape → close */
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !helpPopover.hidden) {
+        helpPopover.hidden = true;
+        helpBtn.setAttribute('aria-expanded', 'false');
+        helpBtn.focus();
+      }
+    });
+  })();
+
+  /* ═════════════════════════════════════════════════════════════════════
+     INTERACTIVE SEMANTIC MAP (D3 force graph)
+
+     Shows the central outcome the user asked about + 3 related outcomes
+     + all their indicators. "Bridge indicators" connect to more than one
+     outcome, making the relatedness VISUALLY explicit — this is the "aha"
+     of the map view.
+
+     Node types (color-coded via inline fills):
+       - outcome-main    : dark slate #334155 (r=24, the focal point)
+       - outcome-related : mid slate  #64748B (r=15, siblings)
+       - ind-outcome     : green      #059669 (measures a result)
+       - ind-output      : blue       #0369A1 (measures activity)
+       - ind-predictor   : purple     #7C3AED (measures a cause)
+
+     Interactions: drag, hover (tooltip), click (navigate).
+     ═════════════════════════════════════════════════════════════════════ */
+
+  const MAP_DATA = {
+    nodes: [
+      /* Central outcome — the one the user asked about */
+      { id: 'o.eligibility',   label: 'שיפור זכאות בגרות', type: 'outcome-main',    r: 24,
+        desc: 'עלייה בשיעור התלמידים הזכאים לתעודת בגרות מלאה', clickable: false },
+
+      /* Related outcomes — sibling ideas the user might not have thought of */
+      { id: 'o.readiness',     label: 'מוכנות לבגרות (י\')', type: 'outcome-related', r: 15,
+        desc: 'רמת ההכנה של תלמידים בכיתה י\' לקראת מבחני הבגרות' },
+      { id: 'o.selfefficacy',  label: 'מסוגלות לימודית',    type: 'outcome-related', r: 15,
+        desc: 'האמונה של התלמיד ביכולתו להצליח בלימודים — מנבא חזק להתמדה' },
+      { id: 'o.psychosocial',  label: 'תמיכה פסיכו-חברתית', type: 'outcome-related', r: 15,
+        desc: 'מסגרת רגשית תומכת — מפחיתה נשירה משמעותית' },
+
+      /* Central outcome's indicators (5) */
+      { id: 'i.eligibility-rate', label: 'שיעור זכאות',      type: 'ind-outcome',   r: 10,
+        desc: 'אחוז התלמידים הזכאים לתעודת בגרות — מדד תוצאה ראשי' },
+      { id: 'i.dropout',          label: 'נשירה',            type: 'ind-outcome',   r: 10,
+        desc: 'שיעור נשירה מהתיכון — מדד תוצאה גם למרכזית וגם לתמיכה' },
+      { id: 'i.bagrut-scores',    label: 'ציוני בגרות',      type: 'ind-outcome',   r: 10,
+        desc: 'ציון ממוצע במבחני בגרות' },
+      { id: 'i.tutoring',         label: 'שעות תגבור',       type: 'ind-output',    r: 10,
+        desc: 'מספר שעות תגבור לתלמיד — מדד תפוקה. גם למסוגלות לימודית' },
+      { id: 'i.attendance',       label: 'נוכחות',           type: 'ind-predictor', r: 10,
+        desc: 'שיעור נוכחות בשיעורים — מנבא הצלחה. גם למוכנות לבגרות' },
+
+      /* Indicators unique to related outcomes (surface new avenues) */
+      { id: 'i.motivation',   label: 'מוטיבציה',      type: 'ind-predictor', r: 10,
+        desc: 'שאלון מוטיבציה תוך-לימודית — מנבא מסוגלות' },
+      { id: 'i.cohort',       label: 'יציבות מסגרת', type: 'ind-predictor', r: 10,
+        desc: 'אחוז תלמידים באותה מסגרת 3+ שנים ברציפות' },
+      { id: 'i.tenthgrade',   label: 'הישגי י\'',    type: 'ind-outcome',   r: 10,
+        desc: 'ממוצע ציונים בכיתה י\' — מנבא זכאות בגרות בכיתה יב\'' }
+    ],
+    /* Links carry a `role` — indicator's role IN RELATION TO the outcome it's
+       linked from. Same indicator can have different roles for different
+       outcomes: e.g. i.tutoring is 'output' for eligibility (tutoring HAPPENS)
+       but 'predictor' for selfefficacy (hours of tutoring predicts perceived
+       ability). The color of the LINE reflects the role — the node itself is
+       neutral. See map-legend UI. */
+    links: [
+      /* Central outcome to its 5 indicators — role reflects how each measures
+         the "improved bagrut eligibility" outcome */
+      { source: 'o.eligibility', target: 'i.eligibility-rate', type: 'measures', role: 'outcome'   },
+      { source: 'o.eligibility', target: 'i.dropout',          type: 'measures', role: 'outcome'   },
+      { source: 'o.eligibility', target: 'i.bagrut-scores',    type: 'measures', role: 'outcome'   },
+      { source: 'o.eligibility', target: 'i.tutoring',         type: 'measures', role: 'output'    },
+      { source: 'o.eligibility', target: 'i.attendance',       type: 'measures', role: 'predictor' },
+
+      /* Central to related outcomes — "you should also consider" */
+      { source: 'o.eligibility', target: 'o.readiness',     type: 'related' },
+      { source: 'o.eligibility', target: 'o.selfefficacy',  type: 'related' },
+      { source: 'o.eligibility', target: 'o.psychosocial',  type: 'related' },
+
+      /* Related outcomes to their indicators — some are SHARED (bridges) with
+         a DIFFERENT role than they had on the central outcome */
+      { source: 'o.readiness',    target: 'i.tenthgrade',  type: 'measures', role: 'outcome'   },
+      { source: 'o.readiness',    target: 'i.attendance',  type: 'measures', role: 'predictor' }, /* BRIDGE — same role */
+      { source: 'o.selfefficacy', target: 'i.motivation',  type: 'measures', role: 'predictor' },
+      { source: 'o.selfefficacy', target: 'i.tutoring',    type: 'measures', role: 'predictor' }, /* BRIDGE — output→predictor role change */
+      { source: 'o.psychosocial', target: 'i.cohort',      type: 'measures', role: 'predictor' },
+      { source: 'o.psychosocial', target: 'i.dropout',     type: 'measures', role: 'outcome'   }  /* BRIDGE — same role */
+    ]
+  };
+
+  const NODE_FILL = {
+    'outcome-main':    '#334155',
+    'outcome-related': '#64748B',
+    /* Indicators are NEUTRAL — role lives on the edge now, not the node.
+       Same indicator can play different roles for different outcomes; a
+       fixed node color would misrepresent that. */
+    'ind-outcome':     '#F1F5F9',
+    'ind-output':      '#F1F5F9',
+    'ind-predictor':   '#F1F5F9'
+  };
+  /* Edge role → color mapping. Applied to `measures` links; `related` links
+     stay dashed grey (they connect outcomes, not indicators). */
+  const ROLE_COLOR = {
+    'outcome':   '#059669',
+    'output':    '#0369A1',
+    'predictor': '#7C3AED'
+  };
+  const TYPE_LABEL_MAP = {
+    'outcome-main':    'תוצאה מרכזית',
+    'outcome-related': 'תוצאה קרובה — לחץ להרחיב במפה',
+    'ind-outcome':     'מדד תוצאה — לחץ לכרטיס',
+    'ind-output':      'מדד תפוקה — לחץ לכרטיס',
+    'ind-predictor':   'מדד ניבוי — לחץ לכרטיס'
+  };
+
+  /* ═══ EXPANSIONS — what emerges when the user clicks a related outcome ═══
+     Each related outcome has "hidden" siblings/indicators that appear only
+     when the user asks for them (by clicking). Progressive disclosure keeps
+     the initial map focused, while allowing deep exploration. Some 2nd-level
+     related outcomes are themselves expandable — chained discovery. */
+  const EXPANSIONS = {
+    'o.readiness': {
+      nodes: [
+        { id: 'i.homework',    label: 'ביצוע ש\"ב',          type: 'ind-output',    r: 10, desc: 'אחוז שיעורי הבית שמוגשים בזמן — מדד תפוקה שגרתי' },
+        { id: 'i.mock-tests',  label: 'הצלחה במבחני דמה',   type: 'ind-outcome',   r: 10, desc: 'ציוני מבחני בגרות דמה בכיתה יא\' — מנבא חזק' },
+        { id: 'o.study-habits', label: 'הרגלי לימוד',        type: 'outcome-related', r: 15, desc: 'איכות ההרגלים של תלמיד סביב תכנון וארגון' }
+      ],
+      links: [
+        { source: 'o.readiness', target: 'i.homework',    type: 'measures' },
+        { source: 'o.readiness', target: 'i.mock-tests',  type: 'measures' },
+        { source: 'o.readiness', target: 'o.study-habits', type: 'related'  }
+      ]
+    },
+    'o.selfefficacy': {
+      nodes: [
+        { id: 'i.growth-mindset', label: 'חשיבת צמיחה',    type: 'ind-predictor', r: 10, desc: 'שאלון Dweck — האמונה שאפשר להשתפר. מנבא הצלחה' },
+        { id: 'i.parent-inv',     label: 'מעורבות הורים',   type: 'ind-predictor', r: 10, desc: 'תדירות שיחות עם הורים על לימודים — מנבא התמדה' },
+        { id: 'o.resilience',     label: 'חוסן וכשלים',    type: 'outcome-related', r: 15, desc: 'יכולת התלמיד להתמודד עם כישלון אקדמי ולהמשיך' }
+      ],
+      links: [
+        { source: 'o.selfefficacy', target: 'i.growth-mindset', type: 'measures' },
+        { source: 'o.selfefficacy', target: 'i.parent-inv',     type: 'measures' },
+        { source: 'o.selfefficacy', target: 'o.resilience',     type: 'related'  }
+      ]
+    },
+    'o.psychosocial': {
+      nodes: [
+        { id: 'i.counselor',    label: 'פגישות יועץ',      type: 'ind-output',    r: 10, desc: 'מספר פגישות עם יועץ חינוכי בשנה — מדד תפוקה' },
+        { id: 'i.peer-conn',    label: 'קשרים חברתיים',    type: 'ind-predictor', r: 10, desc: 'סוציומטריה — מספר קשרים משמעותיים בכיתה' },
+        { id: 'o.mental-well',  label: 'רווחה נפשית',     type: 'outcome-related', r: 15, desc: 'מדד מורכב של רווחה נפשית של התלמיד' }
+      ],
+      links: [
+        { source: 'o.psychosocial', target: 'i.counselor',   type: 'measures' },
+        { source: 'o.psychosocial', target: 'i.peer-conn',   type: 'measures' },
+        { source: 'o.psychosocial', target: 'o.mental-well', type: 'related'  }
+      ]
+    },
+    /* 2nd-level expansions — the newly-discovered outcomes can themselves be
+       expanded further. This is what makes the map a research tool. */
+    'o.study-habits': {
+      nodes: [
+        { id: 'i.study-time', label: 'זמן לימוד יומי', type: 'ind-output', r: 10, desc: 'שעות לימוד עצמי ביום, לפי דיווח התלמיד' }
+      ],
+      links: [{ source: 'o.study-habits', target: 'i.study-time', type: 'measures' }]
+    },
+    'o.resilience': {
+      nodes: [
+        { id: 'i.regrade-req', label: 'בקשות למועד ב\'', type: 'ind-output', r: 10, desc: 'שיעור תלמידים שביקשו מועד ב\' — סימן שהם לא מוותרים' }
+      ],
+      links: [{ source: 'o.resilience', target: 'i.regrade-req', type: 'measures' }]
+    },
+    'o.mental-well': {
+      nodes: [
+        { id: 'i.who-wellbeing', label: 'שאלון WHO-5', type: 'ind-outcome', r: 10, desc: 'סקאלה בינ"ל של רווחה נפשית' }
+      ],
+      links: [{ source: 'o.mental-well', target: 'i.who-wellbeing', type: 'measures' }]
+    }
+  };
+
+  function initMapGraph() {
+    const container = document.getElementById('map-view-canvas');
+    if (!container) return;
+    const tooltipEl = document.getElementById('map-tooltip');
+
+    /* Clean any prior D3 SVG. IMPORTANT: only DIRECT-CHILD svgs — otherwise
+       we accidentally strip the SVG icons inside the .map-controls buttons
+       (help / center), leaving empty circles. */
+    Array.prototype.forEach.call(container.children, function (el) {
+      if (el.tagName === 'svg' || el.tagName === 'SVG') el.remove();
+    });
+
+    const width  = container.clientWidth  || 800;
+    const height = container.clientHeight || 500;
+
+    const svg = d3.select(container).append('svg')
+      .attr('width',  width)
+      .attr('height', height)
+      .attr('viewBox', '0 0 ' + width + ' ' + height);
+
+    /* Zoom + pan container */
+    const viewport = svg.append('g').attr('class', 'viewport');
+    const zoom = d3.zoom()
+      .scaleExtent([0.5, 3])
+      .on('zoom', function (e) { viewport.attr('transform', e.transform); });
+    svg.call(zoom);
+    /* Suppress double-click zoom — reserve dblclick for future actions */
+    svg.on('dblclick.zoom', null);
+
+    /* Expose a "recenter" hook to the window — the center-button in the
+       map-controls overlay calls this to reset zoom + pan to identity.
+       Uses a d3 transition so the reset animates smoothly. */
+    window.mapCenter = function () {
+      svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity);
+    };
+
+    const linkLayer = viewport.append('g').attr('class', 'links');
+    const nodeLayer = viewport.append('g').attr('class', 'nodes');
+
+    /* Filter state — 'all' | 'ind-outcome' | 'ind-output' | 'ind-predictor' */
+    let currentFilter = 'all';
+
+    /* Neighbour index — rebuilt on every render() call */
+    let neighbours = {};
+
+    function rebuildNeighbours() {
+      neighbours = {};
+      MAP_DATA.nodes.forEach(function (n) { neighbours[n.id] = new Set([n.id]); });
+      MAP_DATA.links.forEach(function (l) {
+        const s = (l.source && l.source.id) || l.source;
+        const t = (l.target && l.target.id) || l.target;
+        if (!neighbours[s]) neighbours[s] = new Set([s]);
+        if (!neighbours[t]) neighbours[t] = new Set([t]);
+        neighbours[s].add(t);
+        neighbours[t].add(s);
+      });
+    }
+
+    /* Force simulation — carefully tuned distances so bridges look tight.
+       Kept as a closure so render() can restart it after data changes. */
+    const simulation = d3.forceSimulation(MAP_DATA.nodes)
+      .force('link', d3.forceLink(MAP_DATA.links)
+        .id(function (d) { return d.id; })
+        .distance(function (d) {
+          if (d.type === 'related')  return 140;
+          if (d.type === 'measures') return 70;
+          return 90;
+        })
+        .strength(function (d) { return d.type === 'related' ? 0.35 : 0.7; }))
+      .force('charge',  d3.forceManyBody().strength(-360))
+      .force('center',  d3.forceCenter(width / 2, height / 2))
+      .force('collide', d3.forceCollide().radius(function (d) { return d.r + 22; }))
+      .alphaDecay(0.028);
+
+    /* Tick — uses `.selectAll()` for a FRESH pick each frame, so newly-added
+       nodes/links are included automatically after render() adds them. */
+    simulation.on('tick', function () {
+      linkLayer.selectAll('.map-link')
+        .attr('x1', function (d) { return d.source.x; })
+        .attr('y1', function (d) { return d.source.y; })
+        .attr('x2', function (d) { return d.target.x; })
+        .attr('y2', function (d) { return d.target.y; });
+      nodeLayer.selectAll('.map-node')
+        .attr('transform', function (d) { return 'translate(' + d.x + ',' + d.y + ')'; });
+    });
+
+    const dragBehaviour = d3.drag()
+      .on('start', function (e, d) {
+        if (!e.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x; d.fy = d.y;
+      })
+      .on('drag', function (e, d) { d.fx = e.x; d.fy = e.y; })
+      .on('end', function (e, d) {
+        if (!e.active) simulation.alphaTarget(0);
+        d.fx = null; d.fy = null;
+      });
+
+    /* ─── render() — enter/update/exit pattern.
+       Called on initial mount AND after each expansion. Only NEW elements
+       enter the DOM; existing ones stay put (no re-jitter). ─── */
+    function render() {
+      /* ── LINKS — keyed by source|target|type so identity is stable ── */
+      const linkKey = function (d) {
+        return ((d.source.id || d.source) + '|' + (d.target.id || d.target) + '|' + d.type);
+      };
+      const link = linkLayer.selectAll('.map-link').data(MAP_DATA.links, linkKey);
+      link.exit().remove();
+      link.enter().append('line')
+        .attr('class', function (d) {
+          return 'map-link' + (d.type === 'related' ? ' related-link' : '');
+        })
+        /* Role-based color for measures links (outcome/output/predictor).
+           `related` links stay dashed grey — they connect outcomes, not
+           indicators. */
+        .attr('stroke', function (d) {
+          if (d.type === 'related') return '#94A3B8';
+          return ROLE_COLOR[d.role] || '#CBD5E1';
+        })
+        .attr('stroke-width', function (d) { return d.type === 'related' ? 1.5 : 1.8; })
+        .attr('stroke-dasharray', function (d) { return d.type === 'related' ? '4 4' : ''; })
+        .attr('opacity', 0)
+        .transition().duration(400)
+        .attr('opacity', function (d) { return d.type === 'related' ? 0.5 : 0.75; });
+
+      /* ── NODES — keyed by id ── */
+      const node = nodeLayer.selectAll('.map-node').data(MAP_DATA.nodes, function (d) { return d.id; });
+      node.exit().remove();
+
+      const nodeEnter = node.enter().append('g')
+        .attr('class', 'map-node new-in')
+        .call(dragBehaviour)
+        .on('mouseenter', onNodeEnter)
+        .on('mouseleave', onNodeLeave)
+        .on('mousemove', positionTooltip)
+        .on('click', onNodeClick);
+
+      /* Halo for main outcome only (subtle background ring) */
+      nodeEnter.filter(function (d) { return d.type === 'outcome-main'; })
+        .append('circle')
+        .attr('class', 'halo')
+        .attr('r', function (d) { return d.r + 14; })
+        .attr('fill', 'none')
+        .attr('stroke', '#334155')
+        .attr('stroke-opacity', 0.15)
+        .attr('stroke-width', 2);
+
+      /* Core circle — indicators get a visible neutral fill + stroke since
+         role coloring now lives on their edges, not the node. */
+      nodeEnter.append('circle')
+        .attr('class', 'core')
+        .attr('r', function (d) { return d.r; })
+        .attr('fill', function (d) { return NODE_FILL[d.type] || '#94A3B8'; })
+        .attr('stroke', function (d) {
+          if (d.type === 'outcome-main')    return 'rgba(255,255,255,.6)';
+          if (d.type && d.type.indexOf('ind-') === 0) return '#94A3B8';
+          return 'transparent';
+        })
+        .attr('stroke-width', 1.5);
+
+      /* Label */
+      nodeEnter.append('text')
+        .attr('class', 'label')
+        .attr('dy', function (d) { return d.r + 15; })
+        .attr('text-anchor', 'middle')
+        .attr('font-family', 'Heebo, sans-serif')
+        .attr('font-size', function (d) {
+          if (d.type === 'outcome-main')    return '13.5px';
+          if (d.type === 'outcome-related') return '12.5px';
+          return '11.5px';
+        })
+        .attr('font-weight', function (d) { return d.type.indexOf('outcome') === 0 ? '700' : '500'; })
+        .attr('fill', '#334155')
+        .text(function (d) { return d.label; });
+
+      /* Remove the "new-in" class after the animation runs (so re-render
+         doesn't re-trigger it for existing nodes). */
+      setTimeout(function () {
+        nodeLayer.selectAll('.map-node.new-in').classed('new-in', false);
+      }, 550);
+
+      /* Expand-indicator "+" — refresh all (remove stale, add fresh)
+         because the "expanded" state may change on click. */
+      nodeLayer.selectAll('.expand-indicator').remove();
+      nodeLayer.selectAll('.expand-icon-text').remove();
+      nodeLayer.selectAll('.map-node').each(function (d) {
+        if (!EXPANSIONS[d.id] || d.expanded) return;
+        const g = d3.select(this);
+        /* Position on top-inline-start of the node (upper-right in RTL) */
+        const cx = Math.cos(-Math.PI / 4) * d.r;
+        const cy = Math.sin(-Math.PI / 4) * d.r;
+        g.append('circle')
+          .attr('class', 'expand-indicator')
+          .attr('r', 7)
+          .attr('cx', cx).attr('cy', cy)
+          .attr('fill', '#0F172A')      /* was #7C3AED — grayscale wireframe */
+          .attr('stroke', '#fff')
+          .attr('stroke-width', 2);
+        g.append('text')
+          .attr('class', 'expand-icon-text')
+          .attr('x', cx).attr('y', cy)
+          .attr('text-anchor', 'middle')
+          .attr('dominant-baseline', 'central')
+          .attr('font-size', '11px')
+          .attr('font-weight', '700')
+          .attr('fill', '#fff')
+          .attr('pointer-events', 'none')
+          .text('+');
+      });
+
+      /* Refresh simulation with the new dataset + restart softly */
+      rebuildNeighbours();
+      simulation.nodes(MAP_DATA.nodes);
+      simulation.force('link').links(MAP_DATA.links);
+      simulation.alpha(0.5).restart();
+
+      /* Re-apply the current filter to any newly-added nodes/links */
+      applyFilter(currentFilter);
+    }
+
+    /* ── FILTER — dim EDGES whose role doesn't match. Nodes fade only if
+       ALL their connecting edges are faded (else the node is still
+       relevant via at least one visible relationship). ── */
+    function applyFilter(filterType) {
+      currentFilter = filterType;
+
+      /* Update chip button visual + aria-checked */
+      document.querySelectorAll('.map-filter-btn').forEach(function (btn) {
+        const active = btn.getAttribute('data-map-filter') === filterType;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-checked', active ? 'true' : 'false');
+      });
+
+      /* Link: fade if role doesn't match. `related` links (outcome-to-outcome)
+         stay visible on any filter — they're structural, not role-typed. */
+      linkLayer.selectAll('.map-link').classed('filter-faded', function (l) {
+        if (filterType === 'all') return false;
+        if (l.type === 'related') return false;
+        return l.role !== filterType;
+      });
+
+      /* Node: fade indicator nodes whose ALL edges are faded. Outcomes stay. */
+      nodeLayer.selectAll('.map-node').classed('filter-faded', function (d) {
+        if (filterType === 'all') return false;
+        if (d.type && d.type.indexOf('outcome') === 0) return false;
+        /* Any measures edge involving this node with matching role? */
+        const anyMatch = MAP_DATA.links.some(function (l) {
+          if (l.type !== 'measures') return false;
+          if (l.role !== filterType) return false;
+          const s = l.source.id || l.source;
+          const t = l.target.id || l.target;
+          return s === d.id || t === d.id;
+        });
+        return !anyMatch;
+      });
+    }
+
+    /* Wire up filter chips (once) */
+    document.querySelectorAll('.map-filter-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        applyFilter(btn.getAttribute('data-map-filter'));
+      });
+    });
+
+    /* Logic-mode / causal-chain (שרשרת סיבתית) view removed per product
+       decision. The map is cluster-only now. The role-on-edge data model +
+       all cluster-mode rendering below still stands — Logic view was purely
+       a presentation layer on top of the same data. Only the toggle UI +
+       column layout + overlays were pulled. */
+
+    /* ── Interactions ── */
+
+    /* Hover-delay so the cursor can move from the node to the tooltip's
+       "open in new tab" button without losing the hover state. */
+    let tooltipHideTimer = null;
+    let tooltipSticky = false;
+
+    function hideTooltipNow() {
+      nodeLayer.selectAll('.map-node').classed('faded', false).classed('hovered', false);
+      linkLayer.selectAll('.map-link').classed('faded', false).classed('hovered', false);
+      tooltipEl.classList.remove('visible');
+      tooltipEl.classList.remove('sticky');
+      tooltipSticky = false;
+    }
+
+    /* Tooltip mouse handlers — cancel the hide on enter, kill immediately on leave */
+    if (!tooltipEl._hoverBound) {
+      tooltipEl.addEventListener('mouseenter', function () {
+        if (tooltipHideTimer) { clearTimeout(tooltipHideTimer); tooltipHideTimer = null; }
+      });
+      tooltipEl.addEventListener('mouseleave', function () {
+        hideTooltipNow();
+      });
+      tooltipEl._hoverBound = true;
+    }
+
+    function onNodeEnter(event, d) {
+      /* Cancel any pending hide from a previous node */
+      if (tooltipHideTimer) { clearTimeout(tooltipHideTimer); tooltipHideTimer = null; }
+      /* Clear previous position so positionTooltip's sticky-guard doesn't
+         hold the tooltip at the OLD node's position. */
+      tooltipEl.style.insetInlineStart = '';
+      tooltipEl.style.insetBlockStart = '';
+
+      /* Highlight self + neighbours, fade the rest */
+      const nb = neighbours[d.id] || new Set([d.id]);
+      nodeLayer.selectAll('.map-node').classed('faded', function (n) { return !nb.has(n.id); });
+      nodeLayer.selectAll('.map-node').classed('hovered', function (n) { return n.id === d.id; });
+      linkLayer.selectAll('.map-link').classed('faded', function (l) {
+        return !((l.source.id || l.source) === d.id || (l.target.id || l.target) === d.id);
+      });
+      linkLayer.selectAll('.map-link').classed('hovered', function (l) {
+        return (l.source.id || l.source) === d.id || (l.target.id || l.target) === d.id;
+      });
+      /* Tooltip — DOM API (no innerHTML — XSS-safe pattern) */
+      tooltipEl.textContent = '';
+      const t = document.createElement('div');
+      t.className = 'map-tooltip-title';
+      t.textContent = d.label;
+      tooltipEl.appendChild(t);
+      const ty = document.createElement('div');
+      ty.className = 'map-tooltip-type';
+      ty.textContent = TYPE_LABEL_MAP[d.type] || '';
+      tooltipEl.appendChild(ty);
+      if (d.desc) {
+        const de = document.createElement('div');
+        de.className = 'map-tooltip-desc';
+        de.textContent = d.desc;
+        tooltipEl.appendChild(de);
+      }
+      /* If node is expandable + not yet expanded → hint at the click affordance */
+      if (EXPANSIONS[d.id] && !d.expanded) {
+        const hint = document.createElement('div');
+        hint.className = 'map-tooltip-hint';
+        hint.textContent = '↓ לחץ להרחיב את התוצאה במפה';
+        tooltipEl.appendChild(hint);
+      }
+      /* Outcome nodes get an "open in new tab" affordance — clicking navigates
+         directly to canvas.html?stage=results (skips the refine questionnaire). */
+      const isOutcome = d.type && d.type.indexOf('outcome') === 0;
+      tooltipSticky = isOutcome;
+      if (isOutcome) {
+        const btn = document.createElement('a');
+        btn.className = 'map-tooltip-external-btn';
+        btn.href = 'canvas.html?stage=results&q=' + encodeURIComponent(d.label);
+        btn.target = '_blank';
+        btn.rel = 'noopener';
+        /* External-link icon SVG (Lucide) */
+        const NS = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(NS, 'svg');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('fill', 'none');
+        svg.setAttribute('stroke', 'currentColor');
+        svg.setAttribute('stroke-width', '2');
+        svg.setAttribute('stroke-linecap', 'round');
+        svg.setAttribute('stroke-linejoin', 'round');
+        [
+          'M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6',
+          'M15 3h6v6',
+          'M10 14L21 3'
+        ].forEach(function (dstr) {
+          const p = document.createElementNS(NS, 'path');
+          p.setAttribute('d', dstr);
+          svg.appendChild(p);
+        });
+        btn.appendChild(svg);
+        btn.appendChild(document.createTextNode('פתח במפה סמנטית'));
+        tooltipEl.appendChild(btn);
+        tooltipEl.classList.add('sticky');
+      } else {
+        tooltipEl.classList.remove('sticky');
+      }
+      tooltipEl.classList.add('visible');
+      positionTooltip(event);
+    }
+
+    function onNodeLeave() {
+      /* Delay-hide so the cursor can travel from node → tooltip button.
+         Sticky tooltips (outcome nodes with the "open" button) get a longer
+         window because there's an actual interactive target to reach.
+         Once the cursor enters the tooltip (now pointer-events: auto in
+         sticky mode), tooltipEl.mouseenter cancels the timer. */
+      if (tooltipHideTimer) clearTimeout(tooltipHideTimer);
+      tooltipHideTimer = setTimeout(hideTooltipNow, tooltipSticky ? 400 : 60);
+    }
+
+    function positionTooltip(event) {
+      /* When tooltip has interactive content (sticky), pin its position —
+         don't chase the cursor. Otherwise it moves out from under the user's
+         hand when they try to click the "open" button.
+         Gap between cursor and tooltip is intentionally SMALL for sticky
+         mode (4px vs 14px) — a bigger gap creates a dead zone where the
+         cursor is on neither the node nor the tooltip, and hover state
+         is lost mid-transit. */
+      if (tooltipSticky && tooltipEl.style.insetInlineStart) return;
+      const rect = container.getBoundingClientRect();
+      const gap = tooltipSticky ? 4 : 14;
+      const x = event.clientX - rect.left + gap;
+      const y = event.clientY - rect.top + gap;
+      const maxX = rect.width  - 250;
+      const maxY = rect.height - 100;
+      tooltipEl.style.insetInlineStart = Math.min(x, maxX) + 'px';
+      tooltipEl.style.insetBlockStart  = Math.min(y, maxY) + 'px';
+    }
+
+    function onNodeClick(event, d) {
+      event.stopPropagation();
+      if (d.clickable === false) return;
+
+      /* Indicators → populate the blade with detail + CTA (was: hard-navigate
+         to indicator-card.html). The CTA button IN the blade is where the
+         actual page navigation happens now. This keeps the user on the map
+         while previewing what a node represents. */
+      if (d.type.indexOf('ind-') === 0) {
+        const strippedId = d.id.replace(/^i\./, '');
+        if (typeof window.openBladeDetail === 'function') {
+          /* Attach a synthetic INDICATORS_DATA entry on the fly if this node
+             isn't in the primary 5 — the blade will still render meaningfully. */
+          const known = INDICATORS_DATA.find(function (x) { return x.id === strippedId; });
+          if (!known) {
+            const typeMap = { 'ind-outcome': 'outcome', 'ind-output': 'output', 'ind-predictor': 'predictor' };
+            INDICATORS_DATA.push({
+              id: strippedId,
+              name: d.label,
+              type: typeMap[d.type] || 'outcome',
+              source: '—',
+              frequency: '—',
+              programs: '—',
+              desc: d.desc || ''
+            });
+          }
+          window.openBladeDetail(strippedId);
+        }
+        /* Hide tooltip since click leaves hover state */
+        if (tooltipEl) tooltipEl.classList.remove('visible');
+        return;
+      }
+
+      /* Related outcome → EXPAND in-place if expansion is defined and not
+         yet used. No navigation — user stays in the map, more nodes appear. */
+      if (d.type === 'outcome-related') {
+        const expansion = EXPANSIONS[d.id];
+        if (!expansion || d.expanded) return;
+
+        d.expanded = true;
+
+        /* Seed new nodes near the clicked parent so they don't fly in from
+           the origin. Random small angle spread. */
+        expansion.nodes.forEach(function (newNode) {
+          const angle = Math.random() * Math.PI * 2;
+          newNode.x = d.x + Math.cos(angle) * 30;
+          newNode.y = d.y + Math.sin(angle) * 30;
+          MAP_DATA.nodes.push(newNode);
+        });
+        expansion.links.forEach(function (newLink) {
+          MAP_DATA.links.push(newLink);
+        });
+
+        render();
+        /* Hide the tooltip since we're leaving the hover state during click */
+        tooltipEl.classList.remove('visible');
+      }
+    }
+
+    /* Initial render */
+    render();
+  }
+
+  /* ─── Textarea auto-grow ─── */
+  const chatInput = document.getElementById('chat-input');
+  if (chatInput) {
+    chatInput.addEventListener('input', function () {
+      chatInput.style.height = 'auto';
+      chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+    });
+  }
+})();
+</script>
+
+<!-- Comparison tray — sticky bottom bar mirroring search-results.html.
+     Content rendered by JS (renderCompareTray). Hidden until first add. -->
+<div class="compare-tray" id="compare-tray" role="region" aria-label="מגש השוואה" aria-live="polite">
+  <div class="compare-tray-inner">
+    <span class="compare-tray-label">השוואה:</span>
+    <div class="compare-tray-slots" id="compare-tray-slots"><!-- populated by renderCompareTray --></div>
+    <div class="compare-tray-actions">
+      <a class="compare-tray-cta" id="compare-tray-cta" href="comparison.html" aria-disabled="true"
+         onclick="if (this.getAttribute('aria-disabled') === 'true') { event.preventDefault(); return; } sessionStorage.setItem('comparison-return', location.href);">השווה</a>
+      <button class="compare-tray-clear" type="button" onclick="clearComparison()">נקה</button>
+    </div>
+  </div>
+</div>
+
+<!-- Shared assets. ai-fab.js intentionally NOT loaded — the AI chat is the
+     workspace on this page; a floating button would be redundant.
+
+     search-sync.js also intentionally OMITTED — on canvas.html the ?q= param
+     represents the user's AI-CHAT prompt, not a search query. Loading the
+     sync script would leak the chat prompt into the nav search bar, which
+     is two distinct concepts (search a catalog vs. talk to the AI). -->
+</body>
+</html>

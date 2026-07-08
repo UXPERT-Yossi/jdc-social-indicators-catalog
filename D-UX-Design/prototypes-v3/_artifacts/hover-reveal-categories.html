@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <title>Hover-Reveal Categories — Artifact</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* ──────────────────────────────────────────────────────────────────
+       Hover-Reveal Categories — self-contained artifact
+       Extracted from home.html (JDC social indicators catalog prototype).
+
+       Pattern:  card with two overlaid layers, cross-fade on :hover /
+                 :focus-within. Default = summary. Hover = clickable
+                 sub-domain tag links.
+
+       RTL-first (Hebrew). Uses CSS logical properties throughout.
+       No JS required — pure CSS interaction.
+       ────────────────────────────────────────────────────────────────── */
+
+    :root {
+      --font: 'Heebo', system-ui, sans-serif;
+
+      --bg-page:        #F8FAFC;
+      --bg-card:        #FFFFFF;
+      --border:         #E2E8F0;
+      --border-strong:  #CBD5E1;
+      --primary:        #334155;
+      --primary-hover:  #1E293B;
+      --primary-light:  #F1F5F9;
+      --text-primary:   #0F172A;
+      --text-secondary: #475569;
+      --text-muted:     #64748B;
+
+      --radius-md:      6px;
+      --radius-lg:      10px;
+      --radius-full:    9999px;
+      --shadow-sm:      0 1px 2px rgba(0,0,0,.04);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      color: var(--text-primary);
+      background: var(--bg-page);
+      line-height: 1.5;
+      padding: 60px 24px;
+    }
+
+    /* Section wrapper ─────────────────────────────────────────────────── */
+    .categories-section {
+      max-width: 1080px;
+      margin-inline: auto;
+    }
+    .section-header {
+      text-align: center;
+      margin-block-end: 40px;
+    }
+    .section-eyebrow {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--text-muted);
+      margin: 0 0 8px;
+    }
+    .section-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 10px;
+    }
+    .section-sub {
+      font-size: 15px;
+      color: var(--text-secondary);
+      max-width: 520px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* Grid — flex-wrap so the 5-card row lays out 3-top / 2-centered ─── */
+    .categories-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+    }
+    .category-card {
+      flex: 0 1 calc((100% - 32px) / 3);
+      min-width: 260px;
+    }
+    @media (max-width: 900px) {
+      .category-card { flex-basis: calc((100% - 16px) / 2); }
+    }
+    @media (max-width: 560px) {
+      .category-card { flex-basis: 100%; }
+    }
+
+    /* Card — two overlaid layers cross-fade on hover / focus-within ─── */
+    .category-card {
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-page);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 22px 22px;
+      min-height: 180px;
+      color: inherit;
+      cursor: default;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .18s, box-shadow .18s;
+    }
+    .category-card:hover,
+    .category-card:focus-within {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Both layers share the same box; cross-fade via opacity. */
+    .category-default,
+    .category-hover {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      height: 100%;
+    }
+    .category-default { transition: opacity .22s ease; }
+    .category-hover {
+      position: absolute;
+      inset: 22px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s ease;
+    }
+    .category-card:hover .category-default,
+    .category-card:focus-within .category-default { opacity: 0; pointer-events: none; }
+    .category-card:hover .category-hover,
+    .category-card:focus-within .category-hover { opacity: 1; pointer-events: auto; }
+
+    /* Header — icon + dot + title ────────────────────────────────────── */
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .category-icon {
+      width: 38px; height: 38px;
+      border-radius: var(--radius-md);
+      background: var(--primary-light);
+      color: var(--text-primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .category-icon svg { width: 20px; height: 20px; }
+    .category-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .category-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: var(--category-color, var(--primary));
+    }
+    .category-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.3;
+      margin: 0;
+    }
+    .category-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+      margin: 2px 0 0;
+      flex: 1;
+    }
+
+    /* Hover layer — clickable sub-domain tag links ───────────────────── */
+    .category-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-block-start: 4px;
+    }
+    .category-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-full);
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: background .12s, color .12s, border-color .12s;
+    }
+    .category-tag:hover {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .category-tag:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+    .category-card:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+
+<section class="categories-section" aria-labelledby="categories-title">
+  <header class="section-header">
+    <p class="section-eyebrow">עיון לפי תחום</p>
+    <h2 class="section-title" id="categories-title">חמישה תחומי חיים</h2>
+    <p class="section-sub">בחרו תחום חיים והתחילו לחקור את המדדים הקשורים אליו</p>
+  </header>
+
+  <div class="categories-grid" role="list">
+
+    <!-- 1. ביטחון כלכלי (Economic Security) — Wallet icon, purple accent -->
+    <div class="category-card" role="listitem" style="--category-color: #7C3AED" aria-labelledby="cat-economic-title">
+      <div class="category-default">
+        <div class="category-header">
+          <div class="category-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/>
+              <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/>
+              <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>
+            </svg>
+          </div>
+          <div class="category-title-wrap">
+            <span class="category-dot" aria-hidden="true"></span>
+            <h3 class="category-title" id="cat-economic-title">ביטחון כלכלי</h3>
+          </div>
+        </div>
+        <p class="category-desc">מצב כלכלי, רווחה חומרית ותעסוקה.</p>
+      </div>
+      <div class="category-hover" aria-hidden="true">
+        <div class="category-header">
+          <div class="category-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/>
+              <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/>
+              <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>
+            </svg>
+          </div>
+          <div class="category-title-wrap">
+            <span class="category-dot" aria-hidden="true"></span>
+            <h3 class="category-title">ביטחון כלכלי</h3>
+          </div>
+        </div>
+        <div class="category-tags">
+          <a href="#" class="category-tag">רווחה כלכלית</a>
+          <a href="#" class="category-tag">ביטחון תעסוקתי</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. חינוך ופיתוח (Education & Development) — Book icon, blue accent -->
+    <div class="category-card" role="listitem" style="--category-color: #0369A1" aria-labelledby="cat-education-title">
+      <div class="category-default">
+        <div class="category-header">
+          <div class="category-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/>
+            </svg>
+          </div>
+          <div class="category-title-wrap">
+            <span class="category-dot" aria-hidden="true"></span>
+            <h3 class="category-title" id="cat-education-title">חינוך ופיתוח</h3>
+          </div>
+        </div>
+        <p class="category-desc">הישגים לימודיים, כישורי חיים ופיתוח אישי.</p>
+      </div>
+      <div class="category-hover" aria-hidden="true">
+        <div class="category-header">
+          <div class="category-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/>
+            </svg>
+          </div>
+          <div class="category-title-wrap">
+            <span class="category-dot" aria-hidden="true"></span>
+            <h3 class="category-title">חינוך ופיתוח</h3>
+          </div>
+        </div>
+        <div class="category-tags">
+          <a href="#" class="category-tag">הישגים לימודיים</a>
+          <a href="#" class="category-tag">כישורי חיים</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. רווחה נפשית וחברתית (Mental & Social Wellbeing) — Heart, green -->
+    <div class="category-card" role="listitem" style="--category-color: #059669" aria-labelledby="cat-wellbeing-title">
+      <div class="category-default">
+        <div class="category-header">
+          <div class="category-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z"/>
+            </svg>
+          </div>
+          <div class="category-title-wrap">
+            <span class="category-dot" aria-hidden="true"></span>
+            <h3 class="category-title" id="cat-wellbeing-title">רווחה נפשית וחברתית</h3>
+          </div>
+        </div>
+        <p class="category-desc">בריאות נפשית, קשרים חברתיים ואיכות חיים סובייקטיבית.</p>
+      </div>
+      <div class="category-hover" aria-hidden="true">
+        <div class="category-header">
+          <div class="category-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z"/>
+            </svg>
+          </div>
+          <div class="category-title-wrap">
+            <span class="category-dot" aria-hidden="true"></span>
+            <h3 class="category-title">רווחה נפשית וחברתית</h3>
+          </div>
+        </div>
+        <div class="category-tags">
+          <a href="#" class="category-tag">רווחה נפשית</a>
+          <a href="#" class="category-tag">קשרים חברתיים</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. בריאות (Health) — Activity/pulse icon, red accent -->
+    <div class="category-card" role="listitem" style="--category-color: #DC2626" aria-labelledby="cat-health-title">
+      <div class="category-default">
+        <div class="category-header">
+          <div class="category-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+          </div>
+          <div class="category-title-wrap">
+            <span class="category-dot" aria-hidden="true"></span>
+            <h3 class="category-title" id="cat-health-title">בריאות</h3>
+          </div>
+        </div>
+        <p class="category-desc">בריאות גופנית, גישה לשירותי בריאות ובריאות הנפש.</p>
+      </div>
+      <div class="category-hover" aria-hidden="true">
+        <div class="category-header">
+          <div class="category-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+          </div>
+          <div class="category-title-wrap">
+            <span class="category-dot" aria-hidden="true"></span>
+            <h3 class="category-title">בריאות</h3>
+          </div>
+        </div>
+        <div class="category-tags">
+          <a href="#" class="category-tag">בריאות גופנית</a>
+          <a href="#" class="category-tag">שירותי בריאות הנפש</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. שייכות ומעורבות (Belonging & Engagement) — Users icon, amber -->
+    <div class="category-card" role="listitem" style="--category-color: #D97706" aria-labelledby="cat-belonging-title">
+      <div class="category-default">
+        <div class="category-header">
+          <div class="category-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <div class="category-title-wrap">
+            <span class="category-dot" aria-hidden="true"></span>
+            <h3 class="category-title" id="cat-belonging-title">שייכות ומעורבות</h3>
+          </div>
+        </div>
+        <p class="category-desc">שייכות חברתית, זהות ומעורבות אזרחית.</p>
+      </div>
+      <div class="category-hover" aria-hidden="true">
+        <div class="category-header">
+          <div class="category-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <div class="category-title-wrap">
+            <span class="category-dot" aria-hidden="true"></span>
+            <h3 class="category-title">שייכות ומעורבות</h3>
+          </div>
+        </div>
+        <div class="category-tags">
+          <a href="#" class="category-tag">מעורבות אזרחית</a>
+          <a href="#" class="category-tag">זהות ושייכות</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</body>
+</html>

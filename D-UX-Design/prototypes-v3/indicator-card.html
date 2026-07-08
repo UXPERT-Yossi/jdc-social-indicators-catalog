@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>מדד אושר סובייקטיבי — ילדים ונוער | קטלוג מדדים חברתיים</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ─── RESET ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    ul, ol { list-style: none; }
+    button { cursor: pointer; font-family: inherit; }
+
+    /* ─── DESIGN TOKENS ─── */
+    :root {
+      --primary:        #334155;
+      --primary-hover:  #1E293B;
+      --primary-light:  #F1F5F9;
+      --primary-border: #CBD5E1;
+
+      --domain-color:   #475569;
+      --domain-light:   #F1F5F9;
+      --domain-border:  #CBD5E1;
+
+      --success:        #475569;
+      --success-light:  #F1F5F9;
+      --success-border: #CBD5E1;
+
+      --warning:        #64748B;
+      --warning-light:  #F1F5F9;
+
+      --bg-page:        #F8FAFC;
+      --bg-card:        #FFFFFF;
+      --bg-rationale:   #F8FAFC;
+
+      --border:         #E2E8F0;
+      --border-strong:  #CBD5E1;
+
+      --text-primary:   #0F172A;
+      --text-secondary: #475569;
+      --text-muted:     #94A3B8;
+
+      --font:           'Heebo', 'Assistant', sans-serif;
+
+      --radius-sm:  4px;
+      --radius-md:  8px;
+      --radius-lg:  12px;
+      --radius-xl:  16px;
+      --radius-full: 9999px;
+
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+    }
+
+    /* ─── BASE ─── */
+    html {
+      font-family: var(--font);
+      font-size: 16px;
+      line-height: 1.65;
+      color: var(--text-primary);
+      background: var(--bg-page);
+      -webkit-font-smoothing: antialiased;
+    }
+    body { padding-block-end: 88px; }
+
+    /* ─── GLOBAL NAV ─── */
+    .global-nav {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 100;
+      background: var(--bg-card);
+      border-block-end: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+    .global-nav-inner {
+      max-width: 1280px;
+      margin-inline: auto;
+      padding-inline: 32px;
+      padding-block: 14px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--primary);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .nav-logo-img { height: 18px; width: auto; display: block; }
+    .nav-logo-text { font-weight: 700; color: var(--primary); }
+    .nav-links {
+      display: flex;
+      gap: 4px;
+    }
+    .nav-links a {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      border-radius: var(--radius-md);
+      transition: all .15s;
+    }
+    .nav-links a:hover { background: var(--bg-page); color: var(--text-primary); }
+    .nav-links a[aria-current="page"] {
+      color: var(--primary);
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 6px;
+    }
+    .nav-search {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 320px;
+      max-width: 360px;
+      min-width: 200px;
+      margin-inline-start: auto;
+    }
+    .nav-search-icon {
+      position: absolute;
+      inset-inline-end: 12px;
+      width: 16px;
+      height: 16px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .nav-search-input {
+      width: 100%;
+      font-family: inherit;
+      font-size: 14px;
+      padding: 8px 14px;
+      padding-inline-end: 36px;
+      background: var(--bg-page);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      transition: border-color .15s, background .15s;
+    }
+    .nav-search-input::placeholder { color: var(--text-muted); }
+    .nav-search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: var(--bg-card);
+    }
+
+    /* ─── PAGE GRID ─── */
+    .indicator-page {
+      max-width: 1280px;
+      margin-inline: auto;
+      padding-inline: 32px;
+      padding-block-start: 28px;
+      display: grid;
+      grid-template-columns: 1fr 256px;
+      gap: 28px;
+      align-items: start;
+    }
+
+    /* ─── MAIN ─── */
+    .indicator-main { display: flex; flex-direction: column; gap: 20px; }
+
+    /* ─── RETURN-CHIP — session-journey affordance sitting inline with the
+       breadcrumb on the same row. Chip on inline-start (RIGHT in RTL = read
+       first), then the taxonomy breadcrumb.
+         - Breadcrumb  = LOCATION in the catalog (stable, taxonomy)
+         - Return chip = HISTORY in the session (only if arrived from a flow)
+       Two navigation systems, one row, never mixed in the same slot. */
+    .return-chip {
+      display: none;                          /* JS toggles to inline-flex */
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      background: var(--primary-light);
+      border: 1px solid var(--border-strong, #CBD5E1);
+      border-radius: var(--radius-full, 9999px);
+      color: var(--text-primary);
+      font-size: 12.5px;
+      font-weight: 600;
+      text-decoration: none;
+      margin-inline-end: 8px;                 /* space before the breadcrumb crumbs */
+      transition: background .12s, border-color .12s;
+    }
+    .return-chip.active { display: inline-flex; }
+    .return-chip:hover {
+      background: #fff;
+      border-color: var(--primary);
+    }
+    .return-chip-arrow {
+      display: inline-flex;
+      align-items: center;
+      color: var(--primary);
+    }
+    .return-chip-arrow svg { width: 12px; height: 12px; }
+
+    /* ─── BREADCRUMB — spans BOTH grid columns so it sits ABOVE the identity
+       + sidebar cards, letting them share the same top line. */
+    .breadcrumb {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+    }
+    .breadcrumb a { color: var(--primary); text-decoration: none; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb-sep { display: inline-block; transform: scaleX(-1); }
+    /* "הצג במפה הסמנטית" — pushed to the end of breadcrumb row (LEFT in RTL).
+       Acts as a secondary action: zoom out from the card to the network view. */
+    .show-on-map-btn {
+      margin-inline-start: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: var(--radius-md, 8px);
+      border: 1px solid var(--border-strong, #CBD5E1);
+      background: var(--bg-card, #fff);
+      color: var(--text-secondary, #475569);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: border-color .15s, color .15s, background .15s;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .show-on-map-btn:hover {
+      border-color: var(--primary, #334155);
+      color: var(--primary, #334155);
+      background: var(--primary-light, #F1F5F9);
+    }
+    .show-on-map-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+    /* ─── CARDS ─── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 28px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* ─── IDENTITY ─── */
+    .identity-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-block-end: 16px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 11px;
+      border-radius: var(--radius-full);
+      font-size: 12.5px;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+    .badge-type {
+      background: #F1F5F9;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-strong);
+      position: relative;
+    }
+    /* Tooltip */
+    .badge-type[data-tooltip]:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      inset-block-start: calc(100% + 8px);
+      inset-inline-start: 0;
+      background: var(--text-primary);
+      color: #fff;
+      padding: 6px 11px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 400;
+      white-space: nowrap;
+      z-index: 50;
+      box-shadow: var(--shadow-md);
+      pointer-events: none;
+    }
+    .badge-domain {
+      background: var(--domain-light);
+      color: var(--domain-color);
+      border: 1px solid var(--domain-border);
+    }
+    .badge-status-active {
+      background: var(--success-light);
+      color: var(--success);
+      border: 1px solid var(--success-border);
+    }
+
+    .indicator-title {
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1.3;
+      color: var(--text-primary);
+      margin-block-end: 20px;
+    }
+
+    .identity-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* ─── BUTTONS ─── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary {
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-strong);
+    }
+    .btn-secondary:hover { background: var(--bg-page); color: var(--text-primary); }
+
+    /* ─── SECTION TITLES ─── */
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-block-end: 14px;
+    }
+    .section-title svg { color: var(--primary); flex-shrink: 0; }
+
+    /* ─── DEFINITION ─── */
+    .body-text {
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--text-secondary);
+    }
+    .body-text + .body-text { margin-block-start: 10px; }
+
+    /* ─── RATIONALE (key block) ─── */
+    .rationale-card {
+      background: var(--bg-rationale);
+      border: 1px solid var(--primary-border);
+      border-inline-start: 4px solid var(--primary);
+      border-radius: var(--radius-xl);
+      padding: 28px;
+    }
+    .rationale-lead {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--primary);
+      margin-block-end: 16px;
+    }
+    .rationale-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-block-end: 16px;
+    }
+    .rationale-item {
+      background: var(--bg-card);
+      border: 1px solid rgba(186,230,253,.7);
+      border-radius: var(--radius-md);
+      padding: 14px;
+    }
+    .rationale-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--primary);
+      margin-block-end: 5px;
+    }
+    .rationale-value {
+      font-size: 13.5px;
+      color: var(--text-primary);
+      line-height: 1.55;
+    }
+    .rationale-warning {
+      font-size: 13px;
+      color: var(--warning);
+      background: var(--warning-light);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      line-height: 1.5;
+    }
+
+    /* ─── USAGE — 2 sub-sections: related outcomes + programs ─── */
+    .usage-subsection {
+      margin-block-start: 24px;
+      padding-block-start: 20px;
+      border-block-start: 1px solid var(--border);
+    }
+    .usage-subsection:first-of-type {
+      margin-block-start: 8px;
+      padding-block-start: 0;
+      border-block-start: none;
+    }
+    .usage-subsection-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-block-end: 6px;
+    }
+    .usage-subsection-lede {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      margin-block-end: 14px;
+      line-height: 1.55;
+    }
+
+    /* Related-outcomes list — clickable rows: outcome name + role badge */
+    .usage-outcomes-list {
+      display: flex; flex-direction: column;
+      gap: 6px;
+    }
+    .usage-outcome-row {
+      display: flex; align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: var(--bg-page);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md, 8px);
+      text-decoration: none;
+      color: inherit;
+      transition: border-color .12s, background .12s;
+    }
+    .usage-outcome-row:hover {
+      border-color: var(--primary);
+      background: var(--bg-card);
+    }
+    .usage-outcome-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      flex: 1;
+    }
+    /* External-link icon — reveals on row hover, hints "opens in new tab" */
+    .usage-outcome-external {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px; height: 22px;
+      color: var(--text-muted);
+      opacity: 0;
+      transition: opacity .12s, color .12s;
+      flex-shrink: 0;
+    }
+    .usage-outcome-external svg { width: 14px; height: 14px; }
+    .usage-outcome-row:hover .usage-outcome-external,
+    .usage-outcome-row:focus-visible .usage-outcome-external {
+      opacity: 1;
+      color: var(--primary);
+    }
+    .usage-role-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: var(--radius-full, 9999px);
+      font-size: 11.5px;
+      font-weight: 700;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .usage-role-badge.role-outcome   { background: #DCFCE7; color: #059669; }
+    .usage-role-badge.role-output    { background: #DBEAFE; color: #0369A1; }
+    .usage-role-badge.role-predictor { background: #F3E8FF; color: #7C3AED; }
+
+    /* Programs list — cards with head (name + org) and description */
+    .usage-programs-list {
+      display: flex; flex-direction: column;
+      gap: 10px;
+    }
+    .usage-program {
+      padding: 14px 16px;
+      background: var(--bg-page);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md, 8px);
+    }
+    .usage-program-head {
+      display: flex; align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-block-end: 6px;
+    }
+    .usage-program-name {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    .usage-program-org {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .usage-program-desc {
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    /* Legacy usage-list/entry/link styles — retained for any HTML that still
+       uses them (none currently on this page). Safe to prune later. */
+    .usage-list { display: flex; flex-direction: column; gap: 22px; margin-block-start: 4px; }
+    .usage-entry { padding-inline-start: 16px; border-inline-start: 3px solid var(--border-strong); }
+    .usage-entry h3 { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-block-end: 6px; }
+    .usage-entry p { font-size: 14px; line-height: 1.75; color: var(--text-secondary); margin-block-end: 8px; }
+    .usage-entry p:last-child { margin-block-end: 0; }
+    .usage-link { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; color: var(--primary); }
+    .usage-link:hover { text-decoration: underline; }
+    .usage-link svg { width: 14px; height: 14px; }
+
+    /* ─── RELATED ─── */
+    .related-tabs {
+      display: flex;
+      gap: 2px;
+      border-block-end: 1px solid var(--border);
+      margin-block-end: 14px;
+    }
+    .related-tab {
+      padding: 8px 16px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      border-block-end: 2px solid transparent;
+      margin-block-end: -1px;
+      transition: all .15s;
+    }
+    .related-tab.active { color: var(--primary); border-block-end-color: var(--primary); }
+    .related-tab:hover:not(.active) { color: var(--text-secondary); }
+
+    .related-panel { display: none; }
+    .related-panel.active { display: flex; flex-direction: column; gap: 10px; }
+
+    .related-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all .15s;
+      background: var(--bg-card);
+    }
+    .related-card:hover {
+      border-color: var(--primary);
+      box-shadow: 0 2px 8px rgba(3,105,161,.08);
+    }
+    .related-card-bar {
+      width: 4px;
+      border-radius: 2px;
+      background: var(--domain-color);
+      align-self: stretch;
+      flex-shrink: 0;
+    }
+    .related-card-name { font-size: 14px; font-weight: 600; margin-block-end: 4px; }
+    .related-card-diff { font-size: 12.5px; color: var(--text-muted); line-height: 1.55; }
+    .related-card-tag {
+      margin-inline-start: auto;
+      flex-shrink: 0;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--domain-color);
+      background: var(--domain-light);
+      padding: 2px 9px;
+      border-radius: var(--radius-full);
+      align-self: flex-start;
+    }
+
+    /* ─── METHODOLOGY ─── */
+    .methodology-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      list-style: none;
+      padding-block: 4px;
+      gap: 8px;
+    }
+    .methodology-summary::-webkit-details-marker { display: none; }
+    .toggle-icon { transition: transform .2s; color: var(--text-muted); flex-shrink: 0; }
+    details[open] .toggle-icon { transform: rotate(180deg); }
+    .methodology-body {
+      margin-block-start: 16px;
+      padding-block-start: 16px;
+      border-block-start: 1px solid var(--border);
+    }
+    .meta-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .meta-table tr { border-block-end: 1px solid var(--border); }
+    .meta-table tr:last-child { border-block-end: none; }
+    .meta-table th {
+      text-align: start;
+      padding: 10px 0;
+      padding-inline-end: 20px;
+      color: var(--text-muted);
+      font-weight: 500;
+      width: 180px;
+      vertical-align: top;
+    }
+    .meta-table td { padding: 10px 0; color: var(--text-primary); line-height: 1.55; }
+
+    /* ─── SIDEBAR ─── */
+    .indicator-sidebar { position: sticky; inset-block-start: 76px; }
+    .sidebar-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 22px;
+      box-shadow: var(--shadow-sm);
+    }
+    .sidebar-heading {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-muted);
+      margin-block-end: 16px;
+    }
+    .sidebar-items { display: flex; flex-direction: column; gap: 12px; }
+    .sidebar-item { display: flex; flex-direction: column; gap: 2px; }
+    .sidebar-label { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+    .sidebar-value { font-size: 13.5px; color: var(--text-primary); font-weight: 500; }
+    .sidebar-divider { height: 1px; background: var(--border); margin-block: 4px; }
+    .sidebar-active { color: var(--success) !important; }
+
+    /* ─── COMPARISON TRAY ─── */
+    .comparison-tray {
+      position: fixed;
+      inset-block-end: 0;
+      inset-inline: 0;
+      background: var(--text-primary);
+      color: #fff;
+      padding: 14px 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transform: translateY(100%);
+      transition: transform .3s cubic-bezier(.4,0,.2,1);
+      z-index: 200;
+      box-shadow: 0 -4px 20px rgba(0,0,0,.2);
+    }
+    .comparison-tray.visible { transform: translateY(0); }
+    .tray-label { font-size: 13px; color: rgba(255,255,255,.6); white-space: nowrap; }
+    .tray-chips { display: flex; gap: 8px; flex: 1; flex-wrap: wrap; }
+    .tray-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,.12);
+      border-radius: var(--radius-md);
+      padding: 6px 12px;
+      font-size: 13.5px;
+    }
+    .tray-chip-remove {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,.5);
+      font-size: 17px;
+      line-height: 1;
+      padding: 0;
+      transition: color .1s;
+    }
+    .tray-chip-remove:hover { color: #fff; }
+    .tray-actions { display: flex; align-items: center; gap: 12px; margin-inline-start: auto; }
+    .tray-clear {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,.5);
+      font-size: 13px;
+      transition: color .15s;
+    }
+    .tray-clear:hover { color: #fff; }
+    .btn-compare {
+      background: #fff;
+      color: var(--text-primary);
+      font-weight: 600;
+      border: none;
+      padding: 8px 20px;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-family: inherit;
+      transition: opacity .15s;
+    }
+    .btn-compare:hover { opacity: .9; }
+
+    /* ─── ICON HELPER ─── */
+    .icon { width: 16px; height: 16px; display: inline-flex; flex-shrink: 0; }
+    .icon-sm { width: 14px; height: 14px; }
+
+    /* ─── PRINT ─── */
+    @media print {
+      .global-nav, .comparison-tray, .identity-actions, .indicator-sidebar { display: none !important; }
+      .indicator-page { grid-template-columns: 1fr; }
+      .card, .rationale-card { box-shadow: none; border: 1px solid #ddd; }
+    }
+
+    /* ─── FOCUS ─── */
+    :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     GLOBAL NAV
+══════════════════════════════════════ -->
+<header class="global-nav" role="banner">
+  <nav class="global-nav-inner" aria-label="ניווט ראשי">
+    <a href="home.html" class="nav-logo"><svg class="nav-logo-img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 117 28" fill="none" role="img" aria-label="הג'וינט"><path d="M8.683 27.7342H2.46565L0 3.96457H5.82267L7.71625 22.7453H8.67857C12.7496 22.7453 14.2529 21.0424 14.2529 15.2552V8.95354H9.60984V3.96013H20.0756V15.2507C20.0756 24.7985 15.9691 27.7298 8.67857 27.7298L8.683 27.7342ZM20.5501 27.7342V22.7408H22.7275C24.5856 22.7408 25.0867 21.9071 25.0867 19.6898V8.95354H22.049V3.96013H30.9094V20.4792C30.9094 26.0269 29.5524 27.7298 24.9803 27.7298H20.5501V27.7342ZM33.6987 18.0667V3.96013H39.5569V18.0667H33.6987ZM42.5281 27.7342V3.96013H48.3862V27.7298H42.5281V27.7342ZM56.5681 0V4.11978L54.3198 11.2906H50.5681L51.7832 0H56.5681ZM57.5038 27.7342H56.3242V22.7408H57.5038C62.1114 22.7408 63.362 19.9293 62.7544 15.2507L61.9695 8.9491H57.8985V3.9557H66.7234L70.2977 27.7254H64.7234L63.974 22.457H63.7966C63.0471 25.6677 61.2955 27.7254 57.5083 27.7254L57.5038 27.7342ZM89.584 27.7342H83.7613V8.95354H71.0428V3.96013H89.584V27.7298V27.7342ZM76.9763 14.1421V27.7298H71.1182V14.1421H76.9763Z" fill="#3ABDDC"/><path d="M116.214 4.01074H94.1118V27.7095H116.214V4.01074Z" fill="#00C1DE"/><path d="M106.658 21.2671H103.256V21.9678H106.658V21.2671Z" fill="#fff"/><path d="M107.509 22.519H102.409V23.2197H107.509V22.519Z" fill="#fff"/><path d="M108.777 23.6973H101.127V24.3979H108.777V23.6973Z" fill="#fff"/><mask id="mask0_joint_logo" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="92" y="4" width="25" height="24"><path d="M116.209 4.01318H92.5146V27.7119H116.209V4.01318Z" fill="#fff"/></mask><g mask="url(#mask0_joint_logo)"><path d="M104.952 19.9261C101.945 19.9261 99.4575 17.7398 98.9786 14.8706H98.1626C98.646 18.1833 101.497 20.7288 104.952 20.7288C108.407 20.7288 111.254 18.1833 111.737 14.8706H110.921C110.442 17.7398 107.954 19.9261 104.948 19.9261" fill="#fff"/><path d="M105.504 9.27839C105.504 10.0988 105.264 10.4846 104.967 10.4846C104.67 10.4846 104.431 10.1121 104.431 9.27839C104.431 8.20077 104.967 7.32715 104.967 7.32715C104.967 7.32715 105.504 8.20077 105.504 9.27839Z" fill="#fff"/><path d="M99.1757 12.9356C99.1757 13.756 98.9363 14.1418 98.6391 14.1418C98.342 14.1418 98.1025 13.7649 98.1025 12.9356C98.1025 11.858 98.6391 10.9844 98.6391 10.9844C98.6391 10.9844 99.1757 11.858 99.1757 12.9356Z" fill="#fff"/><path d="M111.824 12.9185C111.824 13.7389 111.585 14.1247 111.288 14.1247C110.99 14.1247 110.751 13.7478 110.751 12.9185C110.751 11.8409 111.288 10.9673 111.288 10.9673C111.288 10.9673 111.824 11.8409 111.824 12.9185Z" fill="#fff"/><path d="M104.461 16.6443H104.847C105.441 16.6443 105.552 16.3339 105.552 15.3405V13.3538C105.552 12.4979 105.464 12.2097 104.781 12.2097H104.461V16.6443ZM103.663 11.54H104.954C106.248 11.54 106.355 11.9702 106.355 13.6554V15.376C106.355 16.8572 106.093 17.3228 104.825 17.3228H103.663V11.5445V11.54Z" fill="#fff"/><path d="M106.99 13.0099C106.99 12.2027 107.252 11.4888 108.343 11.4888C109.137 11.4888 109.505 11.8879 109.505 12.5398V13.1163H108.751V12.7172C108.751 12.3491 108.622 12.1185 108.285 12.1185C107.868 12.1185 107.788 12.4156 107.788 13.1118V15.9456C107.788 16.6241 108.006 16.7483 108.259 16.7483C108.556 16.7483 108.746 16.5398 108.746 16.0609V15.6618H109.5V16.3004C109.5 16.9079 109.252 17.3735 108.325 17.3735C107.318 17.3735 106.99 16.8369 106.99 15.9411V13.0187V13.0099Z" fill="#fff"/><path d="M102.891 11.54H102.089V15.9436C102.089 16.6221 101.871 16.7463 101.614 16.7463C101.317 16.7463 101.126 16.5379 101.126 16.0589V15.6598H100.373V16.2984C100.373 16.906 100.621 17.3716 101.548 17.3716C102.554 17.3716 102.887 16.835 102.887 15.9392V11.5445L102.891 11.54Z" fill="#fff"/><path d="M94.1125 23.7603H92.5205V27.7115H94.1125V23.7603Z" fill="#F8AE51"/><path d="M94.1125 19.814H92.5205V23.7652H94.1125V19.814Z" fill="#BD6095"/><path d="M94.1125 15.8613H92.5205V19.8126H94.1125V15.8613Z" fill="#E9485E"/><path d="M94.1125 7.96436H92.5205V11.9156H94.1125V7.96436Z" fill="#C5D984"/><path d="M94.1125 4.01074H92.5205V7.96201H94.1125V4.01074Z" fill="#00ABA3"/><path d="M94.1125 11.9106H92.5205V15.8619H94.1125V11.9106Z" fill="#0091CE"/></g></svg><span class="nav-logo-text">קטלוג מדדים לאומיים</span></a>
+    <form class="nav-search" role="search" action="search-results.html" method="get">
+      <svg class="nav-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="nav-search-input" type="search" name="q" placeholder="חיפוש מדד, תחום או מילת מפתח..." aria-label="חיפוש מדד">
+    </form>
+
+  </nav>
+</header>
+
+
+<!-- ══════════════════════════════════════
+     PAGE
+══════════════════════════════════════ -->
+<div class="indicator-page" id="indicator-page">
+
+  <!-- BREADCRUMB row — spans both grid columns so identity + sidebar cards
+       share the same top line. Return chip (session journey) sits inline at
+       the start of this row; taxonomy crumbs follow. -->
+  <nav class="breadcrumb" aria-label="נתיב ניווט" aria-live="polite">
+    <!-- Return chip — hidden until JS finds sessionStorage return URL.
+         Chevron points inline-END (right in RTL) = the "back" direction. -->
+    <a class="return-chip" id="return-chip-link" href="#" aria-label="חזרה לעמוד הקודם">
+      <span class="return-chip-arrow" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </span>
+      <span id="return-chip-label">חזרה לדוח</span>
+    </a>
+    <a href="home.html">בית</a>
+    <span class="breadcrumb-sep" aria-hidden="true">›</span>
+    <a href="browse.html?dim=dim-wellbeing">רווחה נפשית וחברתית</a>
+    <span class="breadcrumb-sep" aria-hidden="true">›</span>
+    <span aria-current="page">רווחה נפשית</span>
+
+    <!-- Deep-link to node-chart.html with ?node= param. The map reads the
+         param on init and centers on that node. -->
+    <a class="show-on-map-btn" href="node-chart.html?node=i.bmi"
+       aria-label="הצג מדד זה במפה הסמנטית">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="6" cy="6" r="3"/>
+        <circle cx="18" cy="18" r="3"/>
+        <circle cx="6" cy="18" r="3"/>
+        <line x1="6" y1="9" x2="6" y2="15"/>
+        <line x1="9" y1="6" x2="15" y2="18"/>
+      </svg>
+      הצג במפה הסמנטית
+    </a>
+  </nav>
+
+  <!-- ── MAIN ── -->
+  <main class="indicator-main" id="indicator-main">
+
+    <!-- IDENTITY -->
+    <section class="card" id="indicator-identity-section" aria-labelledby="indicator-title">
+
+      <div class="identity-badges">
+        <span class="badge badge-type"
+              data-tooltip="תוצאה = שינוי הנצפה אצל אוכלוסיית היעד כתוצאה מהתכנית"
+              role="img" aria-label="סוג מדד: תוצאה">
+          <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          תוצאה
+        </span>
+
+        <span class="badge badge-domain">
+          <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+          רווחה רגשית
+        </span>
+
+        <span class="badge badge-status-active">
+          <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          פעיל
+        </span>
+      </div>
+
+      <h1 class="indicator-title" id="indicator-title">מדד אושר סובייקטיבי — ילדים ונוער</h1>
+
+      <div class="identity-actions" role="toolbar" aria-label="פעולות על המדד">
+        <button class="btn btn-primary" id="indicator-button-compare" aria-label="הוסף מדד זה למגש ההשוואה" onclick="addToComparison()">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          הוסף להשוואה
+        </button>
+
+        <button class="btn btn-secondary" id="indicator-button-share" aria-label="העתק קישור לדף זה" onclick="copyLink()">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+          </svg>
+          שתף
+        </button>
+
+        <button class="btn btn-secondary" id="indicator-button-print" aria-label="הדפס דף מדד זה" onclick="window.print()">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="6 9 6 2 18 2 18 9"/>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+            <rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          הדפס
+        </button>
+      </div>
+    </section>
+
+    <!-- "Ask AI about this indicator" section removed — global AI FAB (assets/ai-fab.js)
+         is the single AI entry point across all prototype screens, to avoid two
+         competing affordances on the same page. -->
+
+    <!-- DEFINITION -->
+    <section class="card" id="indicator-definition-section" aria-labelledby="definition-title">
+      <h2 class="section-title" id="definition-title">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        מה מדד זה מודד בפועל
+      </h2>
+      <p class="body-text">
+        מדד זה מכמת את מידת האושר הסובייקטיבי — כפי שהילד או הנער מדרג אותה בעצמו — על סקאלה של 0 עד 10. הוא לא שואל "מה מצבך האובייקטיבי?" אלא "עד כמה אתה מרגיש שחייך טובים?" — הבחנה קריטית כשמעריכים תוצאות רגשיות ולא רק מוחשיות.
+      </p>
+      <p class="body-text">
+        הכלי המרכזי הוא <strong>מדרג קנטריל</strong> — טכניקה מאומתת בינלאומית לאמידת רווחה סובייקטיבית, שהותאמה לאוכלוסיות ילדים ונוער בישראל על ידי מכון מאיירס-ג'וינט-ברוקדייל.
+      </p>
+    </section>
+
+    <!-- Rationale section ("למה המדד הזה?") removed per design decision.
+         The rationale content (when-to-use, when-not-to-use) was overlap
+         with the "מדדים קשורים" section below. CSS retained as dead rules. -->
+
+    <!-- USAGE — two sub-sections:
+         (a) Related outcomes with the ROLE this indicator plays for each
+         (b) Programs currently using this indicator -->
+    <section class="card" id="indicator-usage-section" aria-labelledby="usage-title">
+      <h2 class="section-title" id="usage-title">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        היכן המדד נמצא בשימוש
+      </h2>
+
+      <!-- Sub-section 1: Related outcomes with role badges -->
+      <div class="usage-subsection">
+        <h3 class="usage-subsection-title">תוצאות הקשורות למדד</h3>
+        <p class="usage-subsection-lede">
+          התוצאות שהמדד הזה משמש אותן, ואיזה תפקיד הוא ממלא ביחס לכל אחת מהן.
+        </p>
+        <div class="usage-outcomes-list" role="list">
+          <a class="usage-outcome-row" role="listitem" target="_blank" rel="noopener" href="canvas.html?q=%D7%A9%D7%99%D7%A4%D7%95%D7%A8+%D7%A8%D7%95%D7%95%D7%97%D7%94+%D7%A0%D7%A4%D7%A9%D7%99%D7%AA&stage=results">
+            <span class="usage-outcome-name">שיפור רווחה נפשית של ילדים ונוער</span>
+            <span class="usage-role-badge role-outcome">תוצאה</span>
+            <span class="usage-outcome-external" aria-label="נפתח בטאב חדש" title="פתיחה בטאב חדש">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+            </span>
+          </a>
+          <a class="usage-outcome-row" role="listitem" target="_blank" rel="noopener" href="canvas.html?q=%D7%A6%D7%9E%D7%A6%D7%95%D7%9D+%D7%94%D7%AA%D7%A0%D7%94%D7%92%D7%95%D7%99%D7%95%D7%AA+%D7%A1%D7%99%D7%9B%D7%95%D7%9F&stage=results">
+            <span class="usage-outcome-name">צמצום התנהגויות סיכון בקרב נוער</span>
+            <span class="usage-role-badge role-predictor">מנבא</span>
+            <span class="usage-outcome-external" aria-label="נפתח בטאב חדש" title="פתיחה בטאב חדש">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+            </span>
+          </a>
+          <a class="usage-outcome-row" role="listitem" target="_blank" rel="noopener" href="canvas.html?q=%D7%94%D7%AA%D7%9E%D7%93%D7%94+%D7%91%D7%9E%D7%A1%D7%92%D7%A8%D7%AA+%D7%97%D7%99%D7%A0%D7%95%D7%9B%D7%99%D7%AA&stage=results">
+            <span class="usage-outcome-name">התמדה במסגרת חינוכית</span>
+            <span class="usage-role-badge role-predictor">מנבא</span>
+            <span class="usage-outcome-external" aria-label="נפתח בטאב חדש" title="פתיחה בטאב חדש">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+            </span>
+          </a>
+          <a class="usage-outcome-row" role="listitem" target="_blank" rel="noopener" href="canvas.html?q=%D7%A9%D7%99%D7%9C%D7%95%D7%91+%D7%97%D7%91%D7%A8%D7%AA%D7%99+%D7%A9%D7%9C+%D7%99%D7%9C%D7%93%D7%99%D7%9D+%D7%91%D7%A1%D7%99%D7%9B%D7%95%D7%9F&stage=results">
+            <span class="usage-outcome-name">שילוב חברתי של ילדים בסיכון</span>
+            <span class="usage-role-badge role-outcome">תוצאה</span>
+            <span class="usage-outcome-external" aria-label="נפתח בטאב חדש" title="פתיחה בטאב חדש">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+            </span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Sub-section 2: Programs currently using the indicator -->
+      <div class="usage-subsection">
+        <h3 class="usage-subsection-title">שימושים</h3>
+        <p class="usage-subsection-lede">
+          תכניות שנמצא בהן מדד זה כחלק ממערך המדידה הפעיל.
+        </p>
+        <div class="usage-programs-list" role="list">
+          <article class="usage-program" role="listitem">
+            <div class="usage-program-head">
+              <h4 class="usage-program-name">בריאות מעלה — נוער דרום</h4>
+              <span class="usage-program-org">מטעם: משרד הבריאות + הג'וינט</span>
+            </div>
+            <p class="usage-program-desc">
+              תכנית קידום בריאות רגשית ופיזית לנוער בפריפריה. משתמשת במדד כמדד תוצאה מרכזי במדידה חצי-שנתית.
+            </p>
+          </article>
+          <article class="usage-program" role="listitem">
+            <div class="usage-program-head">
+              <h4 class="usage-program-name">אושר לילדים</h4>
+              <span class="usage-program-org">מטעם: הג'וינט — ילדים ונוער</span>
+            </div>
+            <p class="usage-program-desc">
+              תכנית התערבות בבתי-ספר יסודיים במגזר הערבי. מדידה שנתית עם השוואה לקבוצת ביקורת.
+            </p>
+          </article>
+          <article class="usage-program" role="listitem">
+            <div class="usage-program-head">
+              <h4 class="usage-program-name">יסוד — נוער בסיכון</h4>
+              <span class="usage-program-org">מטעם: משרד הרווחה + עיריית ירושלים</span>
+            </div>
+            <p class="usage-program-desc">
+              תכנית לזיהוי ותמיכה בנוער בסיכון גבוה. מדד רווחה סובייקטיבי משמש כאינדיקציה מקדימה למצוקה.
+            </p>
+          </article>
+          <article class="usage-program" role="listitem">
+            <div class="usage-program-head">
+              <h4 class="usage-program-name">צעדים לרווחה — קהילה חרדית</h4>
+              <span class="usage-program-org">מטעם: הג'וינט + עיריית בני-ברק</span>
+            </div>
+            <p class="usage-program-desc">
+              פיילוט מדידת רווחה רגשית במגזר החרדי, כולל התאמות של השאלון לרגישות תרבותית.
+            </p>
+          </article>
+          <article class="usage-program" role="listitem">
+            <div class="usage-program-head">
+              <h4 class="usage-program-name">מגשימים — יוצאי אתיופיה</h4>
+              <span class="usage-program-org">מטעם: הג'וינט + משרד החינוך</span>
+            </div>
+            <p class="usage-program-desc">
+              תכנית ליווי חברתי-לימודי לתלמידים יוצאי אתיופיה. מדד רווחה נמדד כחלק ממערך רחב של מדדים.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Related-indicators section ("מדדים קשורים וחלופיים") removed per
+         design decision. CSS rules for .related-tabs/.related-tab/
+         .related-panel/.related-card remain as dead code — safe to prune. -->
+
+    <!-- METHODOLOGY -->
+    <section class="card" id="indicator-methodology-section" aria-labelledby="methodology-title">
+      <h2 class="section-title" id="methodology-title" style="margin-block-end: 0;">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+        </svg>
+        מתודולוגיה ומקורות
+      </h2>
+      <details>
+        <summary class="methodology-summary">
+          <span style="color: var(--text-secondary); font-size: 14px; font-weight: 400; margin-block-start: 12px; display: block;">הצג פרטים מתודולוגיים מלאים</span>
+          <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:18px; height:18px; margin-block-start: 12px;">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </summary>
+        <div class="methodology-body">
+          <table class="meta-table">
+            <tbody>
+              <tr>
+                <th scope="row">כלי המדידה</th>
+                <td>מדרג קנטריל (Cantril Ladder) — מותאם לנוער ישראלי על ידי מכון מאיירס-ג'וינט-ברוקדייל</td>
+              </tr>
+              <tr>
+                <th scope="row">שיטת איסוף</th>
+                <td>שאלון עצמי-דיווח · יחיד או קבוצה · דיגיטלי או בנייר</td>
+              </tr>
+              <tr>
+                <th scope="row">יחידת מדידה</th>
+                <td>ציון ממוצע על סקאלה 0–10 (ברמת פרט וקבוצה)</td>
+              </tr>
+              <tr>
+                <th scope="row">תדירות מומלצת</th>
+                <td>שנתית — עדיף תחילה · אמצע · סוף תכנית</td>
+              </tr>
+              <tr>
+                <th scope="row">טווח גילאים</th>
+                <td>8–18 (ניסוח מותאם לקבוצות 8–11 ו-12–18 בנפרד)</td>
+              </tr>
+              <tr>
+                <th scope="row">מקור</th>
+                <td>Cantril (1965), הסתגלות ישראלית — מאיירס-ג'וינט-ברוקדייל, 2015</td>
+              </tr>
+              <tr>
+                <th scope="row">בעל המדד</th>
+                <td>מחלקת מחקר והערכה — הג'וינט</td>
+              </tr>
+              <tr>
+                <th scope="row">שנת הקמה</th>
+                <td>2018 (גרסה ישראלית)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </section>
+
+  </main><!-- /indicator-main -->
+
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="indicator-sidebar" id="indicator-sidebar" aria-label="נתוני מפתח">
+    <div class="sidebar-card">
+      <p class="sidebar-heading">נתוני מפתח</p>
+      <dl class="sidebar-items">
+        <div class="sidebar-item">
+          <dt class="sidebar-label">סוג מדד</dt>
+          <dd class="sidebar-value">תוצאה</dd>
+        </div>
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-item">
+          <dt class="sidebar-label">ממד</dt>
+          <dd class="sidebar-value">רווחה רגשית</dd>
+        </div>
+        <div class="sidebar-item">
+          <dt class="sidebar-label">תחום חיים</dt>
+          <dd class="sidebar-value">בריאות נפשית</dd>
+        </div>
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-item">
+          <dt class="sidebar-label">כלי מדידה</dt>
+          <dd class="sidebar-value">שאלון עצמי-דיווח</dd>
+        </div>
+        <div class="sidebar-item">
+          <dt class="sidebar-label">תדירות</dt>
+          <dd class="sidebar-value">שנתית</dd>
+        </div>
+        <div class="sidebar-item">
+          <dt class="sidebar-label">טווח גילאים</dt>
+          <dd class="sidebar-value">8–18</dd>
+        </div>
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-item">
+          <dt class="sidebar-label">בעל המדד</dt>
+          <dd class="sidebar-value">הג'וינט — מחקר והערכה</dd>
+        </div>
+        <div class="sidebar-item">
+          <dt class="sidebar-label">שנת הקמה</dt>
+          <dd class="sidebar-value">2018</dd>
+        </div>
+        <div class="sidebar-item">
+          <dt class="sidebar-label">סטטוס</dt>
+          <dd class="sidebar-value sidebar-active">● פעיל</dd>
+        </div>
+      </dl>
+    </div>
+  </aside>
+
+</div><!-- /indicator-page -->
+
+
+<!-- ══════════════════════════════════════
+     COMPARISON TRAY
+══════════════════════════════════════ -->
+<div class="comparison-tray" id="comparison-tray" role="region" aria-label="מגש השוואה" aria-live="polite">
+  <span class="tray-label">להשוואה:</span>
+  <div class="tray-chips" id="tray-chips"></div>
+  <div class="tray-actions">
+    <button class="tray-clear" onclick="clearComparison()">נקה הכל</button>
+    <button class="btn-compare" onclick="goToComparison()">השווה מדדים ←</button>
+  </div>
+</div>
+
+
+<script>
+  /* ── Comparison tray ── */
+  let compared = [];
+
+  function addToComparison() {
+    const item = { id: 'happiness-youth', name: 'אושר סובייקטיבי — ילדים ונוער' };
+    if (compared.find(i => i.id === item.id)) return;
+    if (compared.length >= 3) { alert('ניתן להשוות עד 3 מדדים'); return; }
+    compared.push(item);
+    renderTray();
+    const btn = document.getElementById('indicator-button-compare');
+    btn.textContent = '✓ נוסף להשוואה';
+    btn.style.background = 'var(--success)';
+  }
+
+  function removeItem(id) {
+    compared = compared.filter(i => i.id !== id);
+    renderTray();
+    if (id === 'happiness-youth') {
+      const btn = document.getElementById('indicator-button-compare');
+      btn.innerHTML = `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>הוסף להשוואה`;
+      btn.style.background = '';
+    }
+  }
+
+  function clearComparison() {
+    compared = [];
+    renderTray();
+    const btn = document.getElementById('indicator-button-compare');
+    btn.innerHTML = `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>הוסף להשוואה`;
+    btn.style.background = '';
+  }
+
+  function renderTray() {
+    const tray = document.getElementById('comparison-tray');
+    const chips = document.getElementById('tray-chips');
+    tray.classList.toggle('visible', compared.length > 0);
+    chips.innerHTML = compared.map(i =>
+      `<div class="tray-chip">
+        <span>${i.name}</span>
+        <button class="tray-chip-remove" onclick="removeItem('${i.id}')" aria-label="הסר ${i.name}">×</button>
+      </div>`
+    ).join('');
+  }
+
+  function goToComparison() {
+    window.location.href = 'comparison.html';
+  }
+
+  /* ── Share ── */
+  function copyLink() {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      const btn = document.getElementById('indicator-button-share');
+      btn.textContent = '✓ הקישור הועתק';
+      setTimeout(() => {
+        btn.innerHTML = `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>שתף`;
+      }, 2000);
+    });
+  }
+
+  /* switchTab() removed along with the related-indicators tabbed section. */
+
+  /* "Ask AI about this indicator" logic removed along with the inline section.
+     The global AI FAB (assets/ai-fab.js) carries any AI interaction now. */
+
+  /* ═════════════════════════════════════════════════════════════════════
+     RETURN CHIP — reveals a "back to previous flow" affordance when
+     sessionStorage carries a return URL. Set by upstream pages (canvas
+     when user opens indicator from map/blade, could also be set by
+     search-results, browse). Semantically parallel to — never mixed with —
+     the taxonomy breadcrumb.
+     ───────────────────────────────────────────────────────────────────── */
+  (function () {
+    const chip = document.getElementById('return-chip-link');
+    const labelEl = document.getElementById('return-chip-label');
+    if (!chip || !labelEl) return;
+
+    const url = sessionStorage.getItem('indicator-return-url');
+    const source = sessionStorage.getItem('indicator-return-source') || 'previous';
+    if (!url) return;   /* direct visit / deep-link — no chip */
+
+    /* Source-aware label — where the user came FROM. Terse: no title tail. */
+    const labelBySource = {
+      report: 'חזרה לדוח',
+      search: 'חזרה לתוצאות',
+      browse: 'חזרה לעיון'
+    };
+    labelEl.textContent = labelBySource[source] || 'חזרה';
+    chip.setAttribute('href', url);
+    chip.classList.add('active');
+  })();
+
+  /* Note: no dismiss handler — the chip is a one-way "back to where you
+     came from" affordance. It disappears naturally when the user navigates
+     away from the indicator page or opens a new tab. */
+</script>
+
+<script src="assets/search-sync.js?v=2"></script>
+<script src="assets/ai-fab.js?v=4"></script>
+</body>
+</html>
